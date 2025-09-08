@@ -5,7 +5,7 @@ import inspect
 import types
 import typing as t
 
-from vis_tool.logger import Logger
+from vistool.logger import Logger
 
 
 class AsyncContextMixin(abc.ABC):

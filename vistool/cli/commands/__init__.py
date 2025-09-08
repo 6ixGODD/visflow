@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import argparse
 
-from vis_tool import __version__
+from vistool import __version__
 
 
 def parse_args() -> argparse.Namespace:

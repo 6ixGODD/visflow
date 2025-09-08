@@ -1,5 +1,5 @@
 [project]
-name = "vis-tool"
+name = "vistool"
 version = "1.0.0"
 description = ""
 authors = [
@@ -13,7 +13,10 @@ dependencies = [
     "seaborn (>=0.13.2,<0.14.0)",
     "onnxruntime (>=1.22.1,<2.0.0)",
     "onnx (>=1.19.0,<2.0.0)",
-    "scikit-learn (>=1.7.1,<2.0.0)"
+    "scikit-learn (>=1.7.1,<2.0.0)",
+    "matplotlib (>=3.10.6,<4.0.0)",
+    "numpy (>=2.3.2,<3.0.0)",
+    "grad-cam (>=1.5.5,<2.0.0)"
 ]
 
 

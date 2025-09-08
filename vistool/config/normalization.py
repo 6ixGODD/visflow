@@ -6,8 +6,6 @@ import pydantic as pydt
 
 
 class NormalizationConfig(pydt.BaseModel):
-    """Image normalization configuration."""
-
     enabled: bool = pydt.Field(
         default=True,
         description="Whether to apply normalization to input images."

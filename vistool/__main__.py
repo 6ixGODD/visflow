@@ -1,5 +1,5 @@
 from __future__ import annotations
 
-from vis_tool.cli import main
+from vistool.cli import main
 
 main()

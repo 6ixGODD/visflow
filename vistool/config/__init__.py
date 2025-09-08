@@ -6,16 +6,16 @@ import typing as t
 import pydantic as pydt
 import pydantic_settings as ps
 
-from vis_tool.config.augmentation import AugmentationConfig
-from vis_tool.config.data import DataConfig
-from vis_tool.config.export import ExportConfig
-from vis_tool.config.model import ModelConfig
-from vis_tool.config.normalization import NormalizationConfig
-from vis_tool.config.output import OutputConfig
-from vis_tool.config.training import TrainingConfig
+from vistool.config.augmentation import AugmentationConfig
+from vistool.config.data import DataConfig
+from vistool.config.export import ExportConfig
+from vistool.config.model import ModelConfig
+from vistool.config.normalization import NormalizationConfig
+from vistool.config.output import OutputConfig
+from vistool.config.training import TrainingConfig
 
 
-class Config(ps.BaseSettings):
+class TrainConfig(ps.BaseSettings):
     model: ModelConfig = pydt.Field(
         default_factory=ModelConfig,
         description="Model architecture configuration."
@@ -80,13 +80,13 @@ class Config(ps.BaseSettings):
         return cls.model_validate(content, strict=True)
 
 
-config = Config()
+config = TrainConfig()
 
 
-def set(c: Config) -> None:
+def set(c: TrainConfig) -> None:
     global config
     config = c
 
 
-def get() -> Config:
+def get() -> TrainConfig:
     return config

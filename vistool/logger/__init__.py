@@ -10,7 +10,7 @@ import traceback as tb
 import types
 import typing as t
 
-from vis_tool.logger.types import LoggingTarget, LogLevel
+from vistool.logger.types import LoggingTarget, LogLevel
 
 _decorator_context: cvs.ContextVar[t.Dict[str, t.Any]] = cvs.ContextVar(
     '_decorator_context',

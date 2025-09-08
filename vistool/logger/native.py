@@ -7,10 +7,10 @@ import pathlib as p
 import sys
 import typing as t
 
-import vis_tool.utils as utils
-import vis_tool.utils.ansi as ansi_utils
-from vis_tool.logger import Logger, LoggerBackend
-from vis_tool.logger.types import LoggingTarget, LogLevel
+import vistool.utils as utils
+import vistool.utils.ansi as ansi_utils
+from vistool.logger import Logger, LoggerBackend
+from vistool.logger.types import LoggingTarget, LogLevel
 
 _LEVEL_MAP: t.Dict[LogLevel, int] = {
     'debug': logging.DEBUG,

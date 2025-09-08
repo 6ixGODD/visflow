@@ -4,9 +4,9 @@ import datetime
 import sys
 import typing as t
 
-import vis_tool.utils as utils
-from vis_tool.logger import Logger, LoggerBackend
-from vis_tool.logger.types import LoggingTarget, LogLevel, Rotation
+import vistool.utils as utils
+from vistool.logger import Logger, LoggerBackend
+from vistool.logger.types import LoggingTarget, LogLevel, Rotation
 
 try:
     from loguru import logger as _logger

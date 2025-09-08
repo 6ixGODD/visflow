@@ -4,8 +4,6 @@ import pydantic as pydt
 
 
 class OutputConfig(pydt.BaseModel):
-    """Output and logging configuration."""
-
     save_dir: str = pydt.Field(
         default='./output',
         description="Directory where training outputs will be saved."

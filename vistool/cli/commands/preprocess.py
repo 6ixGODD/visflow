@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import argparse
 
-from vis_tool.cli.helpers.args import BaseArgs
+from vistool.cli.helpers.args import BaseArgs
 
 
 class Args(BaseArgs):

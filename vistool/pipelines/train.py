@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from torchvision import models
 
 class TrainPipeline:
-    pass
+    def __init__(self):
+        pass
+

@@ -4,8 +4,6 @@ import pydantic as pydt
 
 
 class ExportConfig(pydt.BaseModel):
-    """Model export configuration."""
-
     export_onnx: bool = pydt.Field(
         default=False,
         description="Whether to export the trained model to ONNX format."

@@ -4,7 +4,7 @@ import abc
 import argparse
 import typing as t
 
-import vis_tool.helpers.slotted as slotted
+import vistool.helpers.slotted as slotted
 
 
 class BaseArgs(slotted.SlottedDataClass):
