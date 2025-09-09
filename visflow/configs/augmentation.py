@@ -3,7 +3,7 @@ from __future__ import annotations
 import typing as t
 
 import pydantic as pydt
-
+from visflow.types import PixelValue
 
 class CropConfig(pydt.BaseModel):
     enabled: bool = pydt.Field(
@@ -17,10 +17,7 @@ class CropConfig(pydt.BaseModel):
                     "borders. If a tuple of two ints is provided, it is used "
                     "for left/right and top/bottom respectively."
     )
-    fill: (int |
-           t.Tuple[int, int, int] |
-           float |
-           t.Tuple[float, float, float]) = pydt.Field(
+    fill: PixelValue = pydt.Field(
         default=0,
         description="Pixel fill value for the area outside the image if "
                     "padding is applied. If a single int is provided, "
@@ -88,10 +85,7 @@ class RotationConfig(pydt.BaseModel):
                     "corner."
     )
 
-    fill: (int |
-           t.Tuple[int, int, int] |
-           float |
-           t.Tuple[float, float, float]) = pydt.Field(
+    fill: PixelValue = pydt.Field(
         default=0,
         description="Pixel fill value for the area outside the rotated image."
     )
@@ -162,10 +156,7 @@ class AffineConfig(pydt.BaseModel):
         description="Interpolation method for affine transformation."
     )
 
-    fill: (int |
-           t.Tuple[int, int, int] |
-           float |
-           t.Tuple[float, float, float]) = pydt.Field(
+    fill: PixelValue = pydt.Field(
         default=0.0,
         description="Pixel fill value for the area outside the transformed "
                     "image."
@@ -196,11 +187,7 @@ class ErasingConfig(pydt.BaseModel):
         description="Range of aspect ratio of erased area."
     )
 
-    value: (int |
-            t.Tuple[int, int, int] |
-            float |
-            t.Tuple[float, float, float] |
-            t.Literal['random']) = pydt.Field(
+    value: PixelValue | t.Literal['random'] = pydt.Field(
         default=0,
         description="Pixel value for erased area. If a single int is provided, "
                     "it is used for all channels. If a tuple of three ints is "

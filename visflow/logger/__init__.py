@@ -10,6 +10,8 @@ import traceback as tb
 import types
 import typing as t
 
+from visflow.configs import Config
+from visflow.exceptions import InvalidConfigurationError
 from visflow.logger.types import LoggingTarget, LogLevel
 
 _context: cvs.ContextVar[t.Dict[str, t.Any]] = cvs.ContextVar(
@@ -18,7 +20,7 @@ _context: cvs.ContextVar[t.Dict[str, t.Any]] = cvs.ContextVar(
 F = t.TypeVar('F', bound=t.Callable[..., t.Any])
 
 
-class LogCtx:
+class LogContext:
     @staticmethod
     def add(**ctx: t.Any) -> None:
         current_ctx = _context.get({})
@@ -45,7 +47,7 @@ class LoggerBackend(abc.ABC):
         self,
         msg: str, /,
         level: LogLevel,
-        **ctx: t.Any
+        **context: t.Any
     ) -> None:
         pass
 
@@ -144,7 +146,7 @@ class _LoggerContext:
 
         def decorator(fn: F) -> F:
             @ft.wraps(fn)
-            def wrapper(*args, **kwargs):
+            def wrapper(*args: t.Any, **kwargs: t.Any) -> t.Any:
                 func_name = fn.__name__
                 module_name = getattr(fn, '__module__', 'unknown')
                 class_name = None
@@ -155,7 +157,7 @@ class _LoggerContext:
                 else:
                     full_name = func_name
 
-                LogCtx.clear()
+                LogContext.clear()
 
                 base_ctx = {
                     'function': func_name,
@@ -190,7 +192,7 @@ class _LoggerContext:
                 try:
                     result = fn(*args, **kwargs)
 
-                    decorator_ctx = LogCtx.get() if incl_ctx else {}
+                    decorator_ctx = LogContext.get() if incl_ctx else {}
 
                     if post_exec:
                         end_time = time.time()
@@ -232,7 +234,7 @@ class _LoggerContext:
                     if isinstance(e, excl_exc):
                         raise
 
-                    decorator_ctx = LogCtx.get() if incl_ctx else {}
+                    decorator_ctx = LogContext.get() if incl_ctx else {}
 
                     end_time = time.time()
                     duration = end_time - start_time
@@ -261,14 +263,14 @@ class _LoggerContext:
 
                     raise
                 finally:
-                    LogCtx.clear()
+                    LogContext.clear()
 
             return wrapper
 
         return decorator
 
 
-class Logger(_LoggerContext):
+class _Logger(_LoggerContext):
     def __init__(
         self,
         backend: LoggerBackend,
@@ -300,3 +302,26 @@ class Logger(_LoggerContext):
     ) -> t.Literal[False]:
         self.close()
         return False
+
+
+class Logger(_Logger):
+    def __init__(self, config: Config):
+        self.config = config.logging
+
+        if self.config.backend == 'native':
+            import visflow.logger.native as native
+            backend = native.NativeLoggingBackend()
+        elif self.config.backend == 'loguru':
+            import visflow.logger.loguru as loguru
+            backend = loguru.LoguruBackend()
+        else:
+            raise InvalidConfigurationError(
+                f"Unsupported logging backend: {self.config.backend}",
+                params={'config.logging.backend': self.config.backend}
+            )
+
+        super().__init__(
+            backend=backend,
+            targets=self.config.targets,
+            initial_ctx=self.config.extra_context
+        )

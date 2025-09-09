@@ -5,15 +5,14 @@ import typing as t
 from torchvision import transforms
 from torchvision.transforms.functional import InterpolationMode
 
-from visflow.config import TrainConfig
-from visflow.logger import Logger
+from visflow.configs import TrainConfig
+from visflow.logger import _Logger
 from visflow.models import BaseClassifier, create_model
-from visflow.pipelines import BasePipeline
 
 
-class TrainPipeline(BasePipeline):
+class TrainPipeline:
     config: TrainConfig
-    logger: Logger
+    logger: _Logger
     model: BaseClassifier
     input_size: tuple[int, int]
     train_transforms: transforms.Compose
@@ -31,7 +30,7 @@ class TrainPipeline(BasePipeline):
             raise ValueError(
                 f"Unsupported logging backend: {config.logging.backend}"
             )
-        self.logger = Logger(
+        self.logger = _Logger(
             backend=backend,
             targets=config.logging.targets,
             initial_ctx=config.logging.extra_context

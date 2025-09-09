@@ -6,15 +6,15 @@ import typing as t
 import pydantic as pydt
 import pydantic_settings as ps
 
-from visflow.config.augmentation import AugmentationConfig
-from visflow.config.data import DataConfig
-from visflow.config.export import ExportConfig
-from visflow.config.logging import LoggingConfig
-from visflow.config.model import ModelConfig
-from visflow.config.normalization import NormalizationConfig
-from visflow.config.output import OutputConfig
-from visflow.config.resize import ResizeConfig
-from visflow.config.training import TrainingConfig
+from visflow.configs.augmentation import AugmentationConfig
+from visflow.configs.data import DataConfig
+from visflow.configs.export import ExportConfig
+from visflow.configs.logging import LoggingConfig
+from visflow.configs.model import ModelConfig
+from visflow.configs.normalization import NormalizationConfig
+from visflow.configs.output import OutputConfig
+from visflow.configs.resize import ResizeConfig
+from visflow.configs.training import TrainingConfig
 
 
 class Config(ps.BaseSettings):
@@ -90,4 +90,8 @@ class TrainConfig(Config):
 
 
 class TestConfig(Config):
+    pass
+
+
+class PreprocessConfig(Config):
     pass

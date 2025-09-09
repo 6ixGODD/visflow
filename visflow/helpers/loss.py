@@ -1,16 +1,13 @@
 from __future__ import annotations
 
-import typing as t
-
 import torch
 import torch.nn as nn
 
+from visflow.types import CriterionFunc
+
 
 class MixUpLoss(nn.Module):
-    def __init__(
-        self,
-        criterion: t.Callable[[torch.Tensor, torch.Tensor], torch.Tensor]
-    ) -> None:
+    def __init__(self, criterion: CriterionFunc):
         super().__init__()
         self.criterion = criterion
 
