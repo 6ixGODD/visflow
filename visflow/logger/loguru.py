@@ -3,9 +3,9 @@ from __future__ import annotations
 import sys
 import typing as t
 
-from vistool.logger import Logger, LoggerBackend
-from vistool.logger.types import LoggingTarget, LogLevel
-from vistool.utils import singleton
+from visflow.logger import Logger, LoggerBackend
+from visflow.logger.types import LoggingTarget, LogLevel
+from visflow.utils import singleton
 
 try:
     from loguru import logger as _logger

@@ -6,15 +6,15 @@ import typing as t
 import pydantic as pydt
 import pydantic_settings as ps
 
-from vistool.config.augmentation import AugmentationConfig
-from vistool.config.data import DataConfig
-from vistool.config.export import ExportConfig
-from vistool.config.logging import LoggingConfig
-from vistool.config.model import ModelConfig
-from vistool.config.normalization import NormalizationConfig
-from vistool.config.output import OutputConfig
-from vistool.config.resize import ResizeConfig
-from vistool.config.training import TrainingConfig
+from visflow.config.augmentation import AugmentationConfig
+from visflow.config.data import DataConfig
+from visflow.config.export import ExportConfig
+from visflow.config.logging import LoggingConfig
+from visflow.config.model import ModelConfig
+from visflow.config.normalization import NormalizationConfig
+from visflow.config.output import OutputConfig
+from visflow.config.resize import ResizeConfig
+from visflow.config.training import TrainingConfig
 
 
 class Config(ps.BaseSettings):

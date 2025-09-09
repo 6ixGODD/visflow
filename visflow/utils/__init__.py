@@ -3,9 +3,13 @@ from __future__ import annotations
 import datetime as dt
 import functools as ft
 import inspect
+import random
 import threading
 import typing as t
 import uuid
+
+import numpy as np
+import torch
 
 _C = t.TypeVar('_C')
 
@@ -141,3 +145,50 @@ def flatten_dict(
         else:
             items.append((key, v))
     return dict(items)
+
+
+def seed(v: int = 42, /) -> None:
+    random.seed(v)
+    np.random.seed(v)
+    torch.manual_seed(v)
+    torch.cuda.manual_seed(v)
+    torch.cuda.manual_seed_all(v)
+    torch.backends.cudnn.deterministic = True
+    torch.backends.cudnn.benchmark = False
+
+
+def mixup(
+    x: torch.Tensor,
+    y: torch.Tensor,
+    *,
+    alpha: float = 1.0
+) -> t.Tuple[torch.Tensor, torch.Tensor]:
+    """Apply MixUp augmentation to a batch of images and labels.
+
+    Args:
+        x (torch.Tensor): Batch of input images of shape (B, C, H, W).
+        y (torch.Tensor): Batch of one-hot encoded labels of shape (B,
+            num_classes).
+        alpha (float): Parameter for the Beta distribution. Default is 1.0.
+
+    Returns:
+        Tuple[torch.Tensor, torch.Tensor]: Augmented images and mixed labels.
+    """
+    if alpha <= 0:
+        return x, y
+
+    batch_size = x.size(0)
+    # Sample lambda from Beta distribution
+    lam = np.random.beta(alpha, alpha)
+    lam = max(lam, 1 - lam)  # Ensure lam >= 0.5 for better mixing
+
+    # Generate random permutation of indices
+    index = torch.randperm(batch_size).to(x.device)
+
+    # Create mixed inputs
+    mixed_x = lam * x + (1 - lam) * x[index, :]
+
+    # Create mixed labels
+    mixed_y = lam * y + (1 - lam) * y[index, :]
+
+    return mixed_x, mixed_y

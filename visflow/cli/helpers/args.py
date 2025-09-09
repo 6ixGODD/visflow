@@ -4,10 +4,14 @@ import abc
 import argparse
 import typing as t
 
-import vistool.helpers.slotted as slotted
+import visflow.helpers.slotted as slotted
 
 
 class BaseArgs(slotted.SlottedDataClass):
+    __slots__ = ('config',)
+
+    config: str
+
     @classmethod
     def func(cls, args: argparse.Namespace) -> None:
         instance = cls.from_args(args)

@@ -13,6 +13,18 @@ class TrainingConfig(pydt.BaseModel):
         description="Number of samples processed in each training batch."
     )
 
+    weighted_sampling: bool = pydt.Field(
+        default=False,
+        description="Whether to use weighted sampling to handle class "
+                    "imbalance."
+    )
+
+    drop_last: bool = pydt.Field(
+        default=False,
+        description="Whether to drop the last incomplete batch if the "
+                    "dataset size is not divisible by the batch size."
+    )
+
     epochs: int = pydt.Field(
         default=10,
         ge=1,

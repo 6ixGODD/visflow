@@ -7,9 +7,9 @@ import pathlib as p
 import sys
 import typing as t
 
-from vistool.logger import Logger, LoggerBackend
-from vistool.logger.types import LoggingTarget, LogLevel
-from vistool.utils import ansi, singleton
+from visflow.logger import Logger, LoggerBackend
+from visflow.logger.types import LoggingTarget, LogLevel
+from visflow.utils import ansi, singleton
 
 _LEVEL_MAP: t.Dict[LogLevel, int] = {
     'debug': logging.DEBUG,

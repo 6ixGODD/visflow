@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-import vistool.cli.commands as cmd
-import vistool.cli.exceptions as exc
+import visflow.cli.commands as cmd
+import visflow.cli.exceptions as exc
 
 
 def main() -> int:
@@ -15,5 +15,5 @@ def main() -> int:
 
 
 def _main() -> None:
-    args = commands.parse_args()
+    args = cmd.parse_args()
     args.func(args)
