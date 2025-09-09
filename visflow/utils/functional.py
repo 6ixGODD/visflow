@@ -4,6 +4,7 @@ import typing as t
 
 import numpy as np
 import torch
+import torchvision.datasets
 
 
 def mixup(
@@ -41,3 +42,17 @@ def mixup(
     mixed_y = lam * y + (1 - lam) * y[index, :]
 
     return mixed_x, mixed_y
+
+
+def compute_class_weights(
+    dataset: torchvision.datasets.DatasetFolder
+) -> t.Dict[int, float]:
+    class_counts = {}
+    for _, label in dataset.samples:
+        class_counts[label] = class_counts.get(label, 0) + 1
+
+    total_samples = len(dataset.samples)
+    class_weights = {cls: total_samples / count
+                     for cls, count in class_counts.items()}
+
+    return class_weights

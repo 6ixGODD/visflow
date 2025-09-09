@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-import visflow.cli.commands as cmd
-import visflow.cli.exceptions as exc
+import visflow._cli.commands as cmd
+import visflow._cli.exceptions as exc
 
 
 def main() -> int:

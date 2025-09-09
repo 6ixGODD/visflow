@@ -43,32 +43,20 @@ class HardwareInfo(te.TypedDict, total=False):
 
 
 class DatasetInfo(te.TypedDict):
-    dataset_name: str
-    """Name of the dataset."""
+    num_classes: int
+    """Number of classes in the dataset."""
 
-    num_classes: int | None
-    """Number of classes in the dataset, if applicable."""
+    train_size: int
+    """Number of training samples."""
 
-    input_shape: tuple[int, ...] | None
-    """Shape of a single input sample, if applicable."""
+    val_size: int
+    """Number of validation samples."""
 
-    train_size: int | None
-    """Number of training samples, if applicable."""
+    test_size: int
+    """Number of test samples."""
 
-    val_size: int | None
-    """Number of validation samples, if applicable."""
-
-    test_size: int | None
-    """Number of test samples, if applicable."""
-
-    train_path: str | None
-    """Path to the training dataset, if applicable."""
-
-    val_path: str | None
-    """Path to the validation dataset, if applicable."""
-
-    test_path: str | None
-    """Path to the test dataset, if applicable."""
+    classes: t.List[str]
+    """List of class names."""
 
 
 class Metrics(te.TypedDict):
@@ -117,7 +105,7 @@ class BatchLog(BaseContext, total=False):
     """Norm of the gradients."""
 
     gpu_memory_usage_gb: float
-    """GPU memory usage in gigabytes, if applicable."""
+    """GPU memory usage in gigabytes."""
 
     batch_time_sec: float
     """Time taken to process the batch in seconds."""

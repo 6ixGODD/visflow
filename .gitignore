@@ -89,7 +89,6 @@ pyrightconfig.json
 
 # Config files
 .config.yml
-.models.json
 
 # Data files
 data/

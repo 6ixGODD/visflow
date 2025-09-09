@@ -3,8 +3,8 @@ from __future__ import annotations
 import sys
 import typing as t
 
-from visflow.logging import BaseLogger, LoggerBackend
-from visflow.logging.types import LoggingTarget, LogLevel
+from visflow.resources.logger import BaseLogger, LoggerBackend
+from visflow.resources.logger.types import LoggingTarget, LogLevel
 from visflow.utils import singleton
 
 try:

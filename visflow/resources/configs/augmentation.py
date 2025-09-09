@@ -11,7 +11,8 @@ class CropConfig(pydt.BaseModel):
         description="Whether to apply random cropping."
     )
     margin: int | t.Tuple[int, int] = pydt.Field(
-        ...,
+        default=0,
+        ge=0,
         description="Margin to be left on each border of the image before "
                     "cropping. If a single int is provided, it is used for all "
                     "borders. If a tuple of two ints is provided, it is used "

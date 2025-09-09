@@ -1,5 +1,5 @@
 from __future__ import annotations
 
-from visflow.cli import main
+from visflow._cli import main
 
 main()

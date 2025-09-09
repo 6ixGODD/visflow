@@ -2,19 +2,20 @@ from __future__ import annotations
 
 import typing as t
 
+import torch
+from torch.utils.data import DataLoader, WeightedRandomSampler
 from torchvision import transforms
-from torchvision.transforms.functional import InterpolationMode
-from torch.utils.data import DataLoader
 from torchvision.datasets import ImageFolder
+from torchvision.transforms.functional import InterpolationMode
 
-from visflow.configs import TrainConfig
-from visflow.logging import Logger
+from visflow.resources.configs import TrainConfig
+from visflow.context import DatasetInfo
+from visflow.utils.functional import compute_class_weights
 
 
-class TrainDataModule:
-    def __init__(self, config: TrainConfig, logger: Logger):
+class ImageDataModule:
+    def __init__(self, config: TrainConfig):
         self.config = config
-        self.logger = logger
         if isinstance(self.config.resize.size, int):  # square resize
             x, y = self.input_size = (self.config.data.input_size,
                                       self.config.data.input_size)
@@ -143,38 +144,73 @@ class TrainDataModule:
 
         self.val_transforms = transforms.Compose(val_transforms)
 
-    @property
-    def loaders(self) -> t.Tuple[DataLoader[t.Any], DataLoader[t.Any]]:
-        train_set = ImageFolder(
+        self.train_set = ImageFolder(
             root=self.config.data.train_dir,
             transform=self.train_transforms
         )
-        val_set = ImageFolder(
+        self.val_set = ImageFolder(
             root=self.config.data.val_dir,
             transform=self.val_transforms
         )
-        self.logger.info(
-            f"Found {len(train_set)} training samples in "
-            f"'{self.config.data.train_dir}'"
+        self.test_set = ImageFolder(
+            root=self.config.data.test_dir,
+            transform=self.val_transforms
         )
-        self.logger.info(
-            f"Found {len(val_set)} validation samples in "
-            f"'{self.config.data.val_dir}'"
-        )
+        if (
+            self.train_set.classes != self.val_set.classes or
+            self.train_set.classes != self.test_set.classes
+        ):
+            raise ValueError(
+                "Train, validation, and test sets must have the same classes"
+            )
+
+    @property
+    def loaders(self) -> t.Tuple[
+        DataLoader[torch.Tensor],
+        DataLoader[torch.Tensor],
+        DataLoader[torch.Tensor]
+    ]:
+        if self.config.training.weighted_sampling:
+            class_weights = compute_class_weights(self.train_set)
+            sample_weights = [
+                class_weights[label] for _, label in self.train_set.samples
+            ]
+            sampler = WeightedRandomSampler(sample_weights, len(sample_weights))
+        else:
+            sampler = None
         train_loader = DataLoader(
-            dataset=train_set,
-            batch_size=self.config.data.batch_size,
-            shuffle=self.config.data.shuffle,
+            dataset=self.train_set,
+            batch_size=self.config.training.batch_size,
+            shuffle=self.config.training.shuffle,
             num_workers=self.config.data.num_workers,
             pin_memory=self.config.data.pin_memory,
-            drop_last=self.config.data.drop_last
+            drop_last=self.config.training.drop_last,
+            sampler=sampler
         )
         val_loader = DataLoader(
-            dataset=val_set,
-            batch_size=self.config.data.batch_size,
+            dataset=self.val_set,
+            batch_size=self.config.training.batch_size,
             shuffle=False,
             num_workers=self.config.data.num_workers,
             pin_memory=self.config.data.pin_memory,
             drop_last=False
         )
-        return train_loader, val_loader
+        test_loader = DataLoader(
+            dataset=self.test_set,
+            batch_size=self.config.testing.batch_size,
+            shuffle=False,
+            num_workers=self.config.data.num_workers,
+            pin_memory=self.config.data.pin_memory,
+            drop_last=False
+        )
+        return train_loader, val_loader, test_loader
+
+    @property
+    def context(self) -> DatasetInfo:
+        return DatasetInfo(
+            num_classes=len(self.train_set.classes),
+            train_size=len(self.train_set),
+            val_size=len(self.val_set),
+            test_size=len(self.test_set),
+            classes=self.train_set.classes
+        )

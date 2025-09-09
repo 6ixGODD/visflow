@@ -3,6 +3,7 @@ from __future__ import annotations
 import datetime as dt
 import functools as ft
 import inspect
+import pathlib as p
 import random
 import threading
 import typing as t
@@ -155,3 +156,20 @@ def seed(v: int = 42, /) -> None:
     torch.cuda.manual_seed_all(v)
     torch.backends.cudnn.deterministic = True
     torch.backends.cudnn.benchmark = False
+
+
+def incr_path(root: p.Path, name: str, sep: str = '-') -> p.Path:
+    root = root.expanduser().resolve()
+    candidate = root / name
+    if not candidate.exists():
+        return candidate
+
+    stem = candidate.stem
+    suffix = candidate.suffix
+    i = 1
+    while True:
+        new_name = f"{stem}{sep}{i}{suffix}"
+        new_candidate = root / new_name
+        if not new_candidate.exists():
+            return new_candidate
+        i += 1

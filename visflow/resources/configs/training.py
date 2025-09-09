@@ -6,6 +6,17 @@ import pydantic as pydt
 
 
 class TrainingConfig(pydt.BaseModel):
+    device: t.Literal['cpu', 'cuda'] = pydt.Field(
+        default='cuda',
+        description="Device to use for training. Options are 'cpu' or 'cuda'."
+    )
+
+    shuffle: bool = pydt.Field(
+        default=True,
+        description="Whether to shuffle the dataset at the beginning of "
+                    "each epoch."
+    )
+
     batch_size: int = pydt.Field(
         default=32,
         ge=1,

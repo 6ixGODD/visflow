@@ -10,8 +10,8 @@ import traceback as tb
 import types
 import typing as t
 
-from visflow.configs import Config
-from visflow.logging.types import LoggingTarget, LogLevel
+from visflow.configs import LoggingConfig
+from visflow.logger.types import LoggingTarget, LogLevel
 
 _context: cvs.ContextVar[t.Dict[str, t.Any]] = cvs.ContextVar(
     '_context', default={}
@@ -304,14 +304,14 @@ class BaseLogger(_LoggerContext):
 
 
 class Logger(BaseLogger):
-    def __init__(self, config: Config):
-        self.config = config.logging
+    def __init__(self, config: LoggingConfig):
+        self.config = config
 
         if self.config.backend == 'native':
-            import visflow.logging.native as native
+            import visflow.logger.native as native
             backend = native.NativeLoggingBackend()
         elif self.config.backend == 'loguru':
-            import visflow.logging.loguru as loguru
+            import visflow.logger.loguru as loguru
             backend = loguru.LoguruBackend()
         else:
             raise ValueError(

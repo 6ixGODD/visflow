@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import argparse
 
-from visflow.cli.helpers.args import BaseArgs
+from visflow._cli.helpers.args import BaseArgs
 
 
 class Args(BaseArgs):

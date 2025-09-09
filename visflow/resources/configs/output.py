@@ -10,7 +10,7 @@ class OutputConfig(pydt.BaseModel):
     )
 
     experiment_name: str = pydt.Field(
-        default='default_experiment',
+        default='exp',
         min_length=1,
         description="Unique name for the experiment."
     )
