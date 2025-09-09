@@ -7,8 +7,8 @@ import pathlib as p
 import sys
 import typing as t
 
-from visflow.logger import _Logger, LoggerBackend
-from visflow.logger.types import LoggingTarget, LogLevel
+from visflow.logging import BaseLogger, LoggerBackend
+from visflow.logging.types import LoggingTarget, LogLevel
 from visflow.utils import ansi, singleton
 
 _LEVEL_MAP: t.Dict[LogLevel, int] = {
@@ -399,7 +399,7 @@ class NativeLoggingBackend(LoggerBackend):
         self._is_setup = False
 
 
-class NativeLogger(_Logger):
+class NativeLogger(BaseLogger):
     def __init__(
         self,
         targets: t.Sequence[LoggingTarget] | None = None,

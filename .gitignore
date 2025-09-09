@@ -93,3 +93,5 @@ pyrightconfig.json
 
 # Data files
 data/
+!data/.gitkeep
+!/visflow/providers/

@@ -11,8 +11,7 @@ import types
 import typing as t
 
 from visflow.configs import Config
-from visflow.exceptions import InvalidConfigurationError
-from visflow.logger.types import LoggingTarget, LogLevel
+from visflow.logging.types import LoggingTarget, LogLevel
 
 _context: cvs.ContextVar[t.Dict[str, t.Any]] = cvs.ContextVar(
     '_context', default={}
@@ -270,7 +269,7 @@ class _LoggerContext:
         return decorator
 
 
-class _Logger(_LoggerContext):
+class BaseLogger(_LoggerContext):
     def __init__(
         self,
         backend: LoggerBackend,
@@ -304,20 +303,19 @@ class _Logger(_LoggerContext):
         return False
 
 
-class Logger(_Logger):
+class Logger(BaseLogger):
     def __init__(self, config: Config):
         self.config = config.logging
 
         if self.config.backend == 'native':
-            import visflow.logger.native as native
+            import visflow.logging.native as native
             backend = native.NativeLoggingBackend()
         elif self.config.backend == 'loguru':
-            import visflow.logger.loguru as loguru
+            import visflow.logging.loguru as loguru
             backend = loguru.LoguruBackend()
         else:
-            raise InvalidConfigurationError(
+            raise ValueError(
                 f"Unsupported logging backend: {self.config.backend}",
-                params={'config.logging.backend': self.config.backend}
             )
 
         super().__init__(

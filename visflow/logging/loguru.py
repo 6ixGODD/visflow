@@ -3,8 +3,8 @@ from __future__ import annotations
 import sys
 import typing as t
 
-from visflow.logger import _Logger, LoggerBackend
-from visflow.logger.types import LoggingTarget, LogLevel
+from visflow.logging import BaseLogger, LoggerBackend
+from visflow.logging.types import LoggingTarget, LogLevel
 from visflow.utils import singleton
 
 try:
@@ -92,7 +92,7 @@ class LoguruBackend(LoggerBackend):
         self._is_setup = False
 
 
-class LoguruLogger(_Logger):
+class LoguruLogger(BaseLogger):
     def __init__(
         self,
         targets: t.Sequence[LoggingTarget] | None = None,

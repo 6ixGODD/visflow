@@ -4,17 +4,17 @@ import pydantic as pydt
 
 
 class DataConfig(pydt.BaseModel):
-    train_data_path: str = pydt.Field(
+    train_dir: str = pydt.Field(
         default='./data/train',
         description="Path to the training dataset directory."
     )
 
-    val_data_path: str = pydt.Field(
+    val_dir: str = pydt.Field(
         default='./data/val',
         description="Path to the validation dataset directory."
     )
 
-    test_data_path: str = pydt.Field(
+    test_dir: str = pydt.Field(
         default='./data/test',
         description="Path to the test dataset directory."
     )

@@ -190,7 +190,7 @@ class TorchVisionClassifier(BaseClassifier):
             )
 
 
-def create_model(
+def make_model(
     name: str,
     *,
     num_classes: int,
