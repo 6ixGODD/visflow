@@ -1,19 +1,22 @@
 from __future__ import annotations
 
 import abc
+import logging
 import os
-import typing as t
 import pathlib as p
+import typing as t
 
 import torch
 import torch.nn as nn
 import torchvision.models as models
 
+logger = logging.getLogger(__name__)
+
 
 class BaseClassifier(nn.Module, abc.ABC):
-    def __init__(self) -> None:
+    def __init__(self, num_classes: int) -> None:
         super().__init__()
-        self._num_classes: int = 0
+        self._num_classes = num_classes
 
     @property
     @abc.abstractmethod
@@ -32,11 +35,12 @@ class BaseClassifier(nn.Module, abc.ABC):
     def loads(
         self,
         path: str | os.PathLike[str],
+        *,
         strict: bool = True,
         map_location: str | torch.device | None = None
     ) -> None:
         path = p.Path(path)
-        state_dict = torch.load(path, map_location=map_location)
+        state_dict = torch.load(path, map_location=map_location or "cpu")
         # Handle different state dict formats
         if 'state_dict' in state_dict:
             state_dict = state_dict['state_dict']
@@ -68,9 +72,10 @@ class TorchVisionClassifier(BaseClassifier):
         num_classes: int,
         pretrained: bool = True,
         weights_path: str | os.PathLike[str] | None = None,
+        map_location: str | torch.device | None = None,
         **kwargs: t.Any
     ) -> None:
-        super().__init__()
+        super().__init__(num_classes=num_classes)
         if not hasattr(models, model_name):
             raise ValueError(
                 f"'{model_name}' not found in torchvision.models. "
@@ -80,10 +85,26 @@ class TorchVisionClassifier(BaseClassifier):
         if not callable(fn):
             raise ValueError(f"'{model_name}' is not callable.")
 
-        model = fn(weights="DEFAULT" if pretrained else None, **kwargs)
-        self.backbone = model
-        self._replace_head(num_classes)
-        self._num_classes = num_classes
+        if weights_path:
+            model = fn(weights=None, **kwargs)
+            self.backbone: nn.Module = model
+            self._replace_head(num_classes)
+            state_dict = torch.load(
+                weights_path,
+                map_location=map_location or "cpu"
+            )
+            missing, unexpected = self.backbone.load_state_dict(
+                state_dict,
+                strict=False
+            )
+            if missing:
+                logger.debug(f"[WARN] Missing keys: {missing}")
+            if unexpected:
+                logger.debug(f"[WARN] Unexpected keys: {unexpected}")
+        else:
+            model = fn(weights="DEFAULT" if pretrained else None, **kwargs)
+            self.backbone = model
+            self._replace_head(num_classes)
 
     @property
     def num_classes(self) -> int:
@@ -111,10 +132,7 @@ class TorchVisionClassifier(BaseClassifier):
 
         elif isinstance(m, models.SqueezeNet):
             m.classifier[1] = nn.Conv2d(
-                512,
-                num_classes,
-                kernel_size=(1, 1),
-                stride=(1, 1)
+                512, num_classes, kernel_size=(1, 1), stride=(1, 1)
             )
             m.num_classes = num_classes
 
@@ -167,6 +185,32 @@ class TorchVisionClassifier(BaseClassifier):
             m.head = nn.Linear(num_features, num_classes)
 
         else:
-            raise ValueError(
-                f"Model head replacement not implemented for {type(m)}"
+            raise NotImplementedError(
+                f"Head replacement not implemented for {type(m).__name__}. "
             )
+
+
+def create_model(
+    name: str,
+    *,
+    num_classes: int,
+    pretrained: bool = True,
+    weights_path: str | os.PathLike[str] | None = None,
+    **kwargs
+) -> BaseClassifier:
+    if hasattr(models, name):  # torchvision
+        return TorchVisionClassifier(
+            model_name=name,
+            num_classes=num_classes,
+            pretrained=pretrained,
+            weights_path=weights_path,
+            **kwargs
+        )
+
+    if name in MODEL_REGISTRY:
+        model = MODEL_REGISTRY[name](num_classes=num_classes, **kwargs)
+        if weights_path:
+            model.loads(weights_path)
+        return model
+
+    raise ValueError(f"Unknown model: {name}")
