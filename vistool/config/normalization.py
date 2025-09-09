@@ -11,23 +11,19 @@ class NormalizationConfig(pydt.BaseModel):
         description="Whether to apply normalization to input images."
     )
 
-    mean: t.List[float] = pydt.Field(
-        default=[0.485, 0.456, 0.406],
+    mean: t.Tuple[float, float, float] = pydt.Field(
+        default=(0.485, 0.456, 0.406),
         description="Mean values for normalization (RGB channels). ImageNet "
-                    "default: [0.485, 0.456, 0.406]"
+                    "default: (0.485, 0.456, 0.406)"
     )
 
-    std: t.List[float] = pydt.Field(
-        default=[0.229, 0.224, 0.225],
+    std: t.Tuple[float, float, float] = pydt.Field(
+        default=(0.229, 0.224, 0.225),
         description="Standard deviation values for normalization (RGB "
-                    "channels). ImageNet default: [0.229, 0.224, 0.225]"
+                    "channels). ImageNet default: (0.229, 0.224, 0.225)"
     )
 
-    @pydt.field_validator('mean', 'std')
-    @classmethod
-    def validate_channels(cls, v):
-        if len(v) != 3:
-            raise ValueError(
-                "Mean and std must have exactly 3 values for RGB channels"
-            )
-        return v
+    inplace: bool = pydt.Field(
+        default=False,
+        description="Whether to perform normalization in-place to save memory."
+    )

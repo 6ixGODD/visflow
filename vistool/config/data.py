@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import typing as t
+
 import pydantic as pydt
 
 
@@ -17,13 +19,6 @@ class DataConfig(pydt.BaseModel):
     test_data_path: str = pydt.Field(
         default='./data/test',
         description="Path to the test dataset directory."
-    )
-
-    input_size: int = pydt.Field(
-        default=224,
-        ge=32,
-        le=1024,
-        description="Input image size (height and width)."
     )
 
     num_workers: int = pydt.Field(

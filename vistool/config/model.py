@@ -37,8 +37,7 @@ class ModelConfig(pydt.BaseModel):
             'vgg19', 'vgg19_bn',
             'vit_b_16', 'vit_b_32', 'vit_l_16', 'vit_l_32', 'vit_h_14',
             'swin_t', 'swin_s', 'swin_b', 'swin_v2_t', 'swin_v2_s', 'swin_v2_b',
-            'maxvit_t',
-        ] | str
+            'maxvit_t'] | str
     ) = pydt.Field(
         default='resnet18',
         description="Model architecture to use for training."
@@ -53,4 +52,9 @@ class ModelConfig(pydt.BaseModel):
         default=2,
         ge=1,
         description="Number of output classes for classification."
+    )
+
+    weights_path: str | None = pydt.Field(
+        default=None,
+        description="Path to custom weights file (optional)."
     )

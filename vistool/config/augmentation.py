@@ -10,15 +10,33 @@ class CropConfig(pydt.BaseModel):
         default=False,
         description="Whether to apply random cropping."
     )
-
-    scale: t.Tuple[float, float] = pydt.Field(
-        default=(0.8, 1.0),
-        description="Range of the random area of the crop."
+    margin: int | t.Tuple[int, int] = pydt.Field(
+        ...,
+        description="Margin to be left on each border of the image before "
+                    "cropping. If a single int is provided, it is used for all "
+                    "borders. If a tuple of two ints is provided, it is used "
+                    "for left/right and top/bottom respectively."
     )
-
-    ratio: t.Tuple[float, float] = pydt.Field(
-        default=(3. / 4., 4. / 3.),
-        description="Range of aspect ratio of the crop."
+    fill: (int |
+           t.Tuple[int, int, int] |
+           float |
+           t.Tuple[float, float, float]) = pydt.Field(
+        default=0,
+        description="Pixel fill value for the area outside the image if "
+                    "padding is applied. If a single int is provided, "
+                    "it is used "
+                    "for all channels. If a tuple of three ints is provided, "
+                    "it is "
+                    "used for the R, G, B channels respectively."
+    )
+    padding_mode: t.Literal[
+        'constant',
+        'edge',
+        'reflect',
+        'symmetric'
+    ] = pydt.Field(
+        default='constant',
+        description="Padding mode to use if padding is applied."
     )
 
 
@@ -28,7 +46,7 @@ class HorizontalFlipConfig(pydt.BaseModel):
         description="Whether to apply random horizontal flip."
     )
 
-    probability: float = pydt.Field(
+    p: float = pydt.Field(
         default=0.5,
         ge=0.0,
         le=1.0,
@@ -48,8 +66,13 @@ class RotationConfig(pydt.BaseModel):
                     "the range will be (-degrees, +degrees)."
     )
 
-    interpolation: t.Literal['nearest', 'bilinear', 'bicubic'] = pydt.Field(
-        default='bilinear',
+    interpolation: t.Literal[
+        'nearest',
+        'nearest-exact',
+        'bilinear',
+        'bicubic'
+    ] = pydt.Field(
+        default='nearest',
         description="Interpolation method for rotation."
     )
 
@@ -65,8 +88,11 @@ class RotationConfig(pydt.BaseModel):
                     "corner."
     )
 
-    fill: float | t.Tuple[float, ...] = pydt.Field(
-        default=0.0,
+    fill: (int |
+           t.Tuple[int, int, int] |
+           float |
+           t.Tuple[float, float, float]) = pydt.Field(
+        default=0,
         description="Pixel fill value for the area outside the rotated image."
     )
 
@@ -136,7 +162,10 @@ class AffineConfig(pydt.BaseModel):
         description="Interpolation method for affine transformation."
     )
 
-    fill: float | t.Tuple[float, ...] = pydt.Field(
+    fill: (int |
+           t.Tuple[int, int, int] |
+           float |
+           t.Tuple[float, float, float]) = pydt.Field(
         default=0.0,
         description="Pixel fill value for the area outside the transformed "
                     "image."
@@ -149,7 +178,7 @@ class ErasingConfig(pydt.BaseModel):
         description="Whether to apply random erasing."
     )
 
-    probability: float = pydt.Field(
+    p: float = pydt.Field(
         default=0.5,
         ge=0.0,
         le=1.0,
@@ -167,10 +196,17 @@ class ErasingConfig(pydt.BaseModel):
         description="Range of aspect ratio of erased area."
     )
 
-    value: float | str = pydt.Field(
+    value: (int |
+            t.Tuple[int, int, int] |
+            float |
+            t.Tuple[float, float, float] |
+            t.Literal['random']) = pydt.Field(
         default=0,
-        description="Erasing value. If value is a single int, it is used to "
-                    "erase all pixels. If 'random', random values are used."
+        description="Pixel value for erased area. If a single int is provided, "
+                    "it is used for all channels. If a tuple of three ints is "
+                    "provided, it is used for the R, G, B channels "
+                    "respectively. "
+                    "If 'random', erasing value is random for each pixel."
     )
 
     inplace: bool = pydt.Field(
@@ -192,7 +228,7 @@ class MixupConfig(pydt.BaseModel):
         description="MixUp interpolation strength parameter."
     )
 
-    probability: float = pydt.Field(
+    p: float = pydt.Field(
         default=1.0,
         ge=0.0,
         le=1.0,
