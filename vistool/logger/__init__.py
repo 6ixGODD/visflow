@@ -12,9 +12,8 @@ import typing as t
 
 from vistool.logger.types import LoggingTarget, LogLevel
 
-_decorator_context: cvs.ContextVar[t.Dict[str, t.Any]] = cvs.ContextVar(
-    '_decorator_context',
-    default={}
+_context: cvs.ContextVar[t.Dict[str, t.Any]] = cvs.ContextVar(
+    '_context', default={}
 )
 F = t.TypeVar('F', bound=t.Callable[..., t.Any])
 
@@ -22,17 +21,17 @@ F = t.TypeVar('F', bound=t.Callable[..., t.Any])
 class LogCtx:
     @staticmethod
     def add(**ctx: t.Any) -> None:
-        current_ctx = _decorator_context.get({})
+        current_ctx = _context.get({})
         new_ctx = {**current_ctx, **ctx}
-        _decorator_context.set(new_ctx)
+        _context.set(new_ctx)
 
     @staticmethod
     def get() -> t.Dict[str, t.Any]:
-        return _decorator_context.get({})
+        return _context.get({})
 
     @staticmethod
     def clear() -> None:
-        _decorator_context.set({})
+        _context.set({})
 
 
 class LoggerBackend(abc.ABC):

@@ -1,19 +1,18 @@
 from __future__ import annotations
 
-import datetime
 import sys
 import typing as t
 
-import vistool.utils as utils
 from vistool.logger import Logger, LoggerBackend
-from vistool.logger.types import LoggingTarget, LogLevel, Rotation
+from vistool.logger.types import LoggingTarget, LogLevel
+from vistool.utils import singleton
 
 try:
     from loguru import logger as _logger
 except ImportError:
     raise
 
-_LEVEL_MAP: t.Dict[LogLevel, str] = {
+_LevelMapper: t.Dict[LogLevel, str] = {
     'debug': 'DEBUG',
     'info': 'INFO',
     'warning': 'WARNING',
@@ -22,25 +21,7 @@ _LEVEL_MAP: t.Dict[LogLevel, str] = {
 }
 
 
-def _get_loguru_rotation(cfg: Rotation | None) -> t.Tuple[
-    t.Optional[datetime.timedelta | str],
-    t.Optional[int],
-]:
-    if cfg is None:
-        return None, None
-
-    if cfg.size_based:
-        return f'{cfg.size_based.max_size} MB', cfg.size_based.backup_count
-    elif cfg.time_based:
-        return (
-            datetime.timedelta(hours=cfg.time_based.interval),
-            cfg.time_based.backup_count,
-        )
-    else:
-        return None, None
-
-
-@utils.singleton
+@singleton
 class LoguruBackend(LoggerBackend):
 
     def __init__(self):
@@ -54,13 +35,11 @@ class LoguruBackend(LoggerBackend):
             return
 
         for target in targets:
-            rotation, retention = _get_loguru_rotation(target.rotation)
             level = target.loglevel
-
             if target.logname == 'stdout':
                 handler_id = self._loguru.add(
                     sys.stdout,
-                    level=_LEVEL_MAP.get(level, 'INFO'),
+                    level=_LevelMapper.get(level, 'INFO'),
                     colorize=True,
                     serialize=False,
                     backtrace=False,
@@ -70,7 +49,7 @@ class LoguruBackend(LoggerBackend):
             elif target.logname == 'stderr':
                 handler_id = self._loguru.add(
                     sys.stderr,
-                    level=_LEVEL_MAP.get(level, 'ERROR'),
+                    level=_LevelMapper.get(level, 'ERROR'),
                     colorize=True,
                     serialize=False,
                     backtrace=False,
@@ -80,9 +59,7 @@ class LoguruBackend(LoggerBackend):
             else:
                 handler_id = self._loguru.add(
                     target.logname,
-                    level=_LEVEL_MAP.get(level, 'INFO'),
-                    rotation=rotation,
-                    retention=retention,
+                    level=_LevelMapper.get(level, 'INFO'),
                     colorize=False,
                     serialize=True,
                     backtrace=False,
@@ -100,10 +77,7 @@ class LoguruBackend(LoggerBackend):
         level: LogLevel,
         **context: t.Any
     ) -> None:
-        self._loguru.bind(**context).lg(
-            _LEVEL_MAP.get(level, 'INFO'),
-            msg,
-        )
+        self._loguru.bind(**context).log(_LevelMapper.get(level, 'INFO'), msg)
 
     def sync(self) -> None:
         pass  # do nothing, loguru is synchronous
