@@ -58,7 +58,8 @@ class ContextFormatter(logging.Formatter):
         if self.use_colors:
             ansi.ANSIFormatter.enable(True)
         if verbose is None:
-            verbose = os.getenv('VERBOSE', '0') not in ('0', '', 'false', 'off')
+            verbose = (os.getenv('VF_VERBOSE', '0')
+                       not in ('0', '', 'false', 'off'))
         self.verbose = verbose
 
     @staticmethod
@@ -90,8 +91,8 @@ class ContextFormatter(logging.Formatter):
         tag = context.get('TAG')
 
         if tag:
-            # Calculate available space: 40 total - 1 for dot = 39
-            available_space = 39
+            # Calculate available space: 20 total - 1 for dot = 39
+            available_space = 19
             name_len = len(name)
             tag_len = len(tag)
             total_needed = name_len + tag_len
@@ -144,20 +145,20 @@ class ContextFormatter(logging.Formatter):
             else:
                 display = full_display
 
-            # Pad to 40 characters
-            if len(full_display) < 40:
-                display += " " * (40 - len(full_display))
+            # Pad to 20 characters
+            if len(full_display) < 20:
+                display += " " * (20 - len(full_display))
             else:
                 # Should not happen with our calculation, but just in case
-                display = display[:40] if not self.use_colors else display
+                display = display[:20] if not self.use_colors else display
         else:
-            # Without TAG: use full 40 characters
-            if len(name) > 40:
-                truncated_name = f"...{name[-37:]}"  # 40 - 3 = 37
+            # Without TAG: use full 20 characters
+            if len(name) > 20:
+                truncated_name = f"...{name[-17:]}"  # 20 - 3 = 17
             else:
                 truncated_name = name
 
-            display = f"{truncated_name:<40}"  # Left-align and pad to 40
+            display = f"{truncated_name:<20}"  # Left-align and pad to 20
 
             if self.use_colors:
                 display = ansi.ANSIFormatter.format(
@@ -250,9 +251,9 @@ class ContextFormatter(logging.Formatter):
         plain_level = f"{record.levelname:<8}"
         prefix_len = self._get_prefix_length(
             plain_timestamp,
-            "somnmind" + 32 * " ",  # Max 40-char logger
+            "visflow" + 13 * " ",  # Max 20-char logger
             plain_level
-        )  # Use consistent 40-char logger
+        )  # Use consistent 20-char logger
         indent = " " * (prefix_len - 3)
 
         # Handle multiline messages
@@ -319,6 +320,7 @@ class ContextFormatter(logging.Formatter):
 
 
 def _create_handler(target: LoggingTarget) -> logging.Handler:
+    handler: logging.Handler
     if target.logname in ('stdout', 'stderr'):
         # Console handler
         stream = sys.stdout if target.logname == 'stdout' else sys.stderr
@@ -340,10 +342,9 @@ def _create_handler(target: LoggingTarget) -> logging.Handler:
     return handler
 
 
-@singleton
 class NativeLoggingBackend(LoggerBackend):
-    def __init__(self):
-        self._logger = logging.getLogger('somnmind')
+    def __init__(self) -> None:
+        self._logger = logging.getLogger('visflow')
         self._logger.setLevel(logging.DEBUG)
         self._handlers: t.List[logging.Handler] = []
         ansi.ANSIFormatter.enable(

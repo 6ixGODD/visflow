@@ -48,7 +48,7 @@ MODEL_REGISTRY: t.Dict[str, t.Callable[..., BaseClassifier]] = {}
 _C = t.TypeVar("_C", bound=BaseClassifier)
 
 
-def register_model(name: str):
+def register_model(name: str) -> t.Callable[[t.Type[_C]], t.Type[_C]]:
     def decorator(cls: t.Type[_C]) -> t.Type[_C]:
         if not issubclass(cls, BaseClassifier):
             raise TypeError(f"{cls.__name__} must inherit from BaseClassifier")
@@ -111,7 +111,7 @@ class TorchVisionClassifier(BaseClassifier):
             self._num_classes = value
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        return self.backbone(x)
+        return t.cast(torch.Tensor, self.backbone(x))
 
     def _replace_head(self, num_classes: int) -> None:
         m = self.backbone

@@ -24,7 +24,7 @@ _LevelMapper: t.Dict[LogLevel, str] = {
 @singleton
 class LoguruBackend(LoggerBackend):
 
-    def __init__(self):
+    def __init__(self) -> None:
         self._loguru = _logger
         self._loguru.remove()
         self._handler_ids: t.List[int] = []

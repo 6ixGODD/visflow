@@ -1,10 +1,10 @@
 from __future__ import annotations
 
 import collections as coll
+import functools as ft
 import os
 import platform
 import typing as t
-import functools as ft
 
 import numpy as np
 import psutil
@@ -43,7 +43,11 @@ def summary(
     device: t.Literal['cuda', 'cpu'] = 'cuda'
 ) -> ModelSummary:
     def register_hook(module: nn.Module) -> None:
-        def hook(module: nn.Module, input: tuple, output: torch.Tensor) -> None:
+        def hook(
+            module: nn.Module,
+            input: t.Tuple[torch.Tensor, ...],
+            output: torch.Tensor
+        ) -> None:
             class_name = str(module.__class__).split(".")[-1].split("'")[0]
             module_idx = len(layer_summary)
 
@@ -51,24 +55,20 @@ def summary(
             layer_summary[m_key] = {}
             layer_summary[m_key]["input_shape"] = list(input[0].size())
             layer_summary[m_key]["input_shape"][0] = batch_size
+            layer_summary[m_key]["output_shape"] = list(output.size())
+            layer_summary[m_key]["output_shape"][0] = batch_size
 
-            if isinstance(output, (list, tuple)):
-                layer_summary[m_key]["output_shape"] = [
-                    [-1] + list(o.size())[1:] for o in output
-                ]
-            else:
-                layer_summary[m_key]["output_shape"] = list(output.size())
-                layer_summary[m_key]["output_shape"][0] = batch_size
-
-            params = 0
+            params = torch.tensor(0)
             trainable = False
             if hasattr(module, "weight") and hasattr(module.weight, "size"):
                 params += torch.prod(
-                    torch.LongTensor(list(module.weight.size()))
+                    torch.LongTensor(list(module.weight.size()))  # type: ignore
                 )
-                trainable = module.weight.requires_grad
+                trainable = bool(module.weight.requires_grad)
             if hasattr(module, "bias") and hasattr(module.bias, "size"):
-                params += torch.prod(torch.LongTensor(list(module.bias.size())))
+                params += torch.prod(
+                    torch.LongTensor(list(module.bias.size()))  # type: ignore
+                )
 
             layer_summary[m_key]["nb_params"] = int(params)
             layer_summary[m_key]["trainable"] = trainable

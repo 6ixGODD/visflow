@@ -8,8 +8,8 @@ from torchvision import transforms
 from torchvision.datasets import ImageFolder
 from torchvision.transforms.functional import InterpolationMode
 
-from visflow.resources.configs import TrainConfig
 from visflow.context import DatasetInfo
+from visflow.resources.configs import TrainConfig
 from visflow.utils.functional import compute_class_weights
 
 
@@ -17,8 +17,8 @@ class ImageDatamodule:
     def __init__(self, config: TrainConfig):
         self.config = config
         if isinstance(self.config.resize.size, int):  # square resize
-            x, y = self.input_size = (self.config.data.input_size,
-                                      self.config.data.input_size)
+            x, y = self.input_size = (self.config.resize.size,
+                                      self.config.resize.size)
         else:  # tuple resize
             x, y = self.input_size = self.config.resize.size
         if self.config.augmentation.crop.enabled:  # adjust for crop margin
@@ -29,7 +29,7 @@ class ImageDatamodule:
                 x += self.config.augmentation.crop.margin[0]
                 y += self.config.augmentation.crop.margin[1]
 
-        train_transforms: t.List[t.Callable] = [
+        train_transforms: t.List[t.Callable[..., torch.Tensor]] = [
             transforms.Resize(
                 size=(x, y),
                 interpolation=InterpolationMode(
@@ -121,7 +121,7 @@ class ImageDatamodule:
         # Compose all transforms
         self.train_transforms = transforms.Compose(train_transforms)
 
-        val_transforms: t.List[t.Callable] = [
+        val_transforms: t.List[t.Callable[..., torch.Tensor]] = [
             transforms.Resize(
                 size=self.input_size,
                 interpolation=InterpolationMode(
@@ -215,3 +215,7 @@ class ImageDatamodule:
             test_size=len(self.test_set),
             classes=self.train_set.classes
         )
+
+    @property
+    def classes(self) -> list[str]:
+        return self.train_set.classes

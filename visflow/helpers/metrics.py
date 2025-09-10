@@ -14,7 +14,7 @@ def compute_metric(
     outputs: torch.Tensor,
     targets: torch.Tensor,
     loss: float,
-    num_classes: int = None
+    num_classes: int | None = None
 ) -> Metrics:
     with torch.no_grad():
         # Get predictions

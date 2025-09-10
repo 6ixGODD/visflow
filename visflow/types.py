@@ -35,7 +35,7 @@ def pixel_int(value: PixelValue, /) -> t.Tuple[int, int, int]:
         return v, v, v
     elif isinstance(value, tuple) and len(value) == 3:
         if all(isinstance(v, int) for v in value):
-            return value
+            return t.cast(t.Tuple[int, int, int], value)
         elif all(isinstance(v, float) for v in value):
             return (int(value[0] * 255.0),
                     int(value[1] * 255.0),
@@ -43,20 +43,20 @@ def pixel_int(value: PixelValue, /) -> t.Tuple[int, int, int]:
     raise ValueError("Invalid pixel value type")
 
 
-FileLikes = str | t.IO[bytes] | os.PathLike[str]
+FileLikes = os.PathLike[str] | str
 
 
 class Checkpoint(te.TypedDict, total=False):
     epoch: te.Required[int]
     """Epoch number when the checkpoint was saved."""
 
-    model_state_dict: te.Required[t.Dict[str, torch.Tensor]]
+    model_state_dict: te.Required[t.Dict[str, t.Any]]
     """State dictionary of the model."""
 
-    optimizer_state_dict: t.Dict[str, torch.Tensor]
+    optimizer_state_dict: t.Dict[str, t.Any] | None
     """State dictionary of the optimizer."""
 
-    scheduler_state_dict: t.Dict[str, torch.Tensor]
+    scheduler_state_dict: t.Dict[str, t.Any] | None
     """State dictionary of the learning rate scheduler."""
 
     accuracy: float

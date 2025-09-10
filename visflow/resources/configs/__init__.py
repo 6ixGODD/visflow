@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import _typeshed as _ts
 import os
 import typing as t
 
@@ -18,9 +17,17 @@ from visflow.resources.configs.testing import TestingConfig
 from visflow.resources.configs.training import TrainingConfig
 from visflow.types import FileLikes
 
+_T_contra = t.TypeVar('_T_contra', contravariant=True)
+
+if t.TYPE_CHECKING:
+    from _typeshed import SupportsWrite
+else:
+    class SupportsWrite(t.Protocol[_T_contra]):
+        def write(self, __s: _T_contra, /) -> object: ...
+
 
 class BaseConfig(ps.BaseSettings):
-    model_config: t.ClassVar[pydt.ConfigDict] = ps.SettingsConfigDict(
+    model_config: t.ClassVar[ps.SettingsConfigDict] = ps.SettingsConfigDict(
         validate_default=False,
         extra='allow'
     )
@@ -56,7 +63,7 @@ class BaseConfig(ps.BaseSettings):
         ext = os.path.splitext(fpath)[1].lower()
         if ext in {'.yaml', '.yml'}:
             try:
-                import yaml
+                import yaml  # type: ignore[import-untyped]
                 with open(fpath, 'w', encoding='utf-8') as f:
                     yaml.safe_dump(self.model_dump(), f)
             except ImportError:
@@ -69,7 +76,7 @@ class BaseConfig(ps.BaseSettings):
             with open(fpath, 'w', encoding='utf-8') as f:
                 json.dump(
                     self.model_dump(mode='json'),
-                    t.cast(_ts.SupportsWrite, f),
+                    t.cast(SupportsWrite, f),
                     indent=4
                 )
         else:

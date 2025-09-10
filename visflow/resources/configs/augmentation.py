@@ -165,6 +165,12 @@ class AffineConfig(pydt.BaseModel):
                     "image."
     )
 
+    center: t.Tuple[float, float] | None = pydt.Field(
+        default=None,
+        description="Optional center of rotation. Origin is the upper left "
+                    "corner."
+    )
+
 
 class ErasingConfig(pydt.BaseModel):
     enabled: bool = pydt.Field(

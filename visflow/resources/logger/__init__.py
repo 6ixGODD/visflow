@@ -10,7 +10,7 @@ import traceback as tb
 import types
 import typing as t
 
-from visflow.resources.configs import LoggingConfig
+from visflow.resources.configs.logging import LoggingConfig
 from visflow.resources.logger.types import LoggingTarget, LogLevel
 
 _context: cvs.ContextVar[t.Dict[str, t.Any]] = cvs.ContextVar(
@@ -87,19 +87,19 @@ class _LoggerContext:
         ctx = {**self._context, **(kwargs or {})}
         self._backend.log(msg, level, **ctx)
 
-    def debug(self, msg: str, /, **kwargs) -> None:
+    def debug(self, msg: str, /, **kwargs: t.Any) -> None:
         return self.log(msg, level='debug', **kwargs)
 
-    def info(self, msg: str, /, **kwargs) -> None:
+    def info(self, msg: str, /, **kwargs: t.Any) -> None:
         return self.log(msg, level='info', **kwargs)
 
-    def warning(self, msg: str, /, **kwargs) -> None:
+    def warning(self, msg: str, /, **kwargs: t.Any) -> None:
         return self.log(msg, level='warning', **kwargs)
 
-    def error(self, msg: str, /, **kwargs) -> None:
+    def error(self, msg: str, /, **kwargs: t.Any) -> None:
         return self.log(msg, level='error', **kwargs)
 
-    def critical(self, msg: str, /, **kwargs) -> None:
+    def critical(self, msg: str, /, **kwargs: t.Any) -> None:
         return self.log(msg, level='critical', **kwargs)
 
     @cl.contextmanager
@@ -143,7 +143,7 @@ class _LoggerContext:
         post_exec: bool = True,
     ) -> t.Callable[[F], F]:
 
-        def decorator(fn: F) -> F:
+        def decorator(fn: F) -> t.Any:
             @ft.wraps(fn)
             def wrapper(*args: t.Any, **kwargs: t.Any) -> t.Any:
                 func_name = fn.__name__
@@ -323,7 +323,7 @@ class Logger(BaseLogger):
 
         if self.config.backend == 'native':
             import visflow.resources.logger.native as native
-            backend = native.NativeLoggingBackend()
+            backend = native.NativeLoggingBackend()  # type: LoggerBackend
         elif self.config.backend == 'loguru':
             import visflow.resources.logger.loguru as loguru
             backend = loguru.LoguruBackend()

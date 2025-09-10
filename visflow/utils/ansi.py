@@ -105,10 +105,12 @@ class ANSIFormatter:
         plat = sys.platform
         if plat == 'win32':
             # Windows 10 with VT sequences enabled
-            return (os.environ.get('TERM_PROGRAM', '')
-                    or 'ANSICON' in os.environ
-                    or 'WT_SESSION' in os.environ
-                    or os.environ.get('ConEmuANSI') == 'ON')
+            return bool(
+                os.environ.get('TERM_PROGRAM', '')
+                or 'ANSICON' in os.environ
+                or 'WT_SESSION' in os.environ
+                or os.environ.get('ConEmuANSI') == 'ON'
+            )
 
         # Most Unix-like systems support colors
         return True
@@ -141,8 +143,8 @@ class ANSIFormatter:
         if not cls._enabled or not styles or all(s is None for s in styles):
             return text
 
-        styles = [s for s in styles if s is not None]
-        style_str = ''.join(styles)
+        style_list = [s for s in styles if s is not None]
+        style_str = ''.join(style_list)
 
         # Handle text that already contains reset codes
         if cls.STYLE.RESET in text:

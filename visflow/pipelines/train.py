@@ -56,19 +56,19 @@ class TrainPipeline(BasePipeline):
 
         self.best_acc = 0.0
         self.best_epoch = 1
-        self.best_metrics = None
-        self.final_metrics = None
-        self.train_loss_history = []
-        self.train_acc_history = []
-        self.val_loss_history = []
-        self.val_acc_history = []
+        self.best_metrics = None  # type: Metrics | None
+        self.final_metrics = None  # type: Metrics | None
+        self.train_loss_history = []  # type: t.List[float]
+        self.train_acc_history = []  # type: t.List[float]
+        self.val_loss_history = []  # type: t.List[float]
+        self.val_acc_history = []  # type: t.List[float]
         self.start_time = 0.0
 
         # Store outputs and targets for plotting
-        self.best_val_outputs = None
-        self.best_val_targets = None
-        self.final_val_outputs = None
-        self.final_val_targets = None
+        self.best_val_outputs = None  # type: torch.Tensor | None
+        self.best_val_targets = None  # type: torch.Tensor | None
+        self.final_val_outputs = None  # type: torch.Tensor | None
+        self.final_val_targets = None  # type: torch.Tensor | None
 
     def __call__(self) -> None:
         self.start_time = time.time()
@@ -90,14 +90,14 @@ class TrainPipeline(BasePipeline):
             timestamp=time.strftime("%Y%m%dT%H%M%S", time.localtime())
         )
         display = Display(context)
-        logger = self.logger.with_context(**context)
-        logger.add_target(
+        self.logger.add_target(
             LoggingTarget(
                 logname='stdout',
                 loglevel=self.config.logging.loglevel
             ),
             LoggingTarget(logname=exp_dir / '.log.json', loglevel='info'),
         )
+        logger = self.logger.with_context(TAG='train', **context)
         self.config.to_file(fpath=exp_dir / '.config.json')
         env = env_info()
 
@@ -112,11 +112,11 @@ class TrainPipeline(BasePipeline):
             weights_path=self.config.model.weights_path
         ).to(self.device)
 
-        resize = self.config.resize
-        if isinstance(resize, tuple):
-            x, y = resize
+        size = self.config.resize.size
+        if isinstance(size, tuple):
+            x, y = size
         else:
-            x = y = resize
+            x = y = size
         model_summary = summary(model, (3, x, y))
 
         # Setup loss function and optimizer ------------------------------------
@@ -210,7 +210,7 @@ class TrainPipeline(BasePipeline):
                 epoch=epoch,
                 total_epochs=self.config.training.epochs,
                 avg_metrics=Metrics(loss=train_loss, accuracy=train_acc),
-                best_metrics=self.best_metrics,
+                best_metrics=t.cast(Metrics, self.best_metrics),
                 epoch_time_sec=epoch_time,
                 initial_lr=initial_lr,
                 final_lr=optimizer.param_groups[0]['lr'],
@@ -244,7 +244,7 @@ class TrainPipeline(BasePipeline):
         )
 
         # Generate plots -------------------------------------------------------
-        class_names = getattr(self.datamodule, 'class_names', None)
+        class_names = self.datamodule.classes
         self.plots(
             logger,
             exp_dir,
@@ -262,8 +262,8 @@ class TrainPipeline(BasePipeline):
         endlog = ExperimentEndLog(
             total_epochs=self.config.training.epochs,
             total_time_sec=total_time,
-            final_metrics=self.final_metrics,
-            best_metrics=self.best_metrics,
+            final_metrics=t.cast(Metrics, self.final_metrics),
+            best_metrics=t.cast(Metrics, self.best_metrics),
             test_metrics=test_metrics,
             best_epoch=self.best_epoch,
         )
@@ -274,6 +274,7 @@ class TrainPipeline(BasePipeline):
 
     def _setup_criterion(self) -> nn.Module:
         """Setup loss function."""
+        criterion: nn.Module
         if self.config.training.label_smoothing > 0:
             criterion = nn.CrossEntropyLoss(
                 label_smoothing=self.config.training.label_smoothing
@@ -392,7 +393,7 @@ class TrainPipeline(BasePipeline):
     def train(
         self,
         model: BaseClassifier,
-        train_loader: torch.utils.data.DataLoader,
+        train_loader: torch.utils.data.DataLoader[torch.Tensor],
         epoch: int,
         optimizer: torch.optim.Optimizer,
         criterion: nn.Module,
@@ -405,7 +406,8 @@ class TrainPipeline(BasePipeline):
 
         for batch, (data, target) in enumerate(train_loader, 1):
             batch_start_time = time.time()
-            data, target = data.to(self.device), target.to(self.device)
+            data, target = (data.to(self.device),  # type: ignore
+                            target.to(self.device))
 
             # Handle mixup augmentation
             use_mixup = (
@@ -516,7 +518,7 @@ class TrainPipeline(BasePipeline):
         optimizer: torch.optim.Optimizer,
         data: torch.Tensor,
         batch_start_time: float,
-        train_loader: torch.utils.data.DataLoader,
+        train_loader: torch.utils.data.DataLoader[torch.Tensor],
         logger: Logger
     ) -> None:
         """Log batch information."""
@@ -558,7 +560,7 @@ class TrainPipeline(BasePipeline):
     def val(
         self,
         model: BaseClassifier,
-        val_loader: torch.utils.data.DataLoader,
+        val_loader: torch.utils.data.DataLoader[torch.Tensor],
         criterion: nn.Module
     ) -> t.Tuple[float, Metrics, torch.Tensor, torch.Tensor]:
         model.eval()
@@ -574,22 +576,22 @@ class TrainPipeline(BasePipeline):
                 all_outputs.append(output)
                 all_targets.append(target)
 
-        all_outputs = torch.cat(all_outputs, dim=0)
-        all_targets = torch.cat(all_targets, dim=0)
+        all_outputs_tensor = torch.cat(all_outputs, dim=0)
+        all_targets_tensor = torch.cat(all_targets, dim=0)
         val_loss /= len(all_targets)
 
         metrics = compute_metric(
-            all_outputs,
-            all_targets,
+            all_outputs_tensor,
+            all_targets_tensor,
             val_loss,
             num_classes=self.config.model.num_classes
         )
-        return val_loss, metrics, all_outputs, all_targets
+        return val_loss, metrics, all_outputs_tensor, all_targets_tensor
 
     def test(
         self,
         model: BaseClassifier,
-        test_loader: torch.utils.data.DataLoader,
+        test_loader: torch.utils.data.DataLoader[torch.Tensor],
         criterion: nn.Module
     ) -> t.Tuple[Metrics, torch.Tensor, torch.Tensor]:
         """Test the model and return metrics, outputs, and targets."""
@@ -606,26 +608,26 @@ class TrainPipeline(BasePipeline):
                 all_outputs.append(output)
                 all_targets.append(target)
 
-        all_outputs = torch.cat(all_outputs, dim=0)
-        all_targets = torch.cat(all_targets, dim=0)
+        all_outputs_tensor = torch.cat(all_outputs, dim=0)
+        all_targets_tensor = torch.cat(all_targets, dim=0)
         test_loss /= len(all_targets)
 
         test_metrics = compute_metric(
-            all_outputs,
-            all_targets,
+            all_outputs_tensor,
+            all_targets_tensor,
             test_loss,
             num_classes=self.config.model.num_classes
         )
-        return test_metrics, all_outputs, all_targets
+        return test_metrics, all_outputs_tensor, all_targets_tensor
 
     def plots(
         self,
         logger: Logger,
         exp_dir: p.Path,
-        class_names: t.List[str] = None,
-        test_outputs: torch.Tensor = None,
-        test_targets: torch.Tensor = None,
-        test_metrics: Metrics = None
+        class_names: t.List[str],
+        test_outputs: torch.Tensor,
+        test_targets: torch.Tensor,
+        test_metrics: Metrics
     ) -> None:
         """Generate and save all plots."""
         plots_dir = exp_dir / 'plots'
@@ -642,12 +644,9 @@ class TrainPipeline(BasePipeline):
         )
 
         # Plot ROC curves for validation (best), validation (final), and test
-        if (
-            self.best_val_outputs is not None and
-            self.best_val_targets is not None
-        ):
+        if self.best_val_outputs is not None:
             plot_roc_curve(
-                y_true=self.best_val_targets,
+                y_true=self.best_val_targets or torch.tensor([]),
                 y_pred_probs=torch.softmax(self.best_val_outputs, dim=1),
                 num_classes=self.config.model.num_classes,
                 class_names=class_names,
@@ -655,12 +654,9 @@ class TrainPipeline(BasePipeline):
                 show=False
             )
 
-        if (
-            self.final_val_outputs is not None and
-            self.final_val_targets is not None
-        ):
+        if self.final_val_outputs is not None:
             plot_roc_curve(
-                y_true=self.final_val_targets,
+                y_true=self.final_val_targets or torch.tensor([]),
                 y_pred_probs=torch.softmax(self.final_val_outputs, dim=1),
                 num_classes=self.config.model.num_classes,
                 class_names=class_names,
@@ -691,7 +687,7 @@ class TrainPipeline(BasePipeline):
     ) -> None:
         """Plot confusion matrices for different datasets."""
         # Test confusion matrix
-        if test_metrics and test_metrics.get('confusion_matrix') is not None:
+        if test_metrics:
             cm = np.array(test_metrics['confusion_matrix'])
 
             plot_confusion_matrix(
@@ -711,9 +707,7 @@ class TrainPipeline(BasePipeline):
             )
 
         # Best validation confusion matrix
-        if self.best_metrics and self.best_metrics.get(
-            'confusion_matrix'
-        ) is not None:
+        if self.best_metrics:
             cm = np.array(self.best_metrics['confusion_matrix'])
 
             plot_confusion_matrix(
@@ -734,9 +728,7 @@ class TrainPipeline(BasePipeline):
             )
 
         # Final validation confusion matrix
-        if self.final_metrics and self.final_metrics.get(
-            'confusion_matrix'
-        ) is not None:
+        if self.final_metrics:
             cm = np.array(self.final_metrics['confusion_matrix'])
 
             plot_confusion_matrix(

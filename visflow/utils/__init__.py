@@ -34,7 +34,7 @@ def singleton(cls: t.Type[_C]) -> t.Callable[..., _C]:
         A wrapper function that returns the singleton instance of the class.
     """
     # Dictionary to keep singleton instances for each decorated class.
-    instances: t.Dict[t.Type, t.Any] = {}
+    instances: t.Dict[t.Type[_C], t.Any] = {}
     lock = threading.RLock()
 
     @ft.wraps(cls)
@@ -69,16 +69,18 @@ def utc_now() -> dt.datetime:
 
 class classproperty(property):
     def __get__(self, __instance: t.Any, __owner: type | None = None) -> t.Any:
+        if not callable(self.fget):
+            raise TypeError("fget must be callable")
         return self.fget(__owner)
 
 
 @ft.lru_cache(maxsize=None)
-def _get_func_params(fn: t.Callable) -> t.Set[str]:
+def _get_func_params(fn: t.Callable[..., t.Any]) -> t.Set[str]:
     return set(inspect.signature(fn).parameters.keys())
 
 
 def filter_kwargs(
-    fn: t.Callable,
+    fn: t.Callable[..., t.Any],
     kwargs: t.Dict[str, t.Any],
     pref: str = ""
 ) -> t.Dict[str, t.Any]:
@@ -120,7 +122,7 @@ def filter_kwargs(
 
 
 class Unset:
-    def __repr__(self):
+    def __repr__(self) -> str:
         return "<UNSET>"
 
     def __bool__(self) -> bool:
@@ -138,7 +140,7 @@ def flatten_dict(
     sep: str = '.',
     _parent: str = '',
 ) -> t.Dict[str, t.Any]:
-    items = []
+    items = []  # type: t.List[tuple[str, t.Any]]
     for k, v in _dict.items():
         key = f"{_parent}{sep}{k}" if _parent else k
         if isinstance(v, t.Mapping):

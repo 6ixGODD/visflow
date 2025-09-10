@@ -8,9 +8,7 @@ import visflow.helpers.slotted as slotted
 
 
 class BaseArgs(slotted.SlottedDataClass):
-    __slots__ = ('config',)
-
-    config: str
+    __slots__ = ()
 
     @classmethod
     def func(cls, args: argparse.Namespace) -> None:

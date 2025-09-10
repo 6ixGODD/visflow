@@ -17,11 +17,11 @@ from visflow.context import (
     Context,
     DatasetInfo,
     EnvironmentInfo,
+    EpochLog,
     ExperimentEndLog,
     ExperimentStartLog,
     LayerInfo,
     ModelSummary,
-    EpochLog,
 )
 from visflow.utils import flatten_dict
 
@@ -99,7 +99,7 @@ def make_final_metrics_table(end_log: ExperimentEndLog) -> rtable.Table:
 def make_ascii_art() -> str:
     try:
         ascii_art = pyfiglet.figlet_format(__project__, font="slant")
-        return ascii_art
+        return str(ascii_art)
     except:
         return __project__
 
@@ -373,7 +373,104 @@ class Display:
         self.console.print()
 
     def display_metrics(self, epoch_log: EpochLog) -> None:
-        pass
+        """Display metrics for the current epoch."""
+        current_epoch = epoch_log["epoch"]
+        total_epochs = epoch_log["total_epochs"]
+
+        # Create progress indicator
+        progress_bar = "█" * int((current_epoch / total_epochs) * 40)
+        remaining_bar = "░" * (40 - int((current_epoch / total_epochs) * 40))
+        progress_str = (f"[{progress_bar}{remaining_bar}] {current_epoch}/"
+                        f"{total_epochs}")
+
+        # Epoch header
+        epoch_header = f"Epoch {current_epoch}/{total_epochs}"
+        if "epoch_time_sec" in epoch_log:
+            epoch_header += f" | Time: {epoch_log['epoch_time_sec']:.2f}s"
+
+        self.console.print()
+        self.console.print(rtext.Text(epoch_header, style="bold yellow"))
+        self.console.print(rtext.Text(progress_str, style="blue"))
+
+        # Current epoch metrics table
+        metrics_table = rtable.Table(
+            box=rbox.SIMPLE,
+            show_header=True,
+            padding=(0, 1)
+        )
+        metrics_table.add_column("Metric", style="cyan", no_wrap=True)
+        metrics_table.add_column("Current", style="white", justify="right")
+        metrics_table.add_column("Best", style="green", justify="right")
+
+        avg_metrics = epoch_log["avg_metrics"]
+        best_metrics = epoch_log["best_metrics"]
+
+        # Display main metrics
+        for metric_name in ["loss",
+                            "accuracy",
+                            "precision",
+                            "recall",
+                            "f1_score",
+                            "auc_roc"]:
+            current_val = avg_metrics.get(metric_name)  # type: ignore
+            best_val = best_metrics.get(metric_name)  # type: ignore
+
+            if current_val is not None:
+                current_str = f"{current_val:.4f}"
+                best_str = f"{best_val:.4f}" if best_val is not None else "N/A"
+
+                # Add visual indicator for improvement
+                indicator = ""
+                if best_val is not None and current_val == best_val:
+                    if metric_name == "loss":
+                        indicator = " ⬇️"  # Lower is better for loss
+                    else:
+                        indicator = " ⬆️"  # Higher is better for other metrics
+
+                metrics_table.add_row(
+                    metric_name.replace("_", " ").title(),
+                    current_str + indicator,
+                    best_str
+                )
+
+        # Display extra metrics if available
+        if "extras" in avg_metrics and avg_metrics["extras"]:
+            metrics_table.add_row("", "", "")  # Separator
+            for extra_metric, value in avg_metrics["extras"].items():
+                best_extra = best_metrics.get("extras", {}).get(
+                    extra_metric
+                ) if "extras" in best_metrics else None
+                current_str = f"{value:.4f}"
+                best_str = f"{best_extra:.4f}" if best_extra is not None else\
+                    "N/A"
+                metrics_table.add_row(
+                    extra_metric.replace("_", " ").title(),
+                    current_str,
+                    best_str
+                )
+
+        self.console.print(metrics_table)
+
+        # Learning rate information if available
+        if "initial_lr" in epoch_log:
+            lr_table = rtable.Table(
+                box=rbox.SIMPLE,
+                show_header=False,
+                padding=(0, 1)
+            )
+            lr_table.add_column("Key", style="cyan", no_wrap=True)
+            lr_table.add_column("Value", style="white")
+
+            if "initial_lr" in epoch_log:
+                lr_table.add_row("Initial LR", f"{epoch_log['initial_lr']:.6f}")
+            if "final_lr" in epoch_log:
+                lr_table.add_row("Final LR", f"{epoch_log['final_lr']:.6f}")
+
+            self.console.print(lr_table)
+
+        # Add a subtle separator between epochs
+        separator = "─" * 60
+        self.console.print(rtext.Text(separator, style="dim"))
 
     def display_end(self, end_log: ExperimentEndLog) -> None:
         end_time = time.time()

@@ -23,15 +23,17 @@ class FieldInfo:
 
 
 class SlottedDataClass:
-    __slots__: t.Collection[str] = ()
+    __slots__ = ()  # type: t.Collection[str]
 
     _field_defaults: t.ClassVar[t.Dict[str, t.Any]] = {}
     _field_optional: t.ClassVar[t.Set[str]] = set()
+    _field_info: t.ClassVar[t.Dict[str, FieldInfo]]
+    _all_fields: t.ClassVar[frozenset[str]]
 
-    def __init_subclass__(cls, **kwargs):
+    def __init_subclass__(cls, **kwargs: t.Any):
         super().__init_subclass__(**kwargs)
         cls._field_info = cls._parse_field()
-        cls._all_fields = frozenset(
+        cls._all_fields = frozenset[str](
             name
             for name in cls.__slots__
             if not name.startswith('_')
@@ -42,7 +44,7 @@ class SlottedDataClass:
         field_info = {}
         anns = getattr(cls, '__annotations__', {})
         defaults = getattr(cls, '_field_defaults', {})
-        optional = getattr(cls, '_field_optional', set())
+        optional: t.Set[str] = getattr(cls, '_field_optional', set())
 
         for field_name in getattr(cls, '__slots__', []):
             if field_name.startswith('_'):
