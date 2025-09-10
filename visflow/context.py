@@ -87,22 +87,22 @@ class Metrics(te.TypedDict, total=False):
     loss: te.Required[float]
     """Current loss value."""
 
-    accuracy: te.Required[float]
+    accuracy: float
     """Current accuracy value."""
 
-    precision: te.Required[float]
+    precision: float
     """Current precision value."""
 
-    recall: te.Required[float]
+    recall: float
     """Current recall value."""
 
-    f1_score: te.Required[float]
+    f1_score: float
     """Current F1 score value."""
 
-    auc_roc: te.Required[float]
+    auc_roc: float
     """Current AUC-ROC value."""
 
-    confusion_matrix: te.Required[t.List[t.List[int]]]
+    confusion_matrix: t.List[t.List[int]]
     """Current confusion matrix."""
 
     extras: t.Dict[str, float]
@@ -239,6 +239,9 @@ class ExperimentEndLog(te.TypedDict, total=False):
 
     best_metrics: te.Required[Metrics]
     """Best metrics achieved during the experiment."""
+
+    test_metrics: Metrics
+    """Metrics evaluated on the test set."""
 
     best_epoch: te.Required[int]
     """Epoch number at which the best metrics were achieved."""

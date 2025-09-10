@@ -4,7 +4,6 @@ import typing as t
 
 import numpy as np
 import torch
-import torchvision.datasets
 
 
 def mixup(
@@ -12,7 +11,7 @@ def mixup(
     y: torch.Tensor,
     *,
     alpha: float = 1.0
-) -> t.Tuple[torch.Tensor, torch.Tensor]:
+) -> t.Tuple[torch.Tensor, torch.Tensor, torch.Tensor, float]:
     """Apply MixUp augmentation to a batch of images and labels.
 
     Args:
@@ -22,37 +21,33 @@ def mixup(
         alpha (float): Parameter for the Beta distribution. Default is 1.0.
 
     Returns:
-        Tuple[torch.Tensor, torch.Tensor]: Augmented images and mixed labels.
+        mixed_x (torch.Tensor): Batch of mixed images.
+        y_a (torch.Tensor): Original labels.
+        y_b (torch.Tensor): Labels of the shuffled images.
+        lam (float): MixUp coefficient.
     """
-    if alpha <= 0:
-        return x, y
+    if alpha > 0:
+        lam = np.random.beta(alpha, alpha)
+    else:
+        lam = 1
 
     batch_size = x.size(0)
-    # Sample lambda from Beta distribution
-    lam = np.random.beta(alpha, alpha)
-    lam = max(lam, 1 - lam)  # Ensure lam >= 0.5 for better mixing
-
-    # Generate random permutation of indices
     index = torch.randperm(batch_size).to(x.device)
 
-    # Create mixed inputs
     mixed_x = lam * x + (1 - lam) * x[index, :]
+    y_a, y_b = y, y[index]
 
-    # Create mixed labels
-    mixed_y = lam * y + (1 - lam) * y[index, :]
-
-    return mixed_x, mixed_y
+    return mixed_x, y_a, y_b, lam
 
 
-def compute_class_weights(
-    dataset: torchvision.datasets.DatasetFolder
-) -> t.Dict[int, float]:
-    class_counts = {}
-    for _, label in dataset.samples:
-        class_counts[label] = class_counts.get(label, 0) + 1
+def compute_class_weights(labels: t.Sequence[int]) -> t.Dict[int, float]:
+    labels_tensor = torch.tensor(labels, dtype=torch.long)
+    class_counts = torch.bincount(labels_tensor)
+    total_samples = len(labels_tensor)
 
-    total_samples = len(dataset.samples)
-    class_weights = {cls: total_samples / count
-                     for cls, count in class_counts.items()}
-
+    class_weights = {
+        cls: total_samples / count.item()  # type: ignore
+        for cls, count in enumerate(class_counts)
+        if count.item() > 0  # type: ignore
+    }
     return class_weights

@@ -171,5 +171,6 @@ def incr_path(root: p.Path, name: str, sep: str = '-') -> p.Path:
         new_name = f"{stem}{sep}{i}{suffix}"
         new_candidate = root / new_name
         if not new_candidate.exists():
+            new_candidate.mkdir(parents=True, exist_ok=True)
             return new_candidate
         i += 1
