@@ -13,7 +13,7 @@ from visflow.context import DatasetInfo
 from visflow.utils.functional import compute_class_weights
 
 
-class ImageDataModule:
+class ImageDatamodule:
     def __init__(self, config: TrainConfig):
         self.config = config
         if isinstance(self.config.resize.size, int):  # square resize
@@ -171,7 +171,8 @@ class ImageDataModule:
         DataLoader[torch.Tensor]
     ]:
         if self.config.training.weighted_sampling:
-            class_weights = compute_class_weights(self.train_set)
+            labels = [label for _, label in self.train_set.samples]
+            class_weights = compute_class_weights(labels)
             sample_weights = [
                 class_weights[label] for _, label in self.train_set.samples
             ]
@@ -206,7 +207,7 @@ class ImageDataModule:
         return train_loader, val_loader, test_loader
 
     @property
-    def context(self) -> DatasetInfo:
+    def info(self) -> DatasetInfo:
         return DatasetInfo(
             num_classes=len(self.train_set.classes),
             train_size=len(self.train_set),
