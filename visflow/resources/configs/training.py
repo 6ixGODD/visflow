@@ -4,6 +4,10 @@ import typing as t
 
 import pydantic as pydt
 
+from visflow.resources.configs.lr_scheduler.cosine import CosineConfig
+from visflow.resources.configs.lr_scheduler.plateau import PlateauConfig
+from visflow.resources.configs.lr_scheduler.step import StepConfig
+
 
 class TrainingConfig(pydt.BaseModel):
     device: t.Literal['cpu', 'cuda'] = pydt.Field(
@@ -67,11 +71,24 @@ class TrainingConfig(pydt.BaseModel):
         description="Optimization algorithm."
     )
 
-    lr_scheduler: t.Literal[
-        'step', 'multistep', 'cosine', 'plateau', 'none'
-    ] = pydt.Field(
-        default='step',
+    lr_scheduler: t.Literal['step', 'cosine', 'plateau'] | None = pydt.Field(
+        default=None,
         description="Learning rate scheduling strategy."
+    )
+
+    cosine_scheduler: CosineConfig | None = pydt.Field(
+        default=None,
+        description="Configuration for cosine learning rate scheduler."
+    )
+
+    step_scheduler: StepConfig | None = pydt.Field(
+        default=None,
+        description="Configuration for step learning rate scheduler."
+    )
+
+    plateau_scheduler: PlateauConfig | None = pydt.Field(
+        default=None,
+        description="Configuration for plateau learning rate scheduler."
     )
 
     early_stopping: bool = pydt.Field(

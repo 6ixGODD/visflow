@@ -10,8 +10,8 @@ import traceback as tb
 import types
 import typing as t
 
-from visflow.configs import LoggingConfig
-from visflow.logger.types import LoggingTarget, LogLevel
+from visflow.resources.configs import LoggingConfig
+from visflow.resources.logger.types import LoggingTarget, LogLevel
 
 _context: cvs.ContextVar[t.Dict[str, t.Any]] = cvs.ContextVar(
     '_context', default={}
