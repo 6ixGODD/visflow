@@ -25,3 +25,9 @@ class ExportConfig(pydt.BaseModel):
         default=False,
         description="Whether to export the trained model to TorchScript format."
     )
+
+    checkpoint_frequency: int = pydt.Field(
+        default=10,
+        ge=1,
+        description="Frequency of model checkpoint saving."
+    )

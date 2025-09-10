@@ -15,8 +15,3 @@ class OutputConfig(pydt.BaseModel):
         description="Unique name for the experiment."
     )
 
-    save_model_every_n_epochs: int = pydt.Field(
-        default=1,
-        ge=1,
-        description="Frequency of model checkpoint saving."
-    )

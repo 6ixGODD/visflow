@@ -138,22 +138,36 @@ class TrainPipeline(BasePipeline):
         # Setup learning rate scheduler ----------------------------------------
         if lr_scheduler := self.config.training.lr_scheduler:
             if lr_scheduler == 'step':
+                if not self.config.training.step_scheduler:
+                    raise ValueError(
+                        "StepLR scheduler requires step_scheduler config."
+                    )
                 scheduler = torch.optim.lr_scheduler.StepLR(
                     optimizer,
-                    step_size=20,
-                    gamma=0.1
+                    step_size=self.config.training.step_scheduler.step_size,
+                    gamma=self.config.training.step_scheduler.gamma
                 )
             elif lr_scheduler == 'cosine':
+                if not self.config.training.cosine_scheduler:
+                    raise ValueError(
+                        "CosineAnnealingLR scheduler requires "
+                        "cosine_scheduler config."
+                    )
                 scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
                     optimizer,
-                    T_max=self.config.training.epochs
+                    T_max=self.config.training.cosine_scheduler.t_max
                 )
             elif lr_scheduler == 'plateau':
+                if not self.config.training.plateau_scheduler:
+                    raise ValueError(
+                        "ReduceLROnPlateau scheduler requires "
+                        "plateau_scheduler config."
+                    )
                 scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
                     optimizer,
-                    mode='max',
-                    patience=5,
-                    factor=0.5
+                    mode=self.config.training.plateau_scheduler.mode,
+                    patience=self.config.training.plateau_scheduler.patience,
+                    factor=self.config.training.plateau_scheduler.factor
                 )
             else:
                 raise ValueError(f"Unsupported lr_scheduler: {lr_scheduler}")
@@ -256,7 +270,6 @@ class TrainPipeline(BasePipeline):
         )
 
         display.display_end(endlog)
-
         logger.info('Training completed', **endlog)
 
         self._completed = True
@@ -450,8 +463,11 @@ class TrainPipeline(BasePipeline):
 
         return test_metrics
 
-    def plots(self):
+    def plots(
+        self,
+        logger: Logger,
+    ) -> None:
         pass
 
-    def save(self):
+    def save(self) -> None:
         pass

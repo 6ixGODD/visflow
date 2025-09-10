@@ -48,4 +48,3 @@ class ResizeConfig(pydt.BaseModel):
                     "downsampled, and when the interpolation method is "
                     "'bilinear' or 'bicubic'."
     )
-
