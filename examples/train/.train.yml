@@ -1,0 +1,133 @@
+logging:
+  backend: native # Options: native, loguru
+  loglevel: info  # Options: debug, info, warning, error, critical
+
+seed: 42
+
+model:
+  # Available architectures:
+  #  AlexNet:          'alexnet',
+  #  ResNet:           'resnet18', 'resnet34', 'resnet50', 'resnet101', 'resnet152', 'resnext50_32x4d',
+  #                    'resnext101_32x8d', 'resnext101_64x4d', 'wide_resnet50_2', 'wide_resnet101_2',
+  #  VGG:              'vgg11', 'vgg11_bn', 'vgg13', 'vgg13_bn', 'vgg16', 'vgg16_bn', 'vgg19', 'vgg19_bn',
+  #  DenseNet:         'densenet121', 'densenet169', 'densenet201', 'densenet161',
+  #  MobileNet:        'mobilenet_v2', 'mobilenet_v3_small', 'mobilenet_v3_large',
+  #  EfficientNet:     'efficientnet_b0', 'efficientnet_b1', 'efficientnet_b2', 'efficientnet_b3', 'efficientnet_b4',
+  #                    'efficientnet_b5', 'efficientnet_b6', 'efficientnet_b7', 'efficientnet_v2_s',
+  #                    'efficientnet_v2_m', 'efficientnet_v2_l',
+  #  ConvNext:         'convnext_tiny', 'convnext_small', 'convnext_base', 'convnext_large',
+  #  GoogleNet:        'googlenet',
+  #  Inception:        'inception_v3',
+  #  MnasNet:          'mnasnet0_5', 'mnasnet0_75', 'mnasnet1_0', 'mnasnet1_3',
+  #  RegNet:           'regnet_y_400mf', 'regnet_y_800mf', 'regnet_y_1_6gf', 'regnet_y_3_2gf', 'regnet_y_8gf',
+  #                    'regnet_y_16gf', 'regnet_y_32gf', 'regnet_y_128gf', 'regnet_x_400mf', 'regnet_x_800mf',
+  #                    'regnet_x_1_6gf', 'regnet_x_3_2gf', 'regnet_x_8gf', 'regnet_x_16gf', 'regnet_x_32gf',
+  #  ShuffleNet:       'shufflenet_v2_x0_5', 'shufflenet_v2_x1_0', 'shufflenet_v2_x1_5', 'shufflenet_v2_x2_0',
+  #  SqueezeNet:       'squeezenet1_0', 'squeezenet1_1',
+  #  ViT:              'vit_b_16', 'vit_b_32', 'vit_l_16', 'vit_l_32', 'vit_h_14',
+  #  Swin Transformer: 'swin_t', 'swin_s', 'swin_b', 'swin_v2_t', 'swin_v2_s', 'swin_v2_b',
+  #  MaxViT:           'maxvit_t'
+  architecture: resnet18 # Model architecture
+  pretrained: true       # Use pretrained weights
+  num_classes: 2         # Number of output classes
+  weights_path: ~        # Path to custom weights file (optional)
+
+training:
+  device: cpu                # Options: cuda, cpu
+  shuffle: true              # Shuffle the training data
+  batch_size: 32             # Batch size for training
+  weighted_sampling: false   # Use weighted sampling to handle class imbalance
+  drop_last: false           # Drop the last incomplete batch
+  epochs: 10                 # Number of training epochs
+  learning_rate: 0.001       # Learning rate
+  momentum: 0.9              # Momentum for SGD optimizer
+  weight_decay: 0.0001       # Weight decay (L2 regularization)
+  optimizer: adam            # Options: sgd, adam, adamw
+  lr_scheduler: ~            # Options: step, cosine, plateau (optional)
+  cosine_scheduler: ~        # Cosine annealing learning rate scheduler
+  #   t_max: 10              # Maximum number of iterations
+  #   eta_min: 0             # Minimum learning rate
+  step_scheduler: ~          # Step learning rate scheduler
+  #   step_size: 7           # Step size for learning rate decay
+  #   gamma: 0.1             # Decay factor
+  plateau_scheduler: ~       # Learning rate scheduler that reduces LR when a metric has stopped improving
+  #   mode: min              # Mode for plateau scheduler (min or max)
+  #   factor: 0.1            # Decay factor
+  #   patience: 10           # Number of epochs with no improvement
+  #   threshold: 0.0001      # Threshold for measuring improvement
+  #   threshold_mode: rel    # Options: rel, abs
+  #   cooldown: 0            # Number of epochs to wait before resuming normal operation
+  #   min_lr: 0              # Minimum learning rate
+  #   eps: 1e-08             # Minimum decay applied to lr
+  early_stopping: true       # Enable early stopping
+  early_stopping_patience: 5 # Number of epochs with no improvement before stopping
+  label_smoothing: 0.0       # Label smoothing factor (0.0 means no smoothing)
+
+testing:
+  batch_size: 32 # Batch size for testing
+
+data:
+  train_dir: ./data/train # Path to training data directory
+  val_dir: ./data/val     # Path to validation data directory
+  test_dir: ./data/test   # Path to test data directory
+  num_workers: 4          # Number of workers for data loading
+  pin_memory: false       # Pin memory for data loading
+
+resize:
+  size: 224              # Resize size
+  interpolation: bicubic # Options: nearest, nearest-exact, bilinear, bicubic
+  max_size: ~            # Maximum size (optional)
+  antialias: true        # Apply antialiasing when downsampling (only available in 'bilinear' and 'bicubic' modes)
+
+normalization:
+  enabled: true               # Enable normalization
+  mean: [0.485, 0.456, 0.406] # Mean for each channel
+  std: [0.229, 0.224, 0.225]  # Standard deviation for each channel
+  inplace: false              # Inplace normalization
+
+augmentation:
+  crop:
+    enabled: false         # Enable RandomResizedCrop
+    margin: 0              # Margin to be left on each border of the image before cropping
+    fill: 0                # Pixel fill value for the area outside the crop
+    padding_mode: constant # Options: constant, edge, reflect, symmetric
+  horizontal_flip:
+    enabled: true  # Enable RandomHorizontalFlip
+    p: 0.5         # Probability of flipping
+  rotation:
+    enabled: false         # Enable RandomRotation
+    degrees: 30            # Range of degrees to select from
+    interpolation: bicubic # Options: nearest, nearest-exact, bilinear, bicubic
+    expand: false          # Expand the output image to hold the entire rotated image
+    center: ~              # Center of rotation (optional)
+    fill: 0                # Pixel fill value for the area outside the rotated image
+  color_jitter:
+    enabled: false  # Enable ColorJitter
+    brightness: 0.2 # How much to jitter brightness
+    contrast: 0.2   # How much to jitter contrast
+    saturation: 0.2 # How much to jitter saturation
+    hue: 0.1        # How much to jitter hue
+  affine:
+    enabled: false         # Enable RandomAffine
+    degrees: 0.0           # Range of degrees to select from
+    translate: ~           # Maximum absolute fraction for horizontal and vertical translations
+    scale: ~               # Scaling factor interval
+    shear: ~               # Shear angle in degrees
+    interpolation: bicubic # Options: nearest, nearest-exact, bilinear, bicubic
+    fill: 0                # Pixel fill value for the area outside the transformed image
+  erasing:
+    enabled: false      # Enable RandomErasing
+    p: 0.5              # Probability of erasing
+    scale: [0.02, 0.33] # Range of proportion of erased area against input image
+    ratio: [0.3, 3.3]   # Range of aspect ratio of erased area
+    value: 0            # Pixel fill value for the erased area
+    inplace: false      # Inplace erasing
+  mixup:
+    enabled: false # Enable MixUp
+    alpha: 0.2     # Alpha value for the Beta distribution
+    p: 0.5         # Probability of applying MixUp
+
+output:
+  output_dir: ./output             # Directory to save outputs
+  experiment_name: vision-research # Experiment name
+  checkpoint_frequency: 10         # Frequency (in epochs) to save model checkpoints
