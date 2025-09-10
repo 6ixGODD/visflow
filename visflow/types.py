@@ -4,6 +4,7 @@ import os
 import typing as t
 
 import torch
+import typing_extensions as te
 
 CriterionFunc = t.Callable[[t.Any, t.Any], torch.Tensor]
 
@@ -43,3 +44,26 @@ def pixel_int(value: PixelValue, /) -> t.Tuple[int, int, int]:
 
 
 FileLikes = str | t.IO[bytes] | os.PathLike[str]
+
+
+class Checkpoint(te.TypedDict, total=False):
+    epoch: te.Required[int]
+    """Epoch number when the checkpoint was saved."""
+
+    model_state_dict: te.Required[t.Dict[str, torch.Tensor]]
+    """State dictionary of the model."""
+
+    optimizer_state_dict: t.Dict[str, torch.Tensor]
+    """State dictionary of the optimizer."""
+
+    scheduler_state_dict: t.Dict[str, torch.Tensor]
+    """State dictionary of the learning rate scheduler."""
+
+    accuracy: float
+    """Accuracy at the time of saving the checkpoint."""
+
+    config: t.Dict[str, t.Any]
+    """Configuration dictionary used for training."""
+
+    extra_state: t.Dict[str, t.Any]
+    """Any additional state information."""

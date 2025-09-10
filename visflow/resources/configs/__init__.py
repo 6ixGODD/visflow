@@ -9,7 +9,6 @@ import pydantic_settings as ps
 
 from visflow.resources.configs.augmentation import AugmentationConfig
 from visflow.resources.configs.data import DataConfig
-from visflow.resources.configs.export import ExportConfig
 from visflow.resources.configs.logging import LoggingConfig
 from visflow.resources.configs.model import ModelConfig
 from visflow.resources.configs.normalization import NormalizationConfig
@@ -116,11 +115,6 @@ class TrainConfig(BaseConfig):
     augmentation: AugmentationConfig = pydt.Field(
         default_factory=AugmentationConfig,
         description="Data augmentation configuration."
-    )
-
-    export: ExportConfig = pydt.Field(
-        default_factory=ExportConfig,
-        description="Model export configuration."
     )
 
     output: OutputConfig = pydt.Field(

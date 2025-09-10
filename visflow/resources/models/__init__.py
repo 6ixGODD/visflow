@@ -10,6 +10,8 @@ import torch
 import torch.nn as nn
 import torchvision.models as models
 
+from visflow.types import Checkpoint
+
 logger = logging.getLogger(__name__)
 
 
@@ -37,13 +39,8 @@ class BaseClassifier(nn.Module, abc.ABC):
         map_location: str | torch.device | None = None
     ) -> None:
         path = p.Path(path)
-        state_dict = torch.load(path, map_location=map_location or "cpu")
-        # Handle different state dict formats
-        if 'state_dict' in state_dict:
-            state_dict = state_dict['state_dict']
-        elif 'model' in state_dict:
-            state_dict = state_dict['model']
-        self.load_state_dict(state_dict, strict=strict)
+        ckpt: Checkpoint = torch.load(path, map_location=map_location or "cpu")
+        self.load_state_dict(ckpt['model_state_dict'], strict=strict)
 
 
 MODEL_REGISTRY: t.Dict[str, t.Callable[..., BaseClassifier]] = {}

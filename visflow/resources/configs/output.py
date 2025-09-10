@@ -15,3 +15,8 @@ class OutputConfig(pydt.BaseModel):
         description="Unique name for the experiment."
     )
 
+    checkpoint_frequency: int = pydt.Field(
+        default=10,
+        ge=1,
+        description="Frequency of model checkpoint saving."
+    )
