@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import visflow._cli.commands as cmd
-import visflow._cli.exceptions as exc
+import visflow.exceptions as exc
 
 
 def main() -> int:
@@ -9,7 +9,7 @@ def main() -> int:
         _main()
     except KeyboardInterrupt:
         return 130
-    except exc.CLIException as e:
+    except exc.VisflowError as e:
         return e.exit_code
     return 0
 
