@@ -3,7 +3,9 @@ from __future__ import annotations
 import typing as t
 
 import pydantic as pydt
+
 from visflow.types import PixelValue
+
 
 class CropConfig(pydt.BaseModel):
     enabled: bool = pydt.Field(
@@ -217,7 +219,7 @@ class MixupConfig(pydt.BaseModel):
     )
 
     p: float = pydt.Field(
-        default=1.0,
+        default=0.5,
         ge=0.0,
         le=1.0,
         description="Probability of applying MixUp."

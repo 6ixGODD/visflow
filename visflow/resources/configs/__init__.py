@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import _typeshed as _ts
 import os
 import typing as t
 
@@ -16,6 +17,7 @@ from visflow.resources.configs.output import OutputConfig
 from visflow.resources.configs.resize import ResizeConfig
 from visflow.resources.configs.testing import TestingConfig
 from visflow.resources.configs.training import TrainingConfig
+from visflow.types import FileLikes
 
 
 class BaseConfig(ps.BaseSettings):
@@ -25,7 +27,7 @@ class BaseConfig(ps.BaseSettings):
     )
 
     @classmethod
-    def from_yaml(cls, fpath: t.AnyStr | os.PathLike[t.AnyStr]) -> t.Self:
+    def from_yaml(cls, fpath: FileLikes) -> t.Self:
         try:
             import yaml
             with open(fpath, 'r') as f:
@@ -38,16 +40,19 @@ class BaseConfig(ps.BaseSettings):
             )
 
     @classmethod
-    def from_json(cls, fpath: t.AnyStr | os.PathLike[t.AnyStr]) -> t.Self:
+    def from_json(cls, fpath: FileLikes) -> t.Self:
         import json
         with open(fpath, 'r') as f:
             content = json.load(f)
         return cls.model_validate(content, strict=True)
 
     logging: LoggingConfig = LoggingConfig()
-    seed: int = 42
+    seed: int = pydt.Field(
+        default=42,
+        description="Random seed for reproducibility"
+    )
 
-    def to_file(self, fpath: t.AnyStr | os.PathLike[t.AnyStr]) -> None:
+    def to_file(self, fpath: FileLikes) -> None:
         fpath = os.fspath(fpath)
         ext = os.path.splitext(fpath)[1].lower()
         if ext in {'.yaml', '.yml'}:
@@ -63,11 +68,18 @@ class BaseConfig(ps.BaseSettings):
         elif ext == '.json':
             import json
             with open(fpath, 'w', encoding='utf-8') as f:
-                json.dump(self.model_dump(), f, indent=4)  # type: ignore
+                json.dump(
+                    self.model_dump(mode='json'),
+                    t.cast(_ts.SupportsWrite, f),
+                    indent=4
+                )
         else:
             raise ValueError(
                 "Unsupported file extension. Use '.yaml', '.yml', or '.json'."
             )
+
+    def to_dict(self) -> t.Dict[str, t.Any]:
+        return self.model_dump(mode='json', exclude_none=True)
 
 
 class TrainConfig(BaseConfig):

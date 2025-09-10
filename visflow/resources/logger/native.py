@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import logging
 import logging.handlers
+import os
 import pathlib as p
 import sys
 import typing as t
@@ -44,16 +45,24 @@ class ContextFormatter(logging.Formatter):
         # Same as arrow for consistency
     }
 
-    def __init__(self, is_console: bool = False, use_colors: bool = True):
+    def __init__(
+        self,
+        is_console: bool = False,
+        use_colors: bool = True,
+        verbose: bool | None = None,
+    ):
         super().__init__(datefmt='%Y-%m-%d %H:%M:%S')
         self.is_console = is_console
         self.use_colors = (use_colors and
                            ansi.ANSIFormatter.supports_color())
         if self.use_colors:
             ansi.ANSIFormatter.enable(True)
+        if verbose is None:
+            verbose = os.getenv('VERBOSE', '0') not in ('0', '', 'false', 'off')
+        self.verbose = verbose
 
     @staticmethod
-    def _extract_context(record: logging.LogRecord) -> t.Dict[str, t.Any]:
+    def _extract_context(record: logging.LogRecord, /) -> t.Dict[str, t.Any]:
         """Extract context from log record, excluding standard fields."""
         excluded = {
             'name', 'msg', 'args', 'levelname', 'levelno', 'pathname',
@@ -72,7 +81,7 @@ class ContextFormatter(logging.Formatter):
                     context[key] = str(value)
         return context
 
-    def _format_logger_with_tag(
+    def _format_with_tag(
         self,
         name: str,
         context: t.Dict[str, t.Any]
@@ -164,6 +173,9 @@ class ContextFormatter(logging.Formatter):
         prefix_len: int
     ) -> str:
         """Format context for console output."""
+        if not self.verbose:
+            return ""
+
         # Remove TAG since it's in logger name
         ctx = {k: v for k, v in context.items() if k != 'TAG'}
         if not ctx:
@@ -212,7 +224,7 @@ class ContextFormatter(logging.Formatter):
         context: t.Dict[str, t.Any]
     ) -> str:
         timestamp = self.formatTime(record, self.datefmt)
-        logger_name = self._format_logger_with_tag(record.name, context)
+        logger_name = self._format_with_tag(record.name, context)
         level_name = f"{record.levelname:<8}"
         message = record.getMessage()
 
@@ -334,18 +346,17 @@ class NativeLoggingBackend(LoggerBackend):
         self._logger = logging.getLogger('somnmind')
         self._logger.setLevel(logging.DEBUG)
         self._handlers: t.List[logging.Handler] = []
-        self._is_setup = False
         ansi.ANSIFormatter.enable(
             ansi.ANSIFormatter.supports_color()
         )
 
     def setup_handlers(self, targets: t.List[LoggingTarget]) -> None:
-        if self._is_setup:
-            return
-
-        # Clear existing handlers
         for handler in self._logger.handlers[:]:
             self._logger.removeHandler(handler)
+            try:
+                handler.close()
+            except Exception:
+                pass
         self._handlers.clear()
 
         # Create new handlers
@@ -355,7 +366,6 @@ class NativeLoggingBackend(LoggerBackend):
             self._handlers.append(handler)
 
         self._logger.propagate = False
-        self._is_setup = True
 
     def log(
         self,
@@ -396,7 +406,6 @@ class NativeLoggingBackend(LoggerBackend):
             except Exception:
                 pass
         self._handlers.clear()
-        self._is_setup = False
 
 
 class NativeLogger(BaseLogger):

@@ -284,6 +284,20 @@ class BaseLogger(_LoggerContext):
     def targets(self) -> t.List[LoggingTarget]:
         return self._targets
 
+    def add_target(self, *target: LoggingTarget) -> None:
+        self._targets.extend(target)
+        self._backend.setup_handlers(self._targets)
+
+    def remove_target(self, logname: str) -> None:
+        self._targets = [
+            t for t in self._targets if t.logname != logname
+        ]
+        self._backend.setup_handlers(self._targets)
+
+    def clear_targets(self) -> None:
+        self._targets = []
+        self._backend.setup_handlers(self._targets)
+
     def sync(self) -> None:
         self._backend.sync()
 
@@ -308,10 +322,10 @@ class Logger(BaseLogger):
         self.config = config
 
         if self.config.backend == 'native':
-            import visflow.logger.native as native
+            import visflow.resources.logger.native as native
             backend = native.NativeLoggingBackend()
         elif self.config.backend == 'loguru':
-            import visflow.logger.loguru as loguru
+            import visflow.resources.logger.loguru as loguru
             backend = loguru.LoguruBackend()
         else:
             raise ValueError(
@@ -320,6 +334,5 @@ class Logger(BaseLogger):
 
         super().__init__(
             backend=backend,
-            targets=self.config.targets,
             initial_ctx=self.config.extra_context
         )

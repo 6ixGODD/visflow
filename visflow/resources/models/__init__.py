@@ -20,17 +20,14 @@ class BaseClassifier(nn.Module, abc.ABC):
 
     @property
     @abc.abstractmethod
-    def num_classes(self) -> int:
-        ...
+    def num_classes(self) -> int: ...
 
     @num_classes.setter
     @abc.abstractmethod
-    def num_classes(self, value: int) -> None:
-        ...
+    def num_classes(self, value: int) -> None: ...
 
     @abc.abstractmethod
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
-        ...
+    def forward(self, x: torch.Tensor) -> torch.Tensor: ...
 
     def loads(
         self,
@@ -196,7 +193,7 @@ def make_model(
     num_classes: int,
     pretrained: bool = True,
     weights_path: str | os.PathLike[str] | None = None,
-    **kwargs
+    **kwargs: t.Any
 ) -> BaseClassifier:
     if hasattr(models, name):  # torchvision
         return TorchVisionClassifier(
