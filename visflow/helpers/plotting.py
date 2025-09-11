@@ -74,7 +74,7 @@ def plot_training_curves(
     plt.tight_layout()
 
     if save_path:
-        plt.savefig(save_path)
+        plt.savefig(save_path, dpi=300)
 
     if show:
         plt.show()
@@ -165,7 +165,7 @@ def plot_roc_curve(
     plt.grid(True, alpha=0.3)
 
     if save_path:
-        plt.savefig(save_path)
+        plt.savefig(save_path, dpi=300)
 
     if show:
         plt.show()
@@ -228,7 +228,7 @@ def plot_confusion_matrix(
     plt.tight_layout()
 
     if save_path:
-        plt.savefig(save_path)
+        plt.savefig(save_path, dpi=300)
 
     if show:
         plt.show()

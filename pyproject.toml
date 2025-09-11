@@ -1,6 +1,6 @@
 [project]
 name = "visflow"
-version = "1.0.0"
+version = "1.0.1"
 description = "A comprehensive computer vision framework for training, evaluation, and visualization with support for multiple architectures and GradCAM analysis"
 authors = [
     {name = "BoChen SHEN", email = "6goddddddd@gmail.com"}
@@ -48,7 +48,7 @@ test = ["mypy>=1.17.1,<2.0.0", "pytest>=7.0.0", "pytest-cov>=4.0.0"]
 dev = ["black>=23.0.0", "isort>=5.12.0", "flake8>=6.0.0"]
 
 [project.scripts]
-visflow = "visflow._cli.main:main"
+visflow = "visflow._cli:main"
 
 [project.urls]
 Homepage = "https://github.com/6ixGODD/visflow"
