@@ -21,12 +21,12 @@ class BaseClassifier(nn.Module, abc.ABC):
         self._num_classes = num_classes
 
     @property
-    @abc.abstractmethod
-    def num_classes(self) -> int: ...
+    def num_classes(self) -> int:
+        return self._num_classes
 
     @num_classes.setter
-    @abc.abstractmethod
-    def num_classes(self, value: int) -> None: ...
+    def num_classes(self, value: int) -> None:
+        self._num_classes = value
 
     @abc.abstractmethod
     def forward(self, x: torch.Tensor) -> torch.Tensor: ...
