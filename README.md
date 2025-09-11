@@ -221,6 +221,8 @@ output:
 
 </details>
 
+See the [example config file](.config.example.yml) for more details.
+
 ### 📄 License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.

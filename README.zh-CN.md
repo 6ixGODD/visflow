@@ -34,19 +34,19 @@ pip install visflow
 
 ```yaml
 model:
-  architecture: resnet18    # 模型架构
-  pretrained: true         # 使用预训练权重
-  num_classes: 2          # 分类数量
+  architecture: resnet18 # 模型架构
+  pretrained: true       # 使用预训练权重
+  num_classes: 2         # 分类数量
 
 training:
-  device: cuda            # 设备选择
-  batch_size: 32         # 批次大小
-  epochs: 10             # 训练轮数
-  learning_rate: 0.001   # 学习率
-  optimizer: adam        # 优化器
+  device: cuda         # 设备选择
+  batch_size: 32       # 批次大小
+  epochs: 10           # 训练轮数
+  learning_rate: 0.001 # 学习率
+  optimizer: adam      # 优化器
 
 data:
-  train_dir: ./data/train  # 训练数据目录
+  train_dir: ./data/train # 训练数据目录
   val_dir: ./data/val     # 验证数据目录
   test_dir: ./data/test   # 测试数据目录
 
@@ -142,6 +142,85 @@ visflow gradcam [OPTIONS]
   -d, --device TEXT         设备 (cpu/cuda)
   -v, --verbose             启用详细日志
 ```
+
+### 📋 配置选项
+
+<details>
+<summary>示例配置</summary>
+
+```yaml
+logging:
+  backend: native  # Options: native, loguru
+  loglevel: info   # Options: debug, info, warning, error, critical
+
+seed: 42
+
+model:
+  architecture: resnet18
+  pretrained: true
+  num_classes: 2
+  weights_path: ~  # Optional custom weights
+
+training:
+  device: cuda
+  shuffle: true
+  batch_size: 32
+  weighted_sampling: false
+  drop_last: false
+  epochs: 10
+  learning_rate: 0.001
+  momentum: 0.9
+  weight_decay: 0.0001
+  optimizer: adam  # Options: sgd, adam, adamw
+  lr_scheduler: ~  # Options: step, cosine, plateau
+  early_stopping: true
+  early_stopping_patience: 5
+  label_smoothing: 0.0
+
+testing:
+  batch_size: 32
+
+data:
+  train_dir: ./data/train
+  val_dir: ./data/val
+  test_dir: ./data/test
+  num_workers: 4
+  pin_memory: false
+
+resize:
+  size: 224
+  interpolation: bicubic
+  antialias: true
+
+normalization:
+  enabled: true
+  mean: [0.485, 0.456, 0.406]
+  std: [0.229, 0.224, 0.225]
+
+augmentation:
+  horizontal_flip:
+    enabled: true
+    p: 0.5
+  rotation:
+    enabled: false
+    degrees: 30
+  color_jitter:
+    enabled: false
+    brightness: 0.2
+    contrast: 0.2
+    saturation: 0.2
+    hue: 0.1
+  # ... more augmentation options
+
+output:
+  output_dir: ./output
+  experiment_name: vision-research
+  checkpoint_frequency: 10
+```
+
+</details>
+
+详见[示例配置文件](.config.example.yml)。
 
 ### 📄 许可证
 
