@@ -4,7 +4,6 @@
 [![PyPI version](https://badge.fury.io/py/visflow.svg)](https://badge.fury.io/py/visflow)
 [![Python Version](https://img.shields.io/pypi/pyversions/visflow)](https://pypi.org/project/visflow/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Downloads](https://pepy.tech/badge/visflow)](https://pepy.tech/project/visflow)
 
 *A comprehensive computer vision framework for training, evaluation, and visualization*
 
