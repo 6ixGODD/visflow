@@ -157,11 +157,17 @@ class EpochLog(te.TypedDict):
     total_epochs: te.Required[int]
     """Total number of epochs."""
 
-    avg_metrics: te.Required[Metrics]
-    """Average metrics for the epoch."""
+    train_metrics: te.Required[Metrics]
+    """Average training metrics for the epoch."""
 
-    best_metrics: te.Required[Metrics]
-    """Best metrics achieved so far."""
+    val_metrics: te.Required[Metrics]
+    """Average validation metrics for the epoch."""
+
+    best_val_metrics: te.Required[Metrics]
+    """Best validation metrics achieved so far."""
+
+    best_epoch: int
+    """Epoch number where the best validation metrics were achieved."""
 
     epoch_time_sec: float
     """Time taken to complete the epoch in seconds."""

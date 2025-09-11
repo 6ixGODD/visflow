@@ -15,7 +15,7 @@ from visflow.resources.configs.output import OutputConfig
 from visflow.resources.configs.resize import ResizeConfig
 from visflow.resources.configs.testing import TestingConfig
 from visflow.resources.configs.training import TrainingConfig
-from visflow.types import FileLikes
+from visflow.types import PathLikes
 
 _T_contra = t.TypeVar('_T_contra', contravariant=True)
 
@@ -33,7 +33,7 @@ class BaseConfig(ps.BaseSettings):
     )
 
     @classmethod
-    def from_yaml(cls, fpath: FileLikes) -> t.Self:
+    def from_yaml(cls, fpath: PathLikes) -> t.Self:
         try:
             import yaml
             with open(fpath, 'r') as f:
@@ -46,7 +46,7 @@ class BaseConfig(ps.BaseSettings):
             )
 
     @classmethod
-    def from_json(cls, fpath: FileLikes) -> t.Self:
+    def from_json(cls, fpath: PathLikes) -> t.Self:
         import json
         with open(fpath, 'r') as f:
             content = json.load(f)
@@ -58,7 +58,7 @@ class BaseConfig(ps.BaseSettings):
         description="Random seed for reproducibility"
     )
 
-    def to_file(self, fpath: FileLikes) -> None:
+    def to_file(self, fpath: PathLikes) -> None:
         fpath = os.fspath(fpath)
         ext = os.path.splitext(fpath)[1].lower()
         if ext in {'.yaml', '.yml'}:

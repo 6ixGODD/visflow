@@ -43,7 +43,7 @@ def pixel_int(value: PixelValue, /) -> t.Tuple[int, int, int]:
     raise ValueError("Invalid pixel value type")
 
 
-FileLikes = os.PathLike[str] | str
+PathLikes = os.PathLike[str] | str
 
 
 class Checkpoint(te.TypedDict, total=False):
@@ -64,6 +64,12 @@ class Checkpoint(te.TypedDict, total=False):
 
     config: t.Dict[str, t.Any]
     """Configuration dictionary used for training."""
+
+    classes: t.List[str]
+    """List of class names."""
+
+    class_to_idx: t.Dict[str, int]
+    """Mapping from class names to indices."""
 
     extra_state: t.Dict[str, t.Any]
     """Any additional state information."""

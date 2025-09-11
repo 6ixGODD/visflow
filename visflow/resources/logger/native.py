@@ -10,7 +10,7 @@ import typing as t
 
 from visflow.resources.logger import BaseLogger, LoggerBackend
 from visflow.resources.logger.types import LoggingTarget, LogLevel
-from visflow.utils import ansi, singleton
+from visflow.utils import ansi
 
 _LEVEL_MAP: t.Dict[LogLevel, int] = {
     'debug': logging.DEBUG,
@@ -53,8 +53,8 @@ class ContextFormatter(logging.Formatter):
     ):
         super().__init__(datefmt='%Y-%m-%d %H:%M:%S')
         self.is_console = is_console
-        self.use_colors = (use_colors and
-                           ansi.ANSIFormatter.supports_color())
+        self.use_colors = use_colors
+
         if self.use_colors:
             ansi.ANSIFormatter.enable(True)
         if verbose is None:

@@ -33,18 +33,17 @@ from visflow.resources.logger import Logger
 from visflow.resources.logger.types import LoggingTarget
 from visflow.resources.models import BaseClassifier, make_model
 from visflow.types import Checkpoint
-from visflow.utils import gen_id, incr_path, seed
+from visflow.utils import gen_id, incr_path, seed, spinner
 from visflow.utils.functional import mixup
 
 
 class TrainPipeline(BasePipeline):
-    __slots__ = (
-        '_completed', 'config', 'logger', 'device', 'datamodule', 'best_acc',
+    __slots__ = BasePipeline.__slots__ + (
+        'config', 'logger', 'device', 'datamodule', 'best_acc',
         'train_loss_history', 'train_acc_history', 'val_loss_history',
         'val_acc_history', 'best_epoch', 'best_metrics', 'final_metrics',
         'start_time', 'best_val_outputs', 'best_val_targets',
-        'final_val_outputs',
-        'final_val_targets'
+        'final_val_outputs', 'final_val_targets'
     )
 
     def __init__(self, config: TrainConfig):
@@ -74,6 +73,7 @@ class TrainPipeline(BasePipeline):
         self.start_time = time.time()
 
         # Setup experiment -----------------------------------------------------
+        spinner.start('Setting up experiment...')
         seed(self.config.seed)
         exp_id = gen_id(
             pref=self.config.output.experiment_name,
@@ -91,20 +91,20 @@ class TrainPipeline(BasePipeline):
         )
         display = Display(context)
         self.logger.add_target(
-            LoggingTarget(
-                logname='stdout',
-                loglevel=self.config.logging.loglevel
-            ),
             LoggingTarget(logname=exp_dir / '.log.json', loglevel='info'),
         )
         logger = self.logger.with_context(TAG='train', **context)
         self.config.to_file(fpath=exp_dir / '.config.json')
         env = env_info()
+        spinner.succeed('Experiment setup completed.')
 
         # Prepare data loaders -------------------------------------------------
+        spinner.start('Preparing data loaders...')
         train_loader, val_loader, test_loader = self.datamodule.loaders
+        spinner.succeed('Data loaders ready.')
 
         # Initialize model -----------------------------------------------------
+        spinner.start('Initializing model...')
         model = make_model(
             name=self.config.model.architecture,
             pretrained=self.config.model.pretrained,
@@ -118,6 +118,7 @@ class TrainPipeline(BasePipeline):
         else:
             x = y = size
         model_summary = summary(model, (3, x, y))
+        spinner.succeed('Model initialized.')
 
         # Setup loss function and optimizer ------------------------------------
         criterion = self._setup_criterion()
@@ -209,8 +210,10 @@ class TrainPipeline(BasePipeline):
             epoch_log = EpochLog(
                 epoch=epoch,
                 total_epochs=self.config.training.epochs,
-                avg_metrics=Metrics(loss=train_loss, accuracy=train_acc),
-                best_metrics=t.cast(Metrics, self.best_metrics),
+                train_metrics=Metrics(loss=train_loss, accuracy=train_acc),
+                val_metrics=val_metrics,
+                best_val_metrics=self.best_metrics,
+                best_epoch=self.best_epoch,
                 epoch_time_sec=epoch_time,
                 initial_lr=initial_lr,
                 final_lr=optimizer.param_groups[0]['lr'],
@@ -434,7 +437,7 @@ class TrainPipeline(BasePipeline):
                 )
 
             # Update metrics
-            running_loss += loss.item()
+            running_loss += loss.item() * data.size(0)
             running_corrects += batch_acc * data.size(0)
             total_samples += data.size(0)
 
@@ -452,7 +455,7 @@ class TrainPipeline(BasePipeline):
                 logger
             )
 
-        epoch_loss = running_loss / len(train_loader)
+        epoch_loss = running_loss / total_samples
         epoch_acc = running_corrects / total_samples
         return epoch_loss, epoch_acc
 
@@ -565,6 +568,7 @@ class TrainPipeline(BasePipeline):
     ) -> t.Tuple[float, Metrics, torch.Tensor, torch.Tensor]:
         model.eval()
         val_loss = 0.0
+        total_samples = 0
         all_outputs = []
         all_targets = []
 
@@ -573,12 +577,13 @@ class TrainPipeline(BasePipeline):
                 data, target = data.to(self.device), target.to(self.device)
                 output = model(data)
                 val_loss += criterion(output, target).item() * data.size(0)
+                total_samples += data.size(0)
                 all_outputs.append(output)
                 all_targets.append(target)
 
         all_outputs_tensor = torch.cat(all_outputs, dim=0)
         all_targets_tensor = torch.cat(all_targets, dim=0)
-        val_loss /= len(all_targets)
+        val_loss /= total_samples
 
         metrics = compute_metric(
             all_outputs_tensor,
@@ -646,7 +651,9 @@ class TrainPipeline(BasePipeline):
         # Plot ROC curves for validation (best), validation (final), and test
         if self.best_val_outputs is not None:
             plot_roc_curve(
-                y_true=self.best_val_targets or torch.tensor([]),
+                y_true=(self.best_val_targets
+                        if self.best_val_targets is not None
+                        else torch.tensor([])),
                 y_pred_probs=torch.softmax(self.best_val_outputs, dim=1),
                 num_classes=self.config.model.num_classes,
                 class_names=class_names,
@@ -656,7 +663,9 @@ class TrainPipeline(BasePipeline):
 
         if self.final_val_outputs is not None:
             plot_roc_curve(
-                y_true=self.final_val_targets or torch.tensor([]),
+                y_true=(self.final_val_targets
+                        if self.final_val_targets is not None
+                        else torch.tensor([])),
                 y_pred_probs=torch.softmax(self.final_val_outputs, dim=1),
                 num_classes=self.config.model.num_classes,
                 class_names=class_names,
@@ -760,15 +769,17 @@ class TrainPipeline(BasePipeline):
         mode: t.Literal['best', 'final', 'frequent'],
     ) -> None:
         """Save model checkpoint."""
+        ckpt_dir = exp_dir / 'checkpoints'
+        ckpt_dir.mkdir(exist_ok=True)
         if mode == 'best':
             # Remove previous best checkpoints
-            for f in exp_dir.glob('best_epoch*.pth'):
+            for f in ckpt_dir.glob('best_epoch*.pth'):
                 f.unlink(missing_ok=True)
-            fname = f'best_epoch{epoch}'
+            fname = f'best_epoch_{epoch}'
         elif mode == 'final':
-            fname = f'final_epoch{epoch}'
+            fname = f'final_epoch_{epoch}'
         elif mode == 'frequent':
-            fname = f'epoch{epoch}'
+            fname = f'epoch_{epoch}'
         else:
             raise ValueError(f"Unsupported save mode: {mode}")
 
@@ -779,9 +790,11 @@ class TrainPipeline(BasePipeline):
             scheduler_state_dict=scheduler.state_dict() if scheduler else None,
             accuracy=accuracy,
             config=self.config.to_dict(),
+            classes=self.datamodule.classes,
+            class_to_idx=self.datamodule.class_to_idx
         )
 
-        checkpoint_path = exp_dir / f'{fname}.pth'
+        checkpoint_path = ckpt_dir / f'{fname}.pth'
         torch.save(ckpt, checkpoint_path)
         logger.info(f"Checkpoint saved: {checkpoint_path}")
 
@@ -793,6 +806,9 @@ class TrainPipeline(BasePipeline):
     ) -> None:
         """Save comprehensive metrics including test, best validation,
         and final validation."""
+        metric_dir = exp_dir / 'metrics'
+        metric_dir.mkdir(exist_ok=True)
+
         # Prepare metrics data
         metrics_data = []
 
@@ -832,7 +848,7 @@ class TrainPipeline(BasePipeline):
         # Save to CSV
         if metrics_data:
             df = pd.DataFrame(metrics_data)
-            metrics_path = exp_dir / 'comprehensive_metrics.csv'
+            metrics_path = metric_dir / 'comprehensive_metrics.csv'
             df.to_csv(metrics_path, index=False)
             logger.info(f"Comprehensive metrics saved: {metrics_path}")
 
@@ -841,6 +857,6 @@ class TrainPipeline(BasePipeline):
             dataset_name = data['dataset']
             dataset_metrics = {k: v for k, v in data.items() if k != 'dataset'}
             df_single = pd.DataFrame([dataset_metrics])
-            single_path = exp_dir / f'metrics_{dataset_name}.csv'
+            single_path = metric_dir / f'metrics_{dataset_name}.csv'
             df_single.to_csv(single_path, index=False)
             logger.info(f"Individual metrics saved: {single_path}")

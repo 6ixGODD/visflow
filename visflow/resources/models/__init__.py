@@ -31,16 +31,32 @@ class BaseClassifier(nn.Module, abc.ABC):
     @abc.abstractmethod
     def forward(self, x: torch.Tensor) -> torch.Tensor: ...
 
-    def loads(
+    def load(
         self,
-        path: str | os.PathLike[str],
+        ckpt: Checkpoint,
         *,
         strict: bool = True,
         map_location: str | torch.device | None = None
     ) -> None:
-        path = p.Path(path)
-        ckpt: Checkpoint = torch.load(path, map_location=map_location or "cpu")
+        classes = ckpt.get('classes', [])
+        self.num_classes = len(classes) or self.num_classes
         self.load_state_dict(ckpt['model_state_dict'], strict=strict)
+
+    def loads(
+        self,
+        ckpt_path: str | os.PathLike[str],
+        *,
+        strict: bool = True,
+        map_location: str | torch.device | None = None
+    ) -> None:
+        path = p.Path(ckpt_path)
+        ckpt: Checkpoint = torch.load(path, map_location=map_location or "cpu")
+        self.load(ckpt, strict=strict, map_location=map_location)
+
+    def last_conv(self) -> nn.Module:
+        raise NotImplementedError(
+            f"{self.__class__.__name__} does not implement last_conv method."
+        )
 
 
 MODEL_REGISTRY: t.Dict[str, t.Callable[..., BaseClassifier]] = {}
@@ -183,6 +199,74 @@ class TorchVisionClassifier(BaseClassifier):
                 f"Head replacement not implemented for {type(m).__name__}. "
             )
 
+    def last_conv(self) -> nn.Module:
+        m = self.backbone
+
+        if isinstance(m, models.ResNet):
+            block = m.layer4[-1]
+            if hasattr(block, "conv3"):  # Bottleneck
+                return block.conv3
+            else:  # BasicBlock
+                return block.conv2
+
+        elif isinstance(m, models.VGG):
+            return m.features[-1]
+
+        elif isinstance(m, models.SqueezeNet):
+            return m.features[-1]
+
+        elif isinstance(m, models.DenseNet):
+            block = m.features[-1]
+            return block[-1].conv2
+
+        elif isinstance(m, models.Inception3):
+            return m.Mixed_7c.branch3[0]
+
+        elif isinstance(m, models.MobileNetV2):
+            block = m.features[-1]
+            return block.conv[-1]
+
+        elif isinstance(m, models.MobileNetV3):
+            return m.features[-1][0]
+
+        elif isinstance(m, models.EfficientNet):
+            return m.features[-1][0]
+
+        elif isinstance(m, models.ConvNeXt):
+            return m.stages[-1][-1].dwconv
+
+        elif isinstance(m, models.GoogLeNet):
+            return m.inception5b.branch3[0]
+
+        elif isinstance(m, models.RegNet):
+            block = m.trunk_output[-1]
+            return block[-1]
+
+        elif isinstance(m, models.ShuffleNetV2):
+            return m.stage4[-1].conv2
+
+        elif isinstance(m, models.VisionTransformer):
+            raise NotImplementedError(
+                "last_conv is not defined for VisionTransformer (no conv "
+                "layer)."
+            )
+
+        elif isinstance(m, models.SwinTransformer):
+            raise NotImplementedError(
+                "last_conv is not defined for SwinTransformer (no conv layer)."
+            )
+
+        elif isinstance(m, models.MaxVit):
+            raise NotImplementedError(
+                "last_conv is not defined for MaxVit (no conv layer)."
+            )
+
+        else:
+            raise NotImplementedError(
+                f"last_conv not implemented for {type(m).__name__}. "
+                f"Please check the model architecture."
+            )
+
 
 def make_model(
     name: str,
@@ -208,3 +292,43 @@ def make_model(
         return model
 
     raise ValueError(f"Unknown model: {name}")
+
+
+def load_model(
+    ckpt_path: str | os.PathLike[str],
+    *,
+    map_location: str | torch.device | None = None,
+    strict: bool = True,
+    **kwargs: t.Any
+) -> BaseClassifier:
+    path = p.Path(ckpt_path)
+    if not path.exists():
+        raise FileNotFoundError(f"Checkpoint not found: {path}")
+
+    return load_model_from_ckpt(
+        torch.load(path, map_location=map_location or "cpu"),
+        strict=strict,
+        map_location=map_location,
+        **kwargs
+    )
+
+
+def load_model_from_ckpt(
+    ckpt: Checkpoint,
+    *,
+    map_location: str | torch.device | None = None,
+    strict: bool = True,
+    **kwargs: t.Any
+) -> BaseClassifier:
+    model_name = ckpt.get('config', {}).get('model', {}).get('architecture', '')
+    if not model_name:
+        raise ValueError("Checkpoint does not contain 'model_name'.")
+
+    num_classes = len(ckpt.get('classes', [])) or kwargs.pop('num_classes', 2)
+    model = make_model(
+        model_name,
+        num_classes=num_classes,
+        **kwargs
+    )
+    model.load(ckpt, strict=strict, map_location=map_location)
+    return model

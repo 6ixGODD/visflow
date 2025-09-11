@@ -336,3 +336,6 @@ class Logger(BaseLogger):
             backend=backend,
             initial_ctx=self.config.extra_context
         )
+        self.add_target(
+            LoggingTarget(logname='stdout', loglevel=self.config.loglevel)
+        )

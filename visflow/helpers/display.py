@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import datetime
+import os
 import time
 import typing as t
 
@@ -276,6 +277,7 @@ class Display:
         self.start_time = 0.0
 
     def display_start(self, start_log: ExperimentStartLog) -> None:
+        self.clear()
         self.start_time = time.time()
         self.console.clear()
 
@@ -297,7 +299,7 @@ class Display:
         )
         exp_panel = rpanel.Panel(
             exp_info,
-            title="[bold green]Experiment Information[/bold green]",
+            title="[bold cyan]Experiment Information[/bold cyan]",
             box=rbox.ROUNDED,
             padding=(1, 2)
         )
@@ -319,7 +321,7 @@ class Display:
         dataset_table = make_dataset_table(start_log["dataset"])
         dataset_panel = rpanel.Panel(
             dataset_table,
-            title="[bold yellow]Dataset Information[/bold yellow]",
+            title="[bold cyan]Dataset Information[/bold cyan]",
             box=rbox.ROUNDED,
             padding=(1, 2)
         )
@@ -330,7 +332,7 @@ class Display:
         config_table = make_config_table(start_log["config"])
         config_panel = rpanel.Panel(
             config_table,
-            title="[bold blue]Configuration[/bold blue]",
+            title="[bold cyan]Configuration[/bold cyan]",
             box=rbox.ROUNDED,
             padding=(1, 2)
         )
@@ -344,7 +346,7 @@ class Display:
             )
             layers_panel = rpanel.Panel(
                 layers_table,
-                title="[bold magenta]Model Architecture[/bold magenta]",
+                title="[bold cyan]Model Architecture[/bold cyan]",
                 box=rbox.ROUNDED,
                 padding=(1, 2)
             )
@@ -355,7 +357,7 @@ class Display:
         model_table = make_model_summary_table(start_log["model_summary"])
         model_panel = rpanel.Panel(
             model_table,
-            title="[bold red]Model Summary[/bold red]",
+            title="[bold cyan]Model Summary[/bold cyan]",
             box=rbox.ROUNDED,
             padding=(1, 2)
         )
@@ -389,8 +391,8 @@ class Display:
             epoch_header += f" | Time: {epoch_log['epoch_time_sec']:.2f}s"
 
         self.console.print()
-        self.console.print(rtext.Text(epoch_header, style="bold yellow"))
-        self.console.print(rtext.Text(progress_str, style="blue"))
+        self.console.print(rtext.Text(epoch_header, style="bold green"))
+        self.console.print(rtext.Text(progress_str, style="white"))
 
         # Current epoch metrics table
         metrics_table = rtable.Table(
@@ -399,29 +401,34 @@ class Display:
             padding=(0, 1)
         )
         metrics_table.add_column("Metric", style="cyan", no_wrap=True)
-        metrics_table.add_column("Current", style="white", justify="right")
-        metrics_table.add_column("Best", style="green", justify="right")
+        metrics_table.add_column("Train", style="yellow", justify="right")
+        metrics_table.add_column("Val", style="white", justify="right")
+        metrics_table.add_column("Best Val", style="green", justify="right")
 
-        avg_metrics = epoch_log["avg_metrics"]
-        best_metrics = epoch_log["best_metrics"]
+        train_metrics = epoch_log["train_metrics"]
+        val_metrics = epoch_log["val_metrics"]
+        best_val_metrics = epoch_log["best_val_metrics"]
 
         # Display main metrics
-        for metric_name in ["loss",
-                            "accuracy",
-                            "precision",
-                            "recall",
-                            "f1_score",
-                            "auc_roc"]:
-            current_val = avg_metrics.get(metric_name)  # type: ignore
-            best_val = best_metrics.get(metric_name)  # type: ignore
+        for metric_name in ["loss", "accuracy", "precision", "recall",
+                            "f1_score", "auc_roc"]:
+            train_val = train_metrics.get(metric_name)  # type: ignore
+            val_val = val_metrics.get(metric_name)  # type: ignore
+            best_val = best_val_metrics.get(metric_name)  # type: ignore
 
-            if current_val is not None:
-                current_str = f"{current_val:.4f}"
+            if train_val is not None or val_val is not None:
+                train_str = (f"{train_val:.4f}"
+                             if train_val is not None else "N/A")
+                val_str = f"{val_val:.4f}" if val_val is not None else "N/A"
                 best_str = f"{best_val:.4f}" if best_val is not None else "N/A"
 
                 # Add visual indicator for improvement
                 indicator = ""
-                if best_val is not None and current_val == best_val:
+                if (
+                    best_val is not None and
+                    val_val is not None and
+                    val_val == best_val
+                ):
                     if metric_name == "loss":
                         indicator = " ⬇️"  # Lower is better for loss
                     else:
@@ -429,44 +436,62 @@ class Display:
 
                 metrics_table.add_row(
                     metric_name.replace("_", " ").title(),
-                    current_str + indicator,
+                    train_str,
+                    val_str + indicator,
                     best_str
                 )
 
         # Display extra metrics if available
-        if "extras" in avg_metrics and avg_metrics["extras"]:
-            metrics_table.add_row("", "", "")  # Separator
-            for extra_metric, value in avg_metrics["extras"].items():
-                best_extra = best_metrics.get("extras", {}).get(
-                    extra_metric
-                ) if "extras" in best_metrics else None
-                current_str = f"{value:.4f}"
-                best_str = f"{best_extra:.4f}" if best_extra is not None else\
-                    "N/A"
+        train_extras = (train_metrics.get("extras", {})
+                        if "extras" in train_metrics else {})
+        val_extras = (val_metrics.get("extras", {})
+                      if "extras" in val_metrics else {})
+        best_extras = (best_val_metrics.get("extras", {})
+                       if "extras" in best_val_metrics else {})
+
+        all_extra_keys = (set(train_extras.keys()) |
+                          set(val_extras.keys()) |
+                          set(best_extras.keys()))
+
+        if all_extra_keys:
+            metrics_table.add_row("", "", "", "")  # Separator
+            for extra_metric in sorted(all_extra_keys):
+                train_extra = train_extras.get(extra_metric)
+                val_extra = val_extras.get(extra_metric)
+                best_extra = best_extras.get(extra_metric)
+
+                train_str = f"{train_extra:.4f}" if train_extra is not None else "N/A"
+                val_str = f"{val_extra:.4f}" if val_extra is not None else "N/A"
+                best_str = f"{best_extra:.4f}" if best_extra is not None else "N/A"
+
                 metrics_table.add_row(
                     extra_metric.replace("_", " ").title(),
-                    current_str,
+                    train_str,
+                    val_str,
                     best_str
                 )
 
         self.console.print(metrics_table)
 
-        # Learning rate information if available
+        # Learning rate and best epoch information
+        info_table = rtable.Table(
+            box=rbox.SIMPLE,
+            show_header=False,
+            padding=(0, 1)
+        )
+        info_table.add_column("Key", style="cyan", no_wrap=True)
+        info_table.add_column("Value", style="white")
+
         if "initial_lr" in epoch_log:
-            lr_table = rtable.Table(
-                box=rbox.SIMPLE,
-                show_header=False,
-                padding=(0, 1)
-            )
-            lr_table.add_column("Key", style="cyan", no_wrap=True)
-            lr_table.add_column("Value", style="white")
+            info_table.add_row("Initial LR", f"{epoch_log['initial_lr']:.6f}")
+        if "final_lr" in epoch_log:
+            info_table.add_row("Final LR", f"{epoch_log['final_lr']:.6f}")
 
-            if "initial_lr" in epoch_log:
-                lr_table.add_row("Initial LR", f"{epoch_log['initial_lr']:.6f}")
-            if "final_lr" in epoch_log:
-                lr_table.add_row("Final LR", f"{epoch_log['final_lr']:.6f}")
+        if "best_epoch" in epoch_log:
+            info_table.add_row("Best Epoch", str(epoch_log["best_epoch"]))
 
-            self.console.print(lr_table)
+        if info_table.row_count > 0:
+            self.console.print(info_table)
 
         # Add a subtle separator between epochs
         separator = "─" * 60
@@ -490,7 +515,7 @@ class Display:
         results_table = make_final_metrics_table(end_log)
         results_panel = rpanel.Panel(
             results_table,
-            title="[bold green]Experiment Results[/bold green]",
+            title="[bold cyan]Experiment Results[/bold cyan]",
             box=rbox.ROUNDED,
             padding=(1, 2)
         )
@@ -513,7 +538,7 @@ class Display:
 
         time_panel = rpanel.Panel(
             time_table,
-            title="[bold blue]Execution Summary[/bold blue]",
+            title="[bold cyan]Execution Summary[/bold cyan]",
             box=rbox.ROUNDED,
             padding=(1, 2)
         )
@@ -533,3 +558,7 @@ class Display:
                 rtext.Text("✨ Experiment Complete! ✨", style="bold green"),
                 justify="center"
             )
+
+    @staticmethod
+    def clear():
+        os.system('cls' if os.name == 'nt' else 'clear')

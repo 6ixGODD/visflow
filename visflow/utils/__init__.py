@@ -9,6 +9,7 @@ import threading
 import typing as t
 import uuid
 
+import halo
 import numpy as np
 import torch
 
@@ -176,3 +177,6 @@ def incr_path(root: p.Path, name: str, sep: str = '-') -> p.Path:
             new_candidate.mkdir(parents=True, exist_ok=True)
             return new_candidate
         i += 1
+
+
+spinner = halo.Halo(spinner='dots')

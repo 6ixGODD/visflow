@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import typing as t
 
-from visflow.types import FileLikes
+from visflow.types import PathLikes
 
 LogLevel: t.TypeAlias = t.Literal[
     'debug',
@@ -19,7 +19,7 @@ class LoggingTarget:
     def __init__(
         self,
         *,
-        logname: t.Literal['stdout', 'stderr'] | FileLikes = 'stdout',
+        logname: t.Literal['stdout', 'stderr'] | PathLikes = 'stdout',
         loglevel: LogLevel = 'info'
     ) -> None:
         self.logname = logname

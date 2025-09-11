@@ -219,3 +219,7 @@ class ImageDatamodule:
     @property
     def classes(self) -> list[str]:
         return self.train_set.classes
+
+    @property
+    def class_to_idx(self) -> dict[str, int]:
+        return self.train_set.class_to_idx
