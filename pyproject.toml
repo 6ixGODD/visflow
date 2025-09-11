@@ -1,35 +1,131 @@
 [project]
 name = "visflow"
 version = "1.0.0"
-description = ""
+description = "A comprehensive computer vision framework for training, evaluation, and visualization with support for multiple architectures and GradCAM analysis"
 authors = [
-    {name = "BoChen SHEN",email = "6goddddddd@gmail.com"}
+    {name = "BoChen SHEN", email = "6goddddddd@gmail.com"}
 ]
 readme = "README.md"
+license = {text = "MIT"}
+homepage = "https://github.com/6ixGODD/visflow"
+repository = "https://github.com/6ixGODD/visflow"
+keywords = ["computer vision", "deep learning", "pytorch", "gradcam", "machine learning", "neural networks"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
 requires-python = ">=3.11,<=3.12"
 dependencies = [
-    "pydantic (>=2.11.7,<3.0.0)",
-    "pydantic-settings (>=2.10.1,<3.0.0)",
-    "seaborn (>=0.13.2,<0.14.0)",
-    "onnxruntime (>=1.22.1,<2.0.0)",
-    "onnx (>=1.19.0,<2.0.0)",
-    "scikit-learn (>=1.7.1,<2.0.0)",
-    "matplotlib (>=3.10.6,<4.0.0)",
-    "numpy (>=2.3.2,<3.0.0)",
-    "tqdm (>=4.67.1,<5.0.0)",
-    "grad-cam (>=1.5.5,<2.0.0)",
-    "torch (>=2.8.0,<3.0.0)",
-    "torchvision (>=0.23.0,<0.24.0)",
-    "pyyaml (>=6.0.2,<7.0.0)",
-    "psutil (>=7.0.0,<8.0.0)",
-    "pyfiglet (>=1.0.4,<2.0.0)",
-    "rich (>=14.1.0,<15.0.0)",
-    "halo (>=0.0.31,<0.0.32)",
+    "pydantic>=2.11.7,<3.0.0",
+    "pydantic-settings>=2.10.1,<3.0.0",
+    "seaborn>=0.13.2,<0.14.0",
+    "onnxruntime>=1.22.1,<2.0.0",
+    "onnx>=1.19.0,<2.0.0",
+    "scikit-learn>=1.7.1,<2.0.0",
+    "matplotlib>=3.10.6,<4.0.0",
+    "numpy>=2.3.2,<3.0.0",
+    "tqdm>=4.67.1,<5.0.0",
+    "grad-cam>=1.5.5,<2.0.0",
+    "torch>=2.8.0,<3.0.0",
+    "torchvision>=0.23.0,<0.24.0",
+    "pyyaml>=6.0.2,<7.0.0",
+    "psutil>=7.0.0,<8.0.0",
+    "pyfiglet>=1.0.4,<2.0.0",
+    "rich>=14.1.0,<15.0.0",
+    "halo>=0.0.31,<0.0.32",
 ]
 
-
 [project.optional-dependencies]
-test = ["mypy (>=1.17.1,<2.0.0)"]
+test = ["mypy>=1.17.1,<2.0.0", "pytest>=7.0.0", "pytest-cov>=4.0.0"]
+dev = ["black>=23.0.0", "isort>=5.12.0", "flake8>=6.0.0"]
+
+[project.scripts]
+visflow = "visflow._cli.main:main"
+
+[project.urls]
+Homepage = "https://github.com/6ixGODD/visflow"
+Repository = "https://github.com/6ixGODD/visflow"
+Documentation = "https://github.com/6ixGODD/visflow#readme"
+"Bug Tracker" = "https://github.com/6ixGODD/visflow/issues"
+
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.poetry]
+name = "visflow"
+version = "1.0.0"
+description = "A comprehensive computer vision framework for training, evaluation, and visualization with support for multiple architectures and GradCAM analysis"
+authors = ["BoChen SHEN <6goddddddd@gmail.com>"]
+readme = "README.md"
+license = "MIT"
+homepage = "https://github.com/6ixGODD/visflow"
+repository = "https://github.com/6ixGODD/visflow"
+keywords = ["computer vision", "deep learning", "pytorch", "gradcam"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+
+[tool.poetry.dependencies]
+python = ">=3.11,<=3.12"
+pydantic = ">=2.11.7,<3.0.0"
+pydantic-settings = ">=2.10.1,<3.0.0"
+seaborn = ">=0.13.2,<0.14.0"
+onnxruntime = ">=1.22.1,<2.0.0"
+onnx = ">=1.19.0,<2.0.0"
+scikit-learn = ">=1.7.1,<2.0.0"
+matplotlib = ">=3.10.6,<4.0.0"
+numpy = ">=2.3.2,<3.0.0"
+tqdm = ">=4.67.1,<5.0.0"
+grad-cam = ">=1.5.5,<2.0.0"
+torch = ">=2.8.0,<3.0.0"
+torchvision = ">=0.23.0,<0.24.0"
+pyyaml = ">=6.0.2,<7.0.0"
+psutil = ">=7.0.0,<8.0.0"
+pyfiglet = ">=1.0.4,<2.0.0"
+rich = ">=14.1.0,<15.0.0"
+halo = ">=0.0.31,<0.0.32"
+
+[tool.poetry.group.test.dependencies]
+mypy = ">=1.17.1,<2.0.0"
+pytest = ">=7.0.0"
+pytest-cov = ">=4.0.0"
+
+[tool.poetry.group.dev.dependencies]
+black = ">=23.0.0"
+isort = ">=5.12.0"
+flake8 = ">=6.0.0"
+
+[tool.poetry.scripts]
+visflow = "visflow._cli.main:main"
+
+[tool.black]
+line-length = 88
+target-version = ['py311', 'py312']
+
+[tool.isort]
+profile = "black"
+multi_line_output = 3
+line_length = 88
+
+[tool.mypy]
+python_version = "3.11"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
