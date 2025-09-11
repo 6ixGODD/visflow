@@ -38,7 +38,7 @@ training:
   batch_size: 32             # Batch size for training
   weighted_sampling: false   # Use weighted sampling to handle class imbalance
   drop_last: false           # Drop the last incomplete batch
-  epochs: 10                 # Number of training epochs
+  epochs: 5                  # Number of training epochs
   learning_rate: 0.001       # Learning rate
   momentum: 0.9              # Momentum for SGD optimizer
   weight_decay: 0.0001       # Weight decay (L2 regularization)
