@@ -60,7 +60,7 @@ class Args(BaseArgs):
         parser.add_argument(
             '--output-dir', '-o',
             type=str,
-            default=cls._field_defaults['output_dir'],
+            default='./output',
             help='Directory to save the output visualizations. (default: '
                  '%(default)s)'
         )
@@ -74,7 +74,6 @@ class Args(BaseArgs):
         parser.add_argument(
             '--heatmap-only',
             action='store_true',
-            default=cls._field_defaults['heatmap_only'],
             help='If set, only the heatmap will be saved without overlaying '
                  'it on the original image. (default: %(default)s)'
         )
@@ -89,7 +88,7 @@ class Args(BaseArgs):
         parser.add_argument(
             '--alpha', '-a',
             type=float,
-            default=cls._field_defaults['alpha'],
+            default=0.5,
             help='Transparency factor for overlaying the heatmap on the '
                  'original image. Value should be between 0 and 1. (default: '
                  '%(default)s)'
@@ -98,20 +97,18 @@ class Args(BaseArgs):
             '--colormap', '-c',
             type=str,
             choices=['jet', 'turbo', 'viridis', 'inferno', 'plasma'],
-            default=cls._field_defaults['colormap'],
+            default='jet',
             help='Colormap to use for the heatmap. (default: %(default)s)'
         )
         parser.add_argument(
             '--eigen-smooth',
             action='store_true',
-            default=cls._field_defaults['eigen_smooth'],
             help='If set, apply eigen-smoothing to the Grad-CAM. (default: '
                  '%(default)s)'
         )
         parser.add_argument(
             '--aug-smooth',
             action='store_true',
-            default=cls._field_defaults['aug_smooth'],
             help='If set, apply augmented smoothing to the Grad-CAM. (default: '
                  '%(default)s)'
         )
@@ -127,7 +124,6 @@ class Args(BaseArgs):
         parser.add_argument(
             '--verbose', '-v',
             action='store_true',
-            default=cls._field_defaults['verbose'],
             help='If set, enable verbose logging. (default: %(default)s)'
         )
 
