@@ -20,6 +20,7 @@ from visflow.context import (
 )
 from visflow.data import ImageDatamodule
 from visflow.helpers.display import Display
+from visflow.helpers.early_stopping import EarlyStopping
 from visflow.helpers.functional import env_info, MixUpLoss, summary
 from visflow.helpers.metrics import compute_metric
 from visflow.helpers.plotting import (
@@ -28,7 +29,7 @@ from visflow.helpers.plotting import (
     plot_training_curves,
 )
 from visflow.pipelines import BasePipeline
-from visflow.resources.configs import TrainConfig
+from visflow.resources.config import TrainConfig
 from visflow.resources.logger import Logger
 from visflow.resources.logger.types import LoggingTarget
 from visflow.resources.models import BaseClassifier, make_model
@@ -139,7 +140,16 @@ class TrainPipeline(BasePipeline):
         initial_lr = optimizer.param_groups[0]['lr']
         checkpoint_freq = getattr(self.config.output, 'checkpoint_frequency', 0)
 
+        early_stopping = EarlyStopping(
+            patience=self.config.training.early_stopping_patience,
+            min_delta=self.config.training.early_stopping_min_delta,
+            mode=('min'  # type: ignore
+                  if self.config.training.early_stopping_target == 'loss'
+                  else 'max'),
+        )
+
         val_acc = 0.0  # Initialize val_acc for first epoch
+        epoch = 0  # cache epoch for saving final checkpoint
         for epoch in range(1, self.config.training.epochs + 1):
             epoch_start_time = time.time()
 
@@ -226,12 +236,35 @@ class TrainPipeline(BasePipeline):
                 f'Val Loss: {val_loss:.4f}, Val Acc: {val_acc:.4f}',
                 **epoch_log
             )
-
+            # Check early stopping
+            if self.config.training.early_stopping_target == 'loss':
+                score = val_loss
+            elif self.config.training.early_stopping_target == 'accuracy':
+                score = val_acc
+            elif self.config.training.early_stopping_target == 'f1':
+                score = val_metrics['f1_score']
+            elif self.config.training.early_stopping_target == 'precision':
+                score = val_metrics['precision']
+            elif self.config.training.early_stopping_target == 'recall':
+                score = val_metrics['recall']
+            else:
+                raise ValueError(
+                    f"Unsupported early_stopping_target: "
+                    f"{self.config.training.early_stopping_target}"
+                )
+            if early_stopping.step(score):
+                logger.info(
+                    f"Early stopping triggered at epoch {epoch}. "
+                    f"No improvement in "
+                    f"{self.config.training.early_stopping_target} for "
+                    f"{self.config.training.early_stopping_patience} epochs."
+                )
+                break
         # Save final checkpoint
         self.save(
             logger,
             exp_dir,
-            self.config.training.epochs,
+            epoch,
             model,
             optimizer,
             scheduler,

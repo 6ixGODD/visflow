@@ -9,7 +9,7 @@ from torchvision.datasets import ImageFolder
 from torchvision.transforms.functional import InterpolationMode
 
 from visflow.context import DatasetInfo
-from visflow.resources.configs import TrainConfig
+from visflow.resources.config import TrainConfig
 from visflow.utils.functional import compute_class_weights
 
 
@@ -29,7 +29,7 @@ class ImageDatamodule:
                 x += self.config.augmentation.crop.margin[0]
                 y += self.config.augmentation.crop.margin[1]
 
-        train_transforms: t.List[t.Callable[..., torch.Tensor]] = [
+        train_transforms: t.List[t.Callable[..., t.Any]] = [
             transforms.Resize(
                 size=(x, y),
                 interpolation=InterpolationMode(

@@ -4,9 +4,9 @@ import typing as t
 
 import pydantic as pydt
 
-from visflow.resources.configs.lr_scheduler.cosine import CosineConfig
-from visflow.resources.configs.lr_scheduler.plateau import PlateauConfig
-from visflow.resources.configs.lr_scheduler.step import StepConfig
+from visflow.resources.config.lr_scheduler.cosine import CosineConfig
+from visflow.resources.config.lr_scheduler.plateau import PlateauConfig
+from visflow.resources.config.lr_scheduler.step import StepConfig
 
 
 class TrainingConfig(pydt.BaseModel):
@@ -102,6 +102,20 @@ class TrainingConfig(pydt.BaseModel):
         ge=1,
         description="Number of epochs with no improvement after which "
                     "training will be stopped."
+    )
+
+    early_stopping_min_delta: float = pydt.Field(
+        default=0.0,
+        ge=0.0,
+        description="Minimum change in the monitored metric to qualify as "
+                    "an improvement."
+    )
+
+    early_stopping_target: t.Literal[
+        'loss', 'accuracy', 'f1', 'precision', 'recall'
+    ] = pydt.Field(
+        default='loss',
+        description="Metric to monitor for early stopping."
     )
 
     label_smoothing: float = pydt.Field(

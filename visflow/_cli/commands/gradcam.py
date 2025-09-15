@@ -12,37 +12,20 @@ if t.TYPE_CHECKING:
 
 
 class Args(BaseArgs):
-    __slots__ = (
-        'ckpt_path', 'image_path', 'output_dir', 'target_layer', 'heatmap_only',
-        'target_class', 'alpha', 'colormap', 'eigen_smooth', 'aug_smooth',
-        'device', 'verbose'
-    )
-    _field_defaults = {
-        'output_dir': './output',
-        'heatmap_only': False,
-        'alpha': 0.5,
-        'colormap': 'jet',
-        'eigen_smooth': False,
-        'aug_smooth': False,
-        'device': 'cuda',
-        'verbose': False,
-    }
-    _field_optional = {'target_class', 'target_layer', 'device'}
-
     ckpt_path: str
     image_path: str
-    output_dir: str
-    target_layer: str | None
-    heatmap_only: bool
-    target_class: int | str | None
-    alpha: float
-    colormap: t.Literal['jet', 'turbo', 'viridis', 'inferno', 'plasma']
-    eigen_smooth: bool
-    aug_smooth: bool
-    device: t.Literal['cpu', 'cuda'] | None
-    verbose: bool
+    output_dir: str = './output'
+    target_layer: str | None = None
+    heatmap_only: bool = False
+    target_class: int | str | None = None
+    alpha: float = 0.5
+    colormap: t.Literal['jet', 'turbo', 'viridis', 'inferno', 'plasma'] = 'jet'
+    eigen_smooth: bool = False
+    aug_smooth: bool = False
+    device: t.Literal['cpu', 'cuda'] | None = 'cuda'
+    verbose: bool = False
 
-    def _func(self) -> None:
+    def run(self) -> None:
         if self.verbose:
             os.environ['VF_VERBOSE'] = '1'
         pipeline = GradCAMPipeline(
@@ -62,13 +45,6 @@ class Args(BaseArgs):
 
     @classmethod
     def add_args(cls, parser: argparse.ArgumentParser) -> None:
-        # parser.add_argument(
-        #     '--config', '-c',
-        #     type=str,
-        #     default=cls._field_defaults['config'],
-        #     help='Path to the training configuration file (YAML format). ('
-        #          'default: %(default)s)'
-        # )
         parser.add_argument(
             '--ckpt-path', '-k',
             type=str,

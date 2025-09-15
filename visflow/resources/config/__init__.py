@@ -6,15 +6,15 @@ import typing as t
 import pydantic as pydt
 import pydantic_settings as ps
 
-from visflow.resources.configs.augmentation import AugmentationConfig
-from visflow.resources.configs.data import DataConfig
-from visflow.resources.configs.logging import LoggingConfig
-from visflow.resources.configs.model import ModelConfig
-from visflow.resources.configs.normalization import NormalizationConfig
-from visflow.resources.configs.output import OutputConfig
-from visflow.resources.configs.resize import ResizeConfig
-from visflow.resources.configs.testing import TestingConfig
-from visflow.resources.configs.training import TrainingConfig
+from visflow.resources.config.augmentation import AugmentationConfig
+from visflow.resources.config.data import DataConfig
+from visflow.resources.config.logging import LoggingConfig
+from visflow.resources.config.model import ModelConfig
+from visflow.resources.config.normalization import NormalizationConfig
+from visflow.resources.config.output import OutputConfig
+from visflow.resources.config.resize import ResizeConfig
+from visflow.resources.config.testing import TestingConfig
+from visflow.resources.config.training import TrainingConfig
 from visflow.types import PathLikes
 
 _T_contra = t.TypeVar('_T_contra', contravariant=True)
@@ -128,7 +128,3 @@ class TrainConfig(BaseConfig):
         default_factory=OutputConfig,
         description="Output and logging configuration."
     )
-
-
-class TestConfig(BaseConfig):
-    pass

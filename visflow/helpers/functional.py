@@ -25,7 +25,7 @@ class MixUpLoss(nn.Module):
         self,
         pred: torch.Tensor,
         target_a: torch.Tensor,
-        target_b: torch.Tensor | None = None,
+        target_b: t.Optional[torch.Tensor] = None,
         lam: float | None = None
     ) -> torch.Tensor:
         if target_b is not None and lam is not None:

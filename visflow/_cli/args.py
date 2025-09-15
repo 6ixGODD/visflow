@@ -4,19 +4,17 @@ import abc
 import argparse
 import typing as t
 
-import visflow.helpers.slotted as slotted
+import pydantic as pydt
 
 
-class BaseArgs(slotted.SlottedDataClass):
-    __slots__ = ()
-
+class BaseArgs(pydt.BaseModel, abc.ABC):
     @classmethod
     def func(cls, args: argparse.Namespace) -> None:
         instance = cls.from_args(args)
-        instance._func()
+        instance.run()
 
     @abc.abstractmethod
-    def _func(self) -> None:
+    def run(self) -> None:
         pass
 
     @classmethod
@@ -26,4 +24,4 @@ class BaseArgs(slotted.SlottedDataClass):
 
     @classmethod
     def from_args(cls, args: argparse.Namespace) -> t.Self:
-        return cls.from_dict(vars(args))
+        return cls.model_validate(vars(args), strict=True)

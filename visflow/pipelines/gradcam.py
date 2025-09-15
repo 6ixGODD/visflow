@@ -10,7 +10,7 @@ import torch
 from visflow.data import ImageDatamodule
 from visflow.helpers.gradcam import GraphCAM
 from visflow.pipelines import BasePipeline
-from visflow.resources.configs import TrainConfig
+from visflow.resources.config import TrainConfig
 from visflow.resources.models import load_model_from_ckpt
 from visflow.types import PathLikes
 from visflow.utils import spinner

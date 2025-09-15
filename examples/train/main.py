@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from visflow.resources.configs import TrainConfig
+from visflow.resources.config import TrainConfig
 from visflow.pipelines.train import TrainPipeline
 
 
