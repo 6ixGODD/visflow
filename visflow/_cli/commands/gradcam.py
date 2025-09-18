@@ -14,20 +14,20 @@ if t.TYPE_CHECKING:
 class Args(BaseArgs):
     ckpt_path: str
     image_path: str
-    output_dir: str = './output'
+    output_dir: str = "./output"
     target_layer: str | None = None
     heatmap_only: bool = False
     target_class: int | str | None = None
     alpha: float = 0.5
-    colormap: t.Literal['jet', 'turbo', 'viridis', 'inferno', 'plasma'] = 'jet'
+    colormap: t.Literal["jet", "turbo", "viridis", "inferno", "plasma"] = "jet"
     eigen_smooth: bool = False
     aug_smooth: bool = False
-    device: t.Literal['cpu', 'cuda'] | None = 'cuda'
+    device: t.Literal["cpu", "cuda"] | None = "cuda"
     verbose: bool = False
 
     def run(self) -> None:
         if self.verbose:
-            os.environ['VF_VERBOSE'] = '1'
+            os.environ["VF_VERBOSE"] = "1"
         pipeline = GradCAMPipeline(
             ckpt_path=self.ckpt_path,
             image_path=self.image_path,
@@ -46,92 +46,100 @@ class Args(BaseArgs):
     @classmethod
     def add_args(cls, parser: argparse.ArgumentParser) -> None:
         parser.add_argument(
-            '--ckpt-path', '-k',
+            "--ckpt-path",
+            "-k",
             type=str,
             required=True,
-            help='Path to the model checkpoint file.'
+            help="Path to the model checkpoint file.",
         )
         parser.add_argument(
-            '--image-path', '-i',
+            "--image-path",
+            "-i",
             type=str,
             required=True,
-            help='Path to the input image file.'
+            help="Path to the input image file.",
         )
         parser.add_argument(
-            '--output-dir', '-o',
+            "--output-dir",
+            "-o",
             type=str,
-            default='./output',
-            help='Directory to save the output visualizations. (default: '
-                 '%(default)s)'
+            default="./output",
+            help="Directory to save the output visualizations. (default: "
+            "%(default)s)",
         )
         parser.add_argument(
-            '--target-layer', '-l',
-            type=str,
-            default=None,
-            help='Name of the target convolutional layer to visualize. If not '
-                 'specified, the last convolutional layer will be used.'
-        )
-        parser.add_argument(
-            '--heatmap-only',
-            action='store_true',
-            help='If set, only the heatmap will be saved without overlaying '
-                 'it on the original image. (default: %(default)s)'
-        )
-        parser.add_argument(
-            '--target-class', '-t',
+            "--target-layer",
+            "-l",
             type=str,
             default=None,
-            help='Target class for which to generate the Grad-CAM. Can be the '
-                 'class index or class name. If not specified, the predicted '
-                 'class will be used.'
+            help="Name of the target convolutional layer to visualize. If not "
+            "specified, the last convolutional layer will be used.",
         )
         parser.add_argument(
-            '--alpha', '-a',
+            "--heatmap-only",
+            action="store_true",
+            help="If set, only the heatmap will be saved without overlaying "
+            "it on the original image. (default: %(default)s)",
+        )
+        parser.add_argument(
+            "--target-class",
+            "-t",
+            type=str,
+            default=None,
+            help="Target class for which to generate the Grad-CAM. Can be the "
+            "class index or class name. If not specified, the predicted "
+            "class will be used.",
+        )
+        parser.add_argument(
+            "--alpha",
+            "-a",
             type=float,
             default=0.5,
-            help='Transparency factor for overlaying the heatmap on the '
-                 'original image. Value should be between 0 and 1. (default: '
-                 '%(default)s)'
+            help="Transparency factor for overlaying the heatmap on the "
+            "original image. Value should be between 0 and 1. (default: "
+            "%(default)s)",
         )
         parser.add_argument(
-            '--colormap', '-c',
+            "--colormap",
+            "-c",
             type=str,
-            choices=['jet', 'turbo', 'viridis', 'inferno', 'plasma'],
-            default='jet',
-            help='Colormap to use for the heatmap. (default: %(default)s)'
+            choices=["jet", "turbo", "viridis", "inferno", "plasma"],
+            default="jet",
+            help="Colormap to use for the heatmap. (default: %(default)s)",
         )
         parser.add_argument(
-            '--eigen-smooth',
-            action='store_true',
-            help='If set, apply eigen-smoothing to the Grad-CAM. (default: '
-                 '%(default)s)'
+            "--eigen-smooth",
+            action="store_true",
+            help="If set, apply eigen-smoothing to the Grad-CAM. (default: "
+            "%(default)s)",
         )
         parser.add_argument(
-            '--aug-smooth',
-            action='store_true',
-            help='If set, apply augmented smoothing to the Grad-CAM. (default: '
-                 '%(default)s)'
+            "--aug-smooth",
+            action="store_true",
+            help="If set, apply augmented smoothing to the Grad-CAM. (default: "
+            "%(default)s)",
         )
         parser.add_argument(
-            '--device', '-d',
+            "--device",
+            "-d",
             type=str,
-            choices=['cpu', 'cuda'],
+            choices=["cpu", "cuda"],
             default=None,
-            help='Device to run the Grad-CAM computation on. If not specified, '
-                 'will use "cuda" if available, otherwise "cpu". (default: '
-                 '%(default)s)'
+            help="Device to run the Grad-CAM computation on. If not specified, "
+            'will use "cuda" if available, otherwise "cpu". (default: '
+            "%(default)s)",
         )
         parser.add_argument(
-            '--verbose', '-v',
-            action='store_true',
-            help='If set, enable verbose logging. (default: %(default)s)'
+            "--verbose",
+            "-v",
+            action="store_true",
+            help="If set, enable verbose logging. (default: %(default)s)",
         )
 
 
 def register(subparser: _SubParsersAction[argparse.ArgumentParser]) -> None:
     parser = subparser.add_parser(
-        'gradcam',
-        help='Visualize model predictions using Grad-CAM'
+        "gradcam", help="Visualize model predictions using Grad-CAM"
     )
     Args.add_args(parser)
     parser.set_defaults(func=Args.func)

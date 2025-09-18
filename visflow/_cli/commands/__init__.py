@@ -9,21 +9,22 @@ def parse_args() -> argparse.Namespace:
     from visflow._cli.commands import train, gradcam
 
     parser = argparse.ArgumentParser(
-        description='VisFlow',
+        description="VisFlow",
         prog="python -m visflow",
         formatter_class=argparse.RawTextHelpFormatter,
     )
 
     parser.add_argument(
-        '--version', '-v',
-        action='version',
-        version=f'%(prog)s {__version__}',
-        help='Show the version of ModX',
+        "--version",
+        "-v",
+        action="version",
+        version=f"%(prog)s {__version__}",
+        help="Show the version of ModX",
     )
     subparser = parser.add_subparsers(
-        title='subcommands',
-        description='Available subcommands',
-        dest='command',
+        title="subcommands",
+        description="Available subcommands",
+        dest="command",
     )
     train.register(subparser)
     gradcam.register(subparser)

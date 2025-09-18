@@ -8,5 +8,5 @@ class TestingConfig(pydt.BaseModel):
         default=32,
         ge=1,
         le=512,
-        description="Number of samples processed in each training batch."
+        description="Number of samples processed in each training batch.",
     )

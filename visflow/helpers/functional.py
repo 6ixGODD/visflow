@@ -26,12 +26,12 @@ class MixUpLoss(nn.Module):
         pred: torch.Tensor,
         target_a: torch.Tensor,
         target_b: t.Optional[torch.Tensor] = None,
-        lam: float | None = None
+        lam: float | None = None,
     ) -> torch.Tensor:
         if target_b is not None and lam is not None:
-            return (lam *
-                    self.criterion(pred, target_a) + (1 - lam) *
-                    self.criterion(pred, target_b))
+            return lam * self.criterion(pred, target_a) + (1 - lam) * self.criterion(
+                pred, target_b
+            )
         else:
             return self.criterion(pred, target_a)
 
@@ -40,13 +40,11 @@ def summary(
     model: nn.Module,
     input_size: t.Tuple[int, ...] | t.List[t.Tuple[int, ...]],
     batch_size: int = -1,
-    device: t.Literal['cuda', 'cpu'] = 'cuda'
+    device: t.Literal["cuda", "cpu"] = "cuda",
 ) -> ModelSummary:
     def register_hook(module: nn.Module) -> None:
         def hook(
-            module: nn.Module,
-            input: t.Tuple[torch.Tensor, ...],
-            output: torch.Tensor
+            module: nn.Module, input: t.Tuple[torch.Tensor, ...], output: torch.Tensor
         ) -> None:
             class_name = str(module.__class__).split(".")[-1].split("'")[0]
             module_idx = len(layer_summary)
@@ -126,11 +124,9 @@ def summary(
             trainable_params += layer_summary[layer]["nb_params"]
 
     # Calculate memory sizes (assume 4 bytes/number - float32)
-    total_input_size = abs(np.prod(input_size) * batch_size * 4. / (1024 ** 2.))
-    total_output_size = abs(
-        2. * total_output * 4. / (1024 ** 2.)
-    )  # x2 for gradients
-    total_params_size = abs(total_params * 4. / (1024 ** 2.))
+    total_input_size = abs(np.prod(input_size) * batch_size * 4.0 / (1024**2.0))
+    total_output_size = abs(2.0 * total_output * 4.0 / (1024**2.0))  # x2 for gradients
+    total_params_size = abs(total_params * 4.0 / (1024**2.0))
     total_size = total_params_size + total_output_size + total_input_size
 
     return ModelSummary(
@@ -141,7 +137,7 @@ def summary(
         input_size_mb=round(total_input_size, 2),
         forward_backward_pass_size_mb=round(total_output_size, 2),
         params_size_mb=round(total_params_size, 2),
-        estimated_total_size_mb=round(total_size, 2)
+        estimated_total_size_mb=round(total_size, 2),
     )
 
 
@@ -153,20 +149,22 @@ def env_info() -> EnvironmentInfo:
         cpu_cores=psutil.cpu_count(logical=True),
         cpu_usage=psutil.cpu_percent(interval=1),
         cpu_architecture=platform.machine(),
-        memory_gb=round(psutil.virtual_memory().total / (1024 ** 3), 2),
-        memory_usage_gb=round(
-            psutil.virtual_memory().used / (1024 ** 3), 2
-        ),
+        memory_gb=round(psutil.virtual_memory().total / (1024**3), 2),
+        memory_usage_gb=round(psutil.virtual_memory().used / (1024**3), 2),
         gpu_available=torch.cuda.is_available(),
-        gpu_model=(torch.cuda.get_device_name(0)
-                   if torch.cuda.is_available()
-                   else "N/A"),
-        gpu_memory_gb=round(
-            torch.cuda.get_device_properties(0).total_memory / (1024 ** 3), 2
-        ) if torch.cuda.is_available() else 0,
-        gpu_memory_usage_gb=round(
-            torch.cuda.memory_allocated(0) / (1024 ** 3), 2
-        ) if torch.cuda.is_available() else 0,
+        gpu_model=(
+            torch.cuda.get_device_name(0) if torch.cuda.is_available() else "N/A"
+        ),
+        gpu_memory_gb=(
+            round(torch.cuda.get_device_properties(0).total_memory / (1024**3), 2)
+            if torch.cuda.is_available()
+            else 0
+        ),
+        gpu_memory_usage_gb=(
+            round(torch.cuda.memory_allocated(0) / (1024**3), 2)
+            if torch.cuda.is_available()
+            else 0
+        ),
         python_version=platform.python_version(),
         torch_version=torch.__version__,
         torchvision_version=torchvision.__version__,

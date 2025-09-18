@@ -14,7 +14,7 @@ def compute_metric(
     outputs: torch.Tensor,
     targets: torch.Tensor,
     loss: float,
-    num_classes: int | None = None
+    num_classes: int | None = None,
 ) -> Metrics:
     with torch.no_grad():
         # Get predictions
@@ -32,28 +32,24 @@ def compute_metric(
         if num_classes and num_classes > 2:
             # Multi-class
             precision, recall, f1, _ = precision_recall_fscore_support(
-                y_true, y_pred, average='weighted', zero_division=0
+                y_true, y_pred, average="weighted", zero_division=0
             )
             # AUC-ROC for multi-class (one-vs-rest)
             try:
                 auc_roc = roc_auc_score(
-                    y_true,
-                    y_prob,
-                    multi_class='ovr',
-                    average='weighted'
+                    y_true, y_prob, multi_class="ovr", average="weighted"
                 )
             except ValueError:
                 auc_roc = None
         else:
             # Binary classification
             precision, recall, f1, _ = precision_recall_fscore_support(
-                y_true, y_pred, average='binary', zero_division=0
+                y_true, y_pred, average="binary", zero_division=0
             )
             # AUC-ROC for binary
             try:
                 auc_roc = roc_auc_score(
-                    y_true,
-                    y_prob[:, 1] if y_prob.shape[1] > 1 else y_prob
+                    y_true, y_prob[:, 1] if y_prob.shape[1] > 1 else y_prob
                 )
             except (ValueError, IndexError):
                 auc_roc = None

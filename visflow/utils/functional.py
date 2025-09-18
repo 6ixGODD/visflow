@@ -7,10 +7,7 @@ import torch
 
 
 def mixup(
-    x: torch.Tensor,
-    y: torch.Tensor,
-    *,
-    alpha: float = 1.0
+    x: torch.Tensor, y: torch.Tensor, *, alpha: float = 1.0
 ) -> t.Tuple[torch.Tensor, torch.Tensor, torch.Tensor, float]:
     """Apply MixUp augmentation to a batch of images and labels.
 

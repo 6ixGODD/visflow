@@ -4,7 +4,7 @@ import abc
 
 
 class BasePipeline(abc.ABC):
-    __slots__ = ('_completed',)
+    __slots__ = ("_completed",)
     _completed: bool
 
     @abc.abstractmethod

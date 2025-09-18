@@ -13,11 +13,11 @@ except ImportError:
     raise
 
 _LevelMapper: t.Dict[LogLevel, str] = {
-    'debug': 'DEBUG',
-    'info': 'INFO',
-    'warning': 'WARNING',
-    'error': 'ERROR',
-    'critical': 'CRITICAL',
+    "debug": "DEBUG",
+    "info": "INFO",
+    "warning": "WARNING",
+    "error": "ERROR",
+    "critical": "CRITICAL",
 }
 
 
@@ -36,20 +36,20 @@ class LoguruBackend(LoggerBackend):
 
         for target in targets:
             level = target.loglevel
-            if target.logname == 'stdout':
+            if target.logname == "stdout":
                 handler_id = self._loguru.add(
                     sys.stdout,
-                    level=_LevelMapper.get(level, 'INFO'),
+                    level=_LevelMapper.get(level, "INFO"),
                     colorize=True,
                     serialize=False,
                     backtrace=False,
                     diagnose=False,
                     catch=False,
                 )
-            elif target.logname == 'stderr':
+            elif target.logname == "stderr":
                 handler_id = self._loguru.add(
                     sys.stderr,
-                    level=_LevelMapper.get(level, 'ERROR'),
+                    level=_LevelMapper.get(level, "ERROR"),
                     colorize=True,
                     serialize=False,
                     backtrace=False,
@@ -59,7 +59,7 @@ class LoguruBackend(LoggerBackend):
             else:
                 handler_id = self._loguru.add(
                     target.logname,
-                    level=_LevelMapper.get(level, 'INFO'),
+                    level=_LevelMapper.get(level, "INFO"),
                     colorize=False,
                     serialize=True,
                     backtrace=False,
@@ -71,13 +71,8 @@ class LoguruBackend(LoggerBackend):
 
         self._is_setup = True
 
-    def log(
-        self,
-        msg: str, /,
-        level: LogLevel,
-        **context: t.Any
-    ) -> None:
-        self._loguru.bind(**context).log(_LevelMapper.get(level, 'INFO'), msg)
+    def log(self, msg: str, /, level: LogLevel, **context: t.Any) -> None:
+        self._loguru.bind(**context).log(_LevelMapper.get(level, "INFO"), msg)
 
     def sync(self) -> None:
         pass  # do nothing, loguru is synchronous

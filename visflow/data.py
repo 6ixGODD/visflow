@@ -17,8 +17,7 @@ class ImageDatamodule:
     def __init__(self, config: TrainConfig):
         self.config = config
         if isinstance(self.config.resize.size, int):  # square resize
-            x, y = self.input_size = (self.config.resize.size,
-                                      self.config.resize.size)
+            x, y = self.input_size = (self.config.resize.size, self.config.resize.size)
         else:  # tuple resize
             x, y = self.input_size = self.config.resize.size
         if self.config.augmentation.crop.enabled:  # adjust for crop margin
@@ -32,11 +31,9 @@ class ImageDatamodule:
         train_transforms: t.List[t.Callable[..., t.Any]] = [
             transforms.Resize(
                 size=(x, y),
-                interpolation=InterpolationMode(
-                    self.config.resize.interpolation
-                ),
+                interpolation=InterpolationMode(self.config.resize.interpolation),
                 max_size=self.config.resize.max_size,
-                antialias=self.config.resize.antialias
+                antialias=self.config.resize.antialias,
             )
         ]
 
@@ -46,7 +43,7 @@ class ImageDatamodule:
                     size=self.input_size,
                     pad_if_needed=True,
                     fill=self.config.augmentation.crop.fill,
-                    padding_mode=self.config.augmentation.crop.padding_mode
+                    padding_mode=self.config.augmentation.crop.padding_mode,
                 )
             )
 
@@ -66,7 +63,7 @@ class ImageDatamodule:
                     ),
                     expand=self.config.augmentation.rotation.expand,
                     center=self.config.augmentation.rotation.center,
-                    fill=self.config.augmentation.rotation.fill
+                    fill=self.config.augmentation.rotation.fill,
                 )
             )
 
@@ -76,7 +73,7 @@ class ImageDatamodule:
                     brightness=self.config.augmentation.color_jitter.brightness,
                     contrast=self.config.augmentation.color_jitter.contrast,
                     saturation=self.config.augmentation.color_jitter.saturation,
-                    hue=self.config.augmentation.color_jitter.hue
+                    hue=self.config.augmentation.color_jitter.hue,
                 )
             )
 
@@ -91,7 +88,7 @@ class ImageDatamodule:
                         self.config.augmentation.affine.interpolation
                     ),
                     fill=self.config.augmentation.affine.fill,
-                    center=self.config.augmentation.affine.center
+                    center=self.config.augmentation.affine.center,
                 )
             )
 
@@ -103,7 +100,7 @@ class ImageDatamodule:
                 transforms.Normalize(
                     mean=self.config.normalization.mean,
                     std=self.config.normalization.std,
-                    inplace=self.config.normalization.inplace
+                    inplace=self.config.normalization.inplace,
                 )
             )
 
@@ -114,7 +111,7 @@ class ImageDatamodule:
                     scale=self.config.augmentation.erasing.scale,
                     ratio=self.config.augmentation.erasing.ratio,
                     value=self.config.augmentation.erasing.value,
-                    inplace=self.config.augmentation.erasing.inplace
+                    inplace=self.config.augmentation.erasing.inplace,
                 )
             )
 
@@ -124,13 +121,11 @@ class ImageDatamodule:
         val_transforms: t.List[t.Callable[..., torch.Tensor]] = [
             transforms.Resize(
                 size=self.input_size,
-                interpolation=InterpolationMode(
-                    self.config.resize.interpolation
-                ),
+                interpolation=InterpolationMode(self.config.resize.interpolation),
                 max_size=self.config.resize.max_size,
-                antialias=self.config.resize.antialias
+                antialias=self.config.resize.antialias,
             ),
-            transforms.ToTensor()
+            transforms.ToTensor(),
         ]
 
         if self.config.normalization.enabled:
@@ -138,37 +133,34 @@ class ImageDatamodule:
                 transforms.Normalize(
                     mean=self.config.normalization.mean,
                     std=self.config.normalization.std,
-                    inplace=self.config.normalization.inplace
+                    inplace=self.config.normalization.inplace,
                 )
             )
 
         self.val_transforms = transforms.Compose(val_transforms)
 
         self.train_set = ImageFolder(
-            root=self.config.data.train_dir,
-            transform=self.train_transforms
+            root=self.config.data.train_dir, transform=self.train_transforms
         )
         self.val_set = ImageFolder(
-            root=self.config.data.val_dir,
-            transform=self.val_transforms
+            root=self.config.data.val_dir, transform=self.val_transforms
         )
         self.test_set = ImageFolder(
-            root=self.config.data.test_dir,
-            transform=self.val_transforms
+            root=self.config.data.test_dir, transform=self.val_transforms
         )
         if (
-            self.train_set.classes != self.val_set.classes or
-            self.train_set.classes != self.test_set.classes
+            self.train_set.classes != self.val_set.classes
+            or self.train_set.classes != self.test_set.classes
         ):
             raise ValueError(
                 "Train, validation, and test sets must have the same classes"
             )
 
     @property
-    def loaders(self) -> t.Tuple[
-        DataLoader[torch.Tensor],
-        DataLoader[torch.Tensor],
-        DataLoader[torch.Tensor]
+    def loaders(
+        self,
+    ) -> t.Tuple[
+        DataLoader[torch.Tensor], DataLoader[torch.Tensor], DataLoader[torch.Tensor]
     ]:
         if self.config.training.weighted_sampling:
             labels = [label for _, label in self.train_set.samples]
@@ -186,7 +178,7 @@ class ImageDatamodule:
             num_workers=self.config.data.num_workers,
             pin_memory=self.config.data.pin_memory,
             drop_last=self.config.training.drop_last,
-            sampler=sampler
+            sampler=sampler,
         )
         val_loader = DataLoader(
             dataset=self.val_set,
@@ -194,7 +186,7 @@ class ImageDatamodule:
             shuffle=False,
             num_workers=self.config.data.num_workers,
             pin_memory=self.config.data.pin_memory,
-            drop_last=False
+            drop_last=False,
         )
         test_loader = DataLoader(
             dataset=self.test_set,
@@ -202,7 +194,7 @@ class ImageDatamodule:
             shuffle=False,
             num_workers=self.config.data.num_workers,
             pin_memory=self.config.data.pin_memory,
-            drop_last=False
+            drop_last=False,
         )
         return train_loader, val_loader, test_loader
 
@@ -213,7 +205,7 @@ class ImageDatamodule:
             train_size=len(self.train_set),
             val_size=len(self.val_set),
             test_size=len(self.test_set),
-            classes=self.train_set.classes
+            classes=self.train_set.classes,
         )
 
     @property

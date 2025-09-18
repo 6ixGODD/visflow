@@ -13,7 +13,7 @@ import halo
 import numpy as np
 import torch
 
-_C = t.TypeVar('_C')
+_C = t.TypeVar("_C")
 
 
 def singleton(cls: t.Type[_C]) -> t.Callable[..., _C]:
@@ -53,15 +53,11 @@ def singleton(cls: t.Type[_C]) -> t.Callable[..., _C]:
     return get_instance
 
 
-def gen_id(
-    pref: str = "",
-    suf: str = "",
-    without_hyphen: bool = True
-) -> str:
+def gen_id(pref: str = "", suf: str = "", without_hyphen: bool = True) -> str:
     uuid_str = str(uuid.uuid4())
     if without_hyphen:
         uuid_str = uuid_str.replace("-", "")
-    return f'{pref}{uuid_str}{suf}'
+    return f"{pref}{uuid_str}{suf}"
 
 
 def utc_now() -> dt.datetime:
@@ -81,9 +77,7 @@ def _get_func_params(fn: t.Callable[..., t.Any]) -> t.Set[str]:
 
 
 def filter_kwargs(
-    fn: t.Callable[..., t.Any],
-    kwargs: t.Dict[str, t.Any],
-    pref: str = ""
+    fn: t.Callable[..., t.Any], kwargs: t.Dict[str, t.Any], pref: str = ""
 ) -> t.Dict[str, t.Any]:
     """
     Filter out invalid keyword arguments for a given function by comparing
@@ -106,11 +100,8 @@ def filter_kwargs(
         filtered = {}
         for key, value in kwargs.items():
             if key.startswith(pref):
-                param_name = key[len(pref):]
-                if (
-                    param_name in valid_params
-                    and param_name not in {"self", "cls"}
-                ):
+                param_name = key[len(pref) :]
+                if param_name in valid_params and param_name not in {"self", "cls"}:
                     filtered[param_name] = value
         return filtered
     else:
@@ -137,9 +128,10 @@ class Unset:
 
 
 def flatten_dict(
-    _dict: t.Mapping[str, t.Any], /,
-    sep: str = '.',
-    _parent: str = '',
+    _dict: t.Mapping[str, t.Any],
+    /,
+    sep: str = ".",
+    _parent: str = "",
 ) -> t.Dict[str, t.Any]:
     items = []  # type: t.List[tuple[str, t.Any]]
     for k, v in _dict.items():
@@ -161,7 +153,7 @@ def seed(v: int = 42, /) -> None:
     torch.backends.cudnn.benchmark = False
 
 
-def incr_path(root: p.Path, name: str, sep: str = '-') -> p.Path:
+def incr_path(root: p.Path, name: str, sep: str = "-") -> p.Path:
     root = root.expanduser().resolve()
     candidate = root / name
     if not candidate.exists():
@@ -179,4 +171,4 @@ def incr_path(root: p.Path, name: str, sep: str = '-') -> p.Path:
         i += 1
 
 
-spinner = halo.Halo(spinner='dots')
+spinner = halo.Halo(spinner="dots")

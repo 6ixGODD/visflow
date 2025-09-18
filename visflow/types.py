@@ -8,10 +8,9 @@ import typing_extensions as te
 
 CriterionFunc = t.Callable[[t.Any, t.Any], torch.Tensor]
 
-PixelValue: t.TypeAlias = (int |
-                           t.Tuple[int, int, int] |
-                           float |
-                           t.Tuple[float, float, float])
+PixelValue: t.TypeAlias = (
+    int | t.Tuple[int, int, int] | float | t.Tuple[float, float, float]
+)
 
 
 def pixel_float(value: PixelValue, /) -> t.Tuple[float, float, float]:
@@ -37,9 +36,7 @@ def pixel_int(value: PixelValue, /) -> t.Tuple[int, int, int]:
         if all(isinstance(v, int) for v in value):
             return t.cast(t.Tuple[int, int, int], value)
         elif all(isinstance(v, float) for v in value):
-            return (int(value[0] * 255.0),
-                    int(value[1] * 255.0),
-                    int(value[2] * 255.0))
+            return (int(value[0] * 255.0), int(value[1] * 255.0), int(value[2] * 255.0))
     raise ValueError("Invalid pixel value type")
 
 

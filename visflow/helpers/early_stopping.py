@@ -8,7 +8,7 @@ class EarlyStopping:
         self,
         patience: int = 7,
         min_delta: float = 0.0,
-        mode: t.Literal['min', 'max'] = 'min'
+        mode: t.Literal["min", "max"] = "min",
     ) -> None:
         """
         Early stopping utility for training loops.
@@ -23,7 +23,7 @@ class EarlyStopping:
         self.patience = patience
         self.min_delta = min_delta
         self.counter = 0
-        self.best_score = None
+        self.best_score = None  # type: float | None
         self.early_stop = False
 
         if mode not in ["min", "max"]:
@@ -32,12 +32,14 @@ class EarlyStopping:
 
         # Set comparison function based on mode
         if mode == "min":
-            self.is_better = (lambda current, best:
-                              current < best - self.min_delta)
+            self.is_better: t.Callable[[float, float], bool] = (
+                lambda current, best: current < best - self.min_delta
+            )
 
         else:  # mode == "max"
-            self.is_better = (lambda current, best:
-                              current > best + self.min_delta)
+            self.is_better: t.Callable[[float, float], bool] = (
+                lambda current, best: current > best + self.min_delta
+            )
 
     def step(self, score: float, /) -> bool:
         """

@@ -19,13 +19,12 @@ class GraphCAM:
     def __init__(
         self,
         model: BaseClassifier,
-        device: t.Literal['cpu', 'cuda'] | None = None,
+        device: t.Literal["cpu", "cuda"] | None = None,
         target_layer: str | None = None,
     ):
         self.model = model
         self.device = torch.device(
-            device or ("cuda"
-                       if torch.cuda.is_available() else "cpu")
+            str(device) or ("cuda" if torch.cuda.is_available() else "cpu")
         )
         self.model.to(self.device)
         self.model.eval()
@@ -40,11 +39,11 @@ class GraphCAM:
     def _parse_target_layer(self, target_layer: str | None) -> nn.Module:
         if target_layer is None:
             try:
-                return self.model.last_conv()
+                return self.model.gradcam_layer
             except NotImplementedError as e:
                 raise ValueError(
                     f"Model {type(self.model).__name__} does not implement "
-                    f"last_conv() "
+                    f"gradcam_layer() "
                     f"and no target_layer was provided. {e}"
                 )
 
@@ -62,9 +61,7 @@ class GraphCAM:
             layer = eval(f"self.model.{layer_path}")
 
             if not isinstance(layer, nn.Module):
-                raise ValueError(
-                    f"Target layer '{target_layer}' is not a nn.Module"
-                )
+                raise ValueError(f"Target layer '{target_layer}' is not a nn.Module")
 
             return layer
 
@@ -79,7 +76,7 @@ class GraphCAM:
         input_tensor: torch.Tensor,
         target_class: int | None = None,
         eigen_smooth: bool = False,
-        aug_smooth: bool = False
+        aug_smooth: bool = False,
     ) -> np.ndarray:
         """
         Generate GradCAM heatmap for input tensor.
@@ -106,7 +103,7 @@ class GraphCAM:
             input_tensor=input_tensor,
             targets=targets,
             eigen_smooth=eigen_smooth,
-            aug_smooth=aug_smooth
+            aug_smooth=aug_smooth,
         )
 
         return grayscale_cam
@@ -120,7 +117,7 @@ class GraphCAM:
         alpha: float = 0.4,
         colormap: cv2.ColormapTypes = cv2.COLORMAP_JET,
         eigen_smooth: bool = False,
-        aug_smooth: bool = False
+        aug_smooth: bool = False,
     ) -> None:
         """
         Generate and save GradCAM visualization overlaid on original image.
@@ -140,7 +137,7 @@ class GraphCAM:
             input_tensor=input_tensor,
             target_class=target_class,
             eigen_smooth=eigen_smooth,
-            aug_smooth=aug_smooth
+            aug_smooth=aug_smooth,
         )
 
         # Take the first image if batch
@@ -153,7 +150,7 @@ class GraphCAM:
             mask=grayscale_cam,
             use_rgb=True,
             colormap=colormap,
-            image_weight=1 - alpha
+            image_weight=1 - alpha,
         )
 
         # Save visualization
@@ -171,7 +168,7 @@ class GraphCAM:
         target_class: int | None = None,
         colormap: cv2.ColormapTypes = cv2.COLORMAP_JET,
         eigen_smooth: bool = False,
-        aug_smooth: bool = False
+        aug_smooth: bool = False,
     ) -> None:
         """
         Generate and save only the GradCAM heatmap without overlay.
@@ -189,7 +186,7 @@ class GraphCAM:
             input_tensor=input_tensor,
             target_class=target_class,
             eigen_smooth=eigen_smooth,
-            aug_smooth=aug_smooth
+            aug_smooth=aug_smooth,
         )
 
         # Take the first image if batch
