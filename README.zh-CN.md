@@ -108,7 +108,7 @@ class MyCustomModel(BaseClassifier):
         # 前向传播实现
         pass
         
-    def last_conv(self):
+    def gradcam_layer(self):
         # 返回最后一个卷积层用于 GradCAM
         return self.conv_layer
 ```

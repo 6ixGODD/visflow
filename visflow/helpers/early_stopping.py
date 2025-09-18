@@ -31,13 +31,14 @@ class EarlyStopping:
         self.mode = mode
 
         # Set comparison function based on mode
+        self.is_better: t.Callable[[float, float], bool]
         if mode == "min":
-            self.is_better: t.Callable[[float, float], bool] = (
+            self.is_better = (
                 lambda current, best: current < best - self.min_delta
             )
 
         else:  # mode == "max"
-            self.is_better: t.Callable[[float, float], bool] = (
+            self.is_better = (
                 lambda current, best: current > best + self.min_delta
             )
 

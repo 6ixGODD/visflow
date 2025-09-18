@@ -10,9 +10,10 @@ import numpy as np
 import psutil
 import torch
 import torch.nn as nn
+import torch.version
 import torchvision
 
-from visflow.context import EnvironmentInfo, ModelSummary
+from visflow.context import EnvironmentInfo, LayerInfo, ModelSummary
 from visflow.types import CriterionFunc
 
 
@@ -29,7 +30,8 @@ class MixUpLoss(nn.Module):
         lam: float | None = None,
     ) -> torch.Tensor:
         if target_b is not None and lam is not None:
-            return lam * self.criterion(pred, target_a) + (1 - lam) * self.criterion(
+            return lam * self.criterion(pred, target_a) + (
+                1 - lam) * self.criterion(
                 pred, target_b
             )
         else:
@@ -44,17 +46,19 @@ def summary(
 ) -> ModelSummary:
     def register_hook(module: nn.Module) -> None:
         def hook(
-            module: nn.Module, input: t.Tuple[torch.Tensor, ...], output: torch.Tensor
+            module: nn.Module,
+            input: t.Tuple[torch.Tensor, ...],
+            output: torch.Tensor
         ) -> None:
             class_name = str(module.__class__).split(".")[-1].split("'")[0]
             module_idx = len(layer_summary)
 
             m_key = "%s-%i" % (class_name, module_idx + 1)
-            layer_summary[m_key] = {}
-            layer_summary[m_key]["input_shape"] = list(input[0].size())
-            layer_summary[m_key]["input_shape"][0] = batch_size
-            layer_summary[m_key]["output_shape"] = list(output.size())
-            layer_summary[m_key]["output_shape"][0] = batch_size
+
+            input_shape = list(input[0].size())
+            input_shape[0] = batch_size
+            output_shape = list(output.size())
+            output_shape[0] = batch_size
 
             params = torch.tensor(0)
             trainable = False
@@ -68,8 +72,13 @@ def summary(
                     torch.LongTensor(list(module.bias.size()))  # type: ignore
                 )
 
-            layer_summary[m_key]["nb_params"] = int(params)
-            layer_summary[m_key]["trainable"] = trainable
+            nb_params = int(params)
+            layer_summary[m_key] = LayerInfo(
+                input_shape=input_shape,
+                output_shape=output_shape,
+                nb_params=nb_params,
+                trainable=trainable,
+            )
 
         if (
             not isinstance(module, nn.Sequential)
@@ -78,9 +87,11 @@ def summary(
         ):
             hooks.append(module.register_forward_hook(hook))
 
-    device = device.lower()
-
-    if device == "cuda" and torch.cuda.is_available():
+    if (
+        device == "cuda" and
+        torch.cuda.is_available() and
+        hasattr(torch.cuda, "FloatTensor")
+    ):
         dtype = torch.cuda.FloatTensor
     else:
         dtype = torch.FloatTensor
@@ -93,8 +104,8 @@ def summary(
     x = [torch.rand(2, *in_size).type(dtype) for in_size in input_size]
 
     # create properties
-    layer_summary = coll.OrderedDict()
-    hooks = []
+    layer_summary = coll.OrderedDict()  # type: t.Dict[str, LayerInfo]
+    hooks = []  # type: t.List[torch.utils.hooks.RemovableHandle]
 
     # register hook
     model.apply(register_hook)
@@ -116,17 +127,21 @@ def summary(
         if isinstance(layer_summary[layer]["output_shape"][0], list):
             # Handle multiple outputs
             for output_shape in layer_summary[layer]["output_shape"]:
-                total_output += np.prod(output_shape)
+                total_output += int(np.prod(output_shape))
         else:
-            total_output += np.prod(layer_summary[layer]["output_shape"])
+            total_output += int(np.prod(layer_summary[layer]["output_shape"]))
 
         if layer_summary[layer]["trainable"]:
             trainable_params += layer_summary[layer]["nb_params"]
 
     # Calculate memory sizes (assume 4 bytes/number - float32)
-    total_input_size = abs(np.prod(input_size) * batch_size * 4.0 / (1024**2.0))
-    total_output_size = abs(2.0 * total_output * 4.0 / (1024**2.0))  # x2 for gradients
-    total_params_size = abs(total_params * 4.0 / (1024**2.0))
+    total_input_size = abs(
+        np.prod(input_size) * batch_size * 4.0 / (1024 ** 2.0)
+    )
+    total_output_size = abs(
+        2.0 * total_output * 4.0 / (1024 ** 2.0)
+    )  # x2 for gradients
+    total_params_size = abs(total_params * 4.0 / (1024 ** 2.0))
     total_size = total_params_size + total_output_size + total_input_size
 
     return ModelSummary(
@@ -149,25 +164,31 @@ def env_info() -> EnvironmentInfo:
         cpu_cores=psutil.cpu_count(logical=True),
         cpu_usage=psutil.cpu_percent(interval=1),
         cpu_architecture=platform.machine(),
-        memory_gb=round(psutil.virtual_memory().total / (1024**3), 2),
-        memory_usage_gb=round(psutil.virtual_memory().used / (1024**3), 2),
+        memory_gb=round(psutil.virtual_memory().total / (1024 ** 3), 2),
+        memory_usage_gb=round(psutil.virtual_memory().used / (1024 ** 3), 2),
         gpu_available=torch.cuda.is_available(),
         gpu_model=(
-            torch.cuda.get_device_name(0) if torch.cuda.is_available() else "N/A"
+            torch.cuda.get_device_name(0)
+            if torch.cuda.is_available() else "N/A"
         ),
         gpu_memory_gb=(
-            round(torch.cuda.get_device_properties(0).total_memory / (1024**3), 2)
+            round(
+                torch
+                .cuda
+                .get_device_properties(0)
+                .total_memory / (1024 ** 3), 2
+            )
             if torch.cuda.is_available()
             else 0
         ),
         gpu_memory_usage_gb=(
-            round(torch.cuda.memory_allocated(0) / (1024**3), 2)
+            round(torch.cuda.memory_allocated(0) / (1024 ** 3), 2)
             if torch.cuda.is_available()
             else 0
         ),
         python_version=platform.python_version(),
         torch_version=torch.__version__,
         torchvision_version=torchvision.__version__,
-        cuda_version=torch.version.cuda,
-        cudnn_version=torch.backends.cudnn.version(),
+        cuda_version=torch.version.cuda or "N/A",
+        cudnn_version=torch.backends.cudnn.version() or "N/A",  # type: ignore
     )

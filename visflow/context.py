@@ -163,7 +163,7 @@ class EpochLog(te.TypedDict):
     val_metrics: te.Required[Metrics]
     """Average validation metrics for the epoch."""
 
-    best_val_metrics: te.Required[Metrics]
+    best_val_metrics: te.Required[Metrics | None]
     """Best validation metrics achieved so far."""
 
     best_epoch: int

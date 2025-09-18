@@ -61,7 +61,8 @@ class BaseClassifier(nn.Module, abc.ABC):
     @property
     def gradcam_layer(self) -> nn.Module:
         raise NotImplementedError(
-            f"{self.__class__.__name__} does not implement gradcam_layer " f"method."
+            f"{self.__class__.__name__} does not implement gradcam_layer "
+            f"method."
         )
 
 
@@ -93,16 +94,24 @@ class TorchVisionClassifier(BaseClassifier):
     ) -> None:
         super().__init__(num_classes=num_classes)
         if not hasattr(models, model_name):
-            raise ValueError(f"'{model_name}' not found in torchvision.models. ")
+            raise ValueError(
+                f"'{model_name}' not found in torchvision.models. "
+            )
 
-        fn: t.Callable[..., nn.Module] = getattr(models, model_name, None)
+        fn = t.cast(
+            t.Callable[..., nn.Module],
+            getattr(models, model_name, None)
+        )
         if not callable(fn):
             raise ValueError(f"'{model_name}' is not callable.")
         if weights_path:
             model = fn(weights=None, **kwargs)  # type: nn.Module
             self.backbone = model
             self._replace_head(num_classes)
-            state_dict = torch.load(weights_path, map_location=map_location or "cpu")
+            state_dict = torch.load(
+                weights_path,
+                map_location=map_location or "cpu"
+            )
             missing, unexpected = self.backbone.load_state_dict(
                 state_dict, strict=False
             )
@@ -209,7 +218,8 @@ class TorchVisionClassifier(BaseClassifier):
                 return block.conv2  # type: ignore[return-value]
             else:
                 raise NotImplementedError(
-                    "`gradcam_layer` not implemented for this ResNet block " "type."
+                    "`gradcam_layer` not implemented for this ResNet block "
+                    "type."
                 )
 
         elif isinstance(m, models.VGG):
@@ -223,7 +233,8 @@ class TorchVisionClassifier(BaseClassifier):
                 return block  # type: ignore[return-value]
             else:
                 raise NotImplementedError(
-                    "gradcam_layer not implemented for this SqueezeNet block " "type."
+                    "gradcam_layer not implemented for this SqueezeNet block "
+                    "" "type."
                 )
 
         elif isinstance(m, models.DenseNet):
@@ -231,7 +242,8 @@ class TorchVisionClassifier(BaseClassifier):
                 return block.conv2  # type: ignore[return-value]
             else:
                 raise NotImplementedError(
-                    "gradcam_layer not implemented for this DenseNet block " "type."
+                    "gradcam_layer not implemented for this DenseNet block "
+                    "type."
                 )
 
         elif isinstance(m, models.Inception3):
@@ -242,7 +254,8 @@ class TorchVisionClassifier(BaseClassifier):
                 return block[0]  # type: ignore[return-value]
             else:
                 raise NotImplementedError(
-                    "gradcam_layer not implemented for this MobileNet block " "type."
+                    "gradcam_layer not implemented for this MobileNet block "
+                    "type."
                 )
 
         elif isinstance(m, models.EfficientNet):
@@ -250,7 +263,8 @@ class TorchVisionClassifier(BaseClassifier):
                 return block[0]  # type: ignore[return-value]
             else:
                 raise NotImplementedError(
-                    "gradcam_layer not implemented for this EfficientNet " "block type."
+                    "gradcam_layer not implemented for this EfficientNet "
+                    "block type."
                 )
 
         elif isinstance(m, models.ConvNeXt):
@@ -258,7 +272,8 @@ class TorchVisionClassifier(BaseClassifier):
                 return t.cast(nn.Conv2d, block.block[0])
             else:
                 raise NotImplementedError(
-                    "gradcam_layer not implemented for this ConvNeXt block " "type."
+                    "gradcam_layer not implemented for this ConvNeXt block "
+                    "type."
                 )
 
         elif isinstance(m, models.GoogLeNet):
@@ -271,19 +286,22 @@ class TorchVisionClassifier(BaseClassifier):
                 return block.f.c  # type: ignore[return-value]
             else:
                 raise NotImplementedError(
-                    "gradcam_layer not implemented for this RegNet block " "type."
+                    "gradcam_layer not implemented for this RegNet block "
+                    "type."
                 )
         elif isinstance(m, models.ShuffleNetV2):
             return m.stage4  # type: ignore[return-value]
 
         elif isinstance(m, models.VisionTransformer):
             raise NotImplementedError(
-                "gradcam_layer is not defined for VisionTransformer (no conv " "layer)."
+                "gradcam_layer is not defined for VisionTransformer (no conv "
+                "" "layer)."
             )
 
         elif isinstance(m, models.SwinTransformer):
             raise NotImplementedError(
-                "gradcam_layer is not defined for SwinTransformer (no conv " "layer)."
+                "gradcam_layer is not defined for SwinTransformer (no conv "
+                "layer)."
             )
 
         elif isinstance(m, models.MaxVit):
@@ -336,7 +354,9 @@ def load_model(
         raise FileNotFoundError(f"Checkpoint not found: {path}")
 
     return load_model_from_ckpt(
-        torch.load(path, map_location=map_location or "cpu"), strict=strict, **kwargs
+        torch.load(path, map_location=map_location or "cpu"),
+        strict=strict,
+        **kwargs
     )
 
 

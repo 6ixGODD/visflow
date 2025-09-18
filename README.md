@@ -109,7 +109,7 @@ class MyCustomModel(BaseClassifier):
         # Forward pass implementation
         pass
         
-    def last_conv(self):
+    def gradcam_layer(self):
         # Return the last convolutional layer for GradCAM
         return self.conv_layer
 ```

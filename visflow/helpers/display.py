@@ -401,7 +401,9 @@ class Display:
         )
         val_extras = val_metrics.get("extras", {}) if "extras" in val_metrics else {}
         best_extras = (
-            best_val_metrics.get("extras", {}) if "extras" in best_val_metrics else {}
+            best_val_metrics.get("extras", {})
+            if best_val_metrics and "extras" in best_val_metrics
+            else {}
         )
 
         all_extra_keys = (
@@ -500,5 +502,5 @@ class Display:
             )
 
     @staticmethod
-    def clear():
+    def clear() -> None:
         os.system("cls" if os.name == "nt" else "clear")

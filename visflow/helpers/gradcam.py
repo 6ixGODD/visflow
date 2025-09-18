@@ -194,7 +194,7 @@ class GraphCAM:
             grayscale_cam = grayscale_cam[0]
 
         # Apply colormap
-        heatmap = cv2.applyColorMap(np.uint8(255 * grayscale_cam), colormap)
+        heatmap = cv2.applyColorMap((255 * grayscale_cam).astype(np.uint8), colormap)
 
         # Save heatmap
         save_path = p.Path(save_path)

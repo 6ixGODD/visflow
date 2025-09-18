@@ -167,6 +167,7 @@ class GradCAMPipeline(BasePipeline):
 
         ckpt: Checkpoint = torch.load(self.ckpt_path, map_location=self.device or "cpu")
 
+        target_class: int | None
         if isinstance(self.target_class, str):
             target_class = ckpt["class_to_idx"][self.target_class]
         else:
