@@ -46,10 +46,7 @@ class BaseConfig(ps.BaseSettings):
         return cls.model_validate(content, strict=True)
 
     logging: LoggingConfig = LoggingConfig()
-    seed: int = pydt.Field(
-        default=42,
-        description="Random seed for reproducibility"
-    )
+    seed: int = pydt.Field(default=42, description="Random seed for reproducibility")
 
     def to_file(self, fpath: PathLikes) -> None:
         fpath = os.fspath(fpath)
@@ -69,11 +66,7 @@ class BaseConfig(ps.BaseSettings):
             import json
 
             with open(fpath, "w", encoding="utf-8") as f:
-                json.dump(
-                    self.model_dump(mode="json"),
-                    f,
-                    indent=4
-                )
+                json.dump(self.model_dump(mode="json"), f, indent=4)
         else:
             raise ValueError(
                 "Unsupported file extension. Use '.yaml', '.yml', or '.json'."
@@ -85,8 +78,7 @@ class BaseConfig(ps.BaseSettings):
 
 class TrainConfig(BaseConfig):
     model: ModelConfig = pydt.Field(
-        default_factory=ModelConfig,
-        description="Model architecture configuration."
+        default_factory=ModelConfig, description="Model architecture configuration."
     )
 
     training: TrainingConfig = pydt.Field(
@@ -104,8 +96,7 @@ class TrainConfig(BaseConfig):
     )
 
     resize: ResizeConfig = pydt.Field(
-        default_factory=ResizeConfig,
-        description="Image resizing configuration."
+        default_factory=ResizeConfig, description="Image resizing configuration."
     )
 
     normalization: NormalizationConfig = pydt.Field(
@@ -119,6 +110,5 @@ class TrainConfig(BaseConfig):
     )
 
     output: OutputConfig = pydt.Field(
-        default_factory=OutputConfig,
-        description="Output and logging configuration."
+        default_factory=OutputConfig, description="Output and logging configuration."
     )

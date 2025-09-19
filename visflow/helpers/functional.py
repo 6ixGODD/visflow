@@ -30,8 +30,7 @@ class MixUpLoss(nn.Module):
         lam: float | None = None,
     ) -> torch.Tensor:
         if target_b is not None and lam is not None:
-            return lam * self.criterion(pred, target_a) + (
-                1 - lam) * self.criterion(
+            return lam * self.criterion(pred, target_a) + (1 - lam) * self.criterion(
                 pred, target_b
             )
         else:
@@ -46,9 +45,7 @@ def summary(
 ) -> ModelSummary:
     def register_hook(module: nn.Module) -> None:
         def hook(
-            module: nn.Module,
-            input: t.Tuple[torch.Tensor, ...],
-            output: torch.Tensor
+            module: nn.Module, input: t.Tuple[torch.Tensor, ...], output: torch.Tensor
         ) -> None:
             class_name = str(module.__class__).split(".")[-1].split("'")[0]
             module_idx = len(layer_summary)
@@ -88,9 +85,9 @@ def summary(
             hooks.append(module.register_forward_hook(hook))
 
     if (
-        device == "cuda" and
-        torch.cuda.is_available() and
-        hasattr(torch.cuda, "FloatTensor")
+        device == "cuda"
+        and torch.cuda.is_available()
+        and hasattr(torch.cuda, "FloatTensor")
     ):
         dtype = torch.cuda.FloatTensor
     else:
@@ -135,13 +132,9 @@ def summary(
             trainable_params += layer_summary[layer]["nb_params"]
 
     # Calculate memory sizes (assume 4 bytes/number - float32)
-    total_input_size = abs(
-        np.prod(input_size) * batch_size * 4.0 / (1024 ** 2.0)
-    )
-    total_output_size = abs(
-        2.0 * total_output * 4.0 / (1024 ** 2.0)
-    )  # x2 for gradients
-    total_params_size = abs(total_params * 4.0 / (1024 ** 2.0))
+    total_input_size = abs(np.prod(input_size) * batch_size * 4.0 / (1024**2.0))
+    total_output_size = abs(2.0 * total_output * 4.0 / (1024**2.0))  # x2 for gradients
+    total_params_size = abs(total_params * 4.0 / (1024**2.0))
     total_size = total_params_size + total_output_size + total_input_size
 
     return ModelSummary(
@@ -164,25 +157,19 @@ def env_info() -> EnvironmentInfo:
         cpu_cores=psutil.cpu_count(logical=True),
         cpu_usage=psutil.cpu_percent(interval=1),
         cpu_architecture=platform.machine(),
-        memory_gb=round(psutil.virtual_memory().total / (1024 ** 3), 2),
-        memory_usage_gb=round(psutil.virtual_memory().used / (1024 ** 3), 2),
+        memory_gb=round(psutil.virtual_memory().total / (1024**3), 2),
+        memory_usage_gb=round(psutil.virtual_memory().used / (1024**3), 2),
         gpu_available=torch.cuda.is_available(),
         gpu_model=(
-            torch.cuda.get_device_name(0)
-            if torch.cuda.is_available() else "N/A"
+            torch.cuda.get_device_name(0) if torch.cuda.is_available() else "N/A"
         ),
         gpu_memory_gb=(
-            round(
-                torch
-                .cuda
-                .get_device_properties(0)
-                .total_memory / (1024 ** 3), 2
-            )
+            round(torch.cuda.get_device_properties(0).total_memory / (1024**3), 2)
             if torch.cuda.is_available()
             else 0
         ),
         gpu_memory_usage_gb=(
-            round(torch.cuda.memory_allocated(0) / (1024 ** 3), 2)
+            round(torch.cuda.memory_allocated(0) / (1024**3), 2)
             if torch.cuda.is_available()
             else 0
         ),

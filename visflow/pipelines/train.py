@@ -88,10 +88,7 @@ class TrainPipeline(BasePipeline):
         # Setup experiment -----------------------------------------------------
         spinner.start("Setting up experiment...")
         seed(self.config.seed)
-        exp_id = gen_id(
-            pref=self.config.output.experiment_name,
-            without_hyphen=True
-            )
+        exp_id = gen_id(pref=self.config.output.experiment_name, without_hyphen=True)
 
         output_dir = p.Path(self.config.output.output_dir)
         output_dir.mkdir(parents=True, exist_ok=True)
@@ -156,9 +153,7 @@ class TrainPipeline(BasePipeline):
             patience=self.config.training.early_stopping_patience,
             min_delta=self.config.training.early_stopping_min_delta,
             mode=(  # type: ignore
-                "min"
-                if self.config.training.early_stopping_target == "loss"
-                else "max"
+                "min" if self.config.training.early_stopping_target == "loss" else "max"
             ),
         )
 
@@ -193,14 +188,7 @@ class TrainPipeline(BasePipeline):
                 self.best_val_targets = val_targets
                 # Save best checkpoint
                 self.save(
-                    logger,
-                    exp_dir,
-                    epoch,
-                    model,
-                    optimizer,
-                    scheduler,
-                    val_acc,
-                    "best"
+                    logger, exp_dir, epoch, model, optimizer, scheduler, val_acc, "best"
                 )
 
             # Always update final metrics (last epoch)
@@ -268,16 +256,7 @@ class TrainPipeline(BasePipeline):
                 )
                 break
         # Save final checkpoint
-        self.save(
-            logger,
-            exp_dir,
-            epoch,
-            model,
-            optimizer,
-            scheduler,
-            val_acc,
-            "final"
-            )
+        self.save(logger, exp_dir, epoch, model, optimizer, scheduler, val_acc, "final")
 
         # Test evaluation ------------------------------------------------------
         test_metrics, test_outputs, test_targets = self.test(
@@ -287,12 +266,7 @@ class TrainPipeline(BasePipeline):
         # Generate plots -------------------------------------------------------
         class_names = self.datamodule.classes
         self.plots(
-            logger,
-            exp_dir,
-            class_names,
-            test_outputs,
-            test_targets,
-            test_metrics
+            logger, exp_dir, class_names, test_outputs, test_targets, test_metrics
         )
 
         # Save comprehensive metrics -------------------------------------------
@@ -362,9 +336,7 @@ class TrainPipeline(BasePipeline):
 
         if lr_scheduler == "step":
             if not self.config.training.step_scheduler:
-                raise ValueError(
-                    "StepLR scheduler requires step_scheduler config."
-                    )
+                raise ValueError("StepLR scheduler requires step_scheduler config.")
             return torch.optim.lr_scheduler.StepLR(
                 optimizer,
                 step_size=self.config.training.step_scheduler.step_size,
@@ -373,8 +345,7 @@ class TrainPipeline(BasePipeline):
         elif lr_scheduler == "cosine":
             if not self.config.training.cosine_scheduler:
                 raise ValueError(
-                    "CosineAnnealingLR scheduler requires cosine_scheduler " 
-                    "config."
+                    "CosineAnnealingLR scheduler requires cosine_scheduler " "config."
                 )
             return torch.optim.lr_scheduler.CosineAnnealingLR(
                 optimizer, T_max=self.config.training.cosine_scheduler.t_max
@@ -382,8 +353,7 @@ class TrainPipeline(BasePipeline):
         elif lr_scheduler == "plateau":
             if not self.config.training.plateau_scheduler:
                 raise ValueError(
-                    "ReduceLROnPlateau scheduler requires plateau_scheduler " 
-                    "config."
+                    "ReduceLROnPlateau scheduler requires plateau_scheduler " "config."
                 )
             return torch.optim.lr_scheduler.ReduceLROnPlateau(
                 optimizer,
@@ -395,9 +365,7 @@ class TrainPipeline(BasePipeline):
             raise ValueError(f"Unsupported lr_scheduler: {lr_scheduler}")
 
     def _update_scheduler(
-        self,
-        scheduler: torch.optim.lr_scheduler.LRScheduler | None,
-        val_acc: float
+        self, scheduler: torch.optim.lr_scheduler.LRScheduler | None, val_acc: float
     ) -> None:
         """Update learning rate scheduler."""
         if scheduler:
@@ -409,11 +377,7 @@ class TrainPipeline(BasePipeline):
                 scheduler.step()
 
     def _update_histories(
-        self,
-        train_loss: float,
-        train_acc: float,
-        val_loss: float,
-        val_acc: float
+        self, train_loss: float, train_acc: float, val_loss: float, val_acc: float
     ) -> None:
         """Update training histories."""
         self.train_loss_history.append(train_loss)
@@ -558,11 +522,11 @@ class TrainPipeline(BasePipeline):
             for p in model.parameters()
             if p.grad is not None
         )
-        gradient_norm = total_norm ** 0.5
+        gradient_norm = total_norm**0.5
 
         # GPU memory usage
         gpu_memory_usage = (
-            torch.cuda.memory_allocated() / (1024 ** 3)
+            torch.cuda.memory_allocated() / (1024**3)
             if torch.cuda.is_available()
             else 0.0
         )
@@ -761,8 +725,7 @@ class TrainPipeline(BasePipeline):
                 confusion_matrix=cm,
                 class_names=class_names,
                 normalize=True,
-                save_path=(
-                        plots_dir / "confusion_matrix_best_val_normalized.png"),
+                save_path=(plots_dir / "confusion_matrix_best_val_normalized.png"),
                 show=False,
             )
 
@@ -782,9 +745,7 @@ class TrainPipeline(BasePipeline):
                 confusion_matrix=cm,
                 class_names=class_names,
                 normalize=True,
-                save_path=(
-                        plots_dir /
-                        "confusion_matrix_final_val_normalized.png"),
+                save_path=(plots_dir / "confusion_matrix_final_val_normalized.png"),
                 show=False,
             )
 
@@ -849,8 +810,7 @@ class TrainPipeline(BasePipeline):
                 "dataset": "test",
                 "architecture": self.config.model.architecture,
                 "epoch": self.config.training.epochs,
-                **{k: v for k, v in test_metrics.items() if
-                   k != "confusion_matrix"},
+                **{k: v for k, v in test_metrics.items() if k != "confusion_matrix"},
             }
             metrics_data.append(test_row)
 
