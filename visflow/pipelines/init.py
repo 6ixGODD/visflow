@@ -10,6 +10,7 @@ from visflow.utils import spinner
 
 class InitPipeline(BasePipeline):
     def __init__(self, proxy: str | None = None):
+        self._completed = False
         self.downloader = HTTPDownloader(
             base_url="https://raw.githubusercontent.com/6ixGODD/visflow" "/master/",
             proxy=proxy,
@@ -50,3 +51,4 @@ class InitPipeline(BasePipeline):
             '"data" folder, then edit .config.yml to configure your project, '
             'then run "visflow train" to start training. Happy exploring!'
         )
+        self._completed = True

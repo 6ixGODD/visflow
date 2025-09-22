@@ -46,7 +46,10 @@ class BaseConfig(ps.BaseSettings):
         return cls.model_validate(content, strict=True)
 
     logging: LoggingConfig = LoggingConfig()
-    seed: int = pydt.Field(default=42, description="Random seed for reproducibility")
+    seed: int = pydt.Field(
+        default=42,
+        description="Random seed for reproducibility"
+    )
 
     def to_file(self, fpath: PathLikes) -> None:
         fpath = os.fspath(fpath)
@@ -78,7 +81,8 @@ class BaseConfig(ps.BaseSettings):
 
 class TrainConfig(BaseConfig):
     model: ModelConfig = pydt.Field(
-        default_factory=ModelConfig, description="Model architecture configuration."
+        default_factory=ModelConfig,
+        description="Model architecture configuration."
     )
 
     training: TrainingConfig = pydt.Field(
@@ -96,7 +100,8 @@ class TrainConfig(BaseConfig):
     )
 
     resize: ResizeConfig = pydt.Field(
-        default_factory=ResizeConfig, description="Image resizing configuration."
+        default_factory=ResizeConfig,
+        description="Image resizing configuration."
     )
 
     normalization: NormalizationConfig = pydt.Field(
@@ -110,5 +115,25 @@ class TrainConfig(BaseConfig):
     )
 
     output: OutputConfig = pydt.Field(
-        default_factory=OutputConfig, description="Output and logging configuration."
+        default_factory=OutputConfig,
+        description="Output and logging configuration."
+    )
+
+
+class TestConfig(BaseConfig):
+    checkpoint_files: t.List[str] = pydt.Field(
+        [],
+        description="List of checkpoint file paths to be evaluated.",
+        min_length=1,
+    )
+
+    test_set: str = pydt.Field(
+        "test",
+        description="Name of the test dataset split to be used.",
+    )
+
+    batch_size: int = pydt.Field(
+        32,
+        description="Batch size for testing.",
+        gt=0,
     )

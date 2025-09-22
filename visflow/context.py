@@ -84,7 +84,7 @@ class DatasetInfo(te.TypedDict):
 
 
 class Metrics(te.TypedDict, total=False):
-    loss: te.Required[float]
+    loss: float | None
     """Current loss value."""
 
     accuracy: float
@@ -257,3 +257,44 @@ class ExperimentEndLog(te.TypedDict, total=False):
 
     best_epoch: te.Required[int]
     """Epoch number at which the best metrics were achieved."""
+
+
+class CheckpointTestLog(te.TypedDict):
+    """Log for individual checkpoint testing results."""
+
+    checkpoint_path: te.Required[str]
+    """Path to the checkpoint file."""
+
+    checkpoint_name: te.Required[str]
+    """Name of the checkpoint (derived from filename)."""
+
+    epoch: te.Required[int]
+    """Epoch number from the checkpoint."""
+
+    test_metrics: te.Required[Metrics]
+    """Test metrics for this checkpoint."""
+
+    inference_time_sec: float
+    """Time taken for inference in seconds."""
+
+    model_params: int
+    """Number of model parameters."""
+
+
+class TestEndLog(te.TypedDict):
+    """Log for test pipeline completion."""
+
+    total_checkpoints: te.Required[int]
+    """Total number of checkpoints tested."""
+
+    total_time_sec: te.Required[float]
+    """Total time taken for all tests."""
+
+    checkpoint_results: te.Required[t.List[CheckpointTestLog]]
+    """Results for all checkpoints."""
+
+    best_checkpoint: te.Required[CheckpointTestLog]
+    """Best performing checkpoint."""
+
+    test_dataset_info: t.Dict[str, t.Any]
+    """Information about the test dataset."""
