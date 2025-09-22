@@ -2,7 +2,7 @@ logging:
   backend: native # Options: native, loguru
   loglevel: info  # Options: debug, info, warning, error, critical
 
-seed: 42
+seed: 42 # Random seed for reproducibility
 
 model:
   # Available architectures:
