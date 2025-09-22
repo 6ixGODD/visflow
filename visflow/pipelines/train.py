@@ -817,7 +817,11 @@ class TrainPipeline(BasePipeline):
                 "dataset": "test",
                 "architecture": self.config.model.architecture,
                 "epoch": self.config.training.epochs,
-                **{k: v for k, v in test_metrics.items() if k != "confusion_matrix"},
+                **{
+                    k: v
+                    for k, v in test_metrics.items()
+                    if k != "confusion_matrix"
+                },
                 **{
                     f"cm_{i}": v
                     for i, v in enumerate(
