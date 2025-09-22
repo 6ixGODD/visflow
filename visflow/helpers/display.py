@@ -370,6 +370,8 @@ class Display:
             "recall",
             "f1_score",
             "auc_roc",
+            "sensitivity",
+            "specificity",
         ]:
             train_val = train_metrics.get(metric_name)  # type: ignore
             val_val = val_metrics.get(metric_name)  # type: ignore
