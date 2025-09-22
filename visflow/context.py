@@ -105,6 +105,12 @@ class Metrics(te.TypedDict, total=False):
     confusion_matrix: t.List[t.List[int]]
     """Current confusion matrix."""
 
+    sensitivity: float
+    """Current sensitivity value."""
+
+    specificity: float
+    """Current specificity value."""
+
     extras: t.Dict[str, float]
     """Any additional metrics."""
 

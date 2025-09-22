@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import typing as t
+
 import pydantic as pydt
 
 
@@ -9,8 +11,11 @@ class OutputConfig(pydt.BaseModel):
         description="Directory where training outputs will be saved.",
     )
 
-    experiment_name: str = pydt.Field(
-        default="exp", min_length=1, description="Unique name for the experiment."
+    experiment_name: t.Literal["auto"] | str = pydt.Field(
+        default="auto",
+        min_length=1,
+        description="Unique name for the experiment. Use 'auto' to generate a "
+        "name based on model achitecture.",
     )
 
     checkpoint_frequency: int = pydt.Field(

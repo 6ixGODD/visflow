@@ -33,37 +33,35 @@ model:
   weights_path: ~        # Path to custom weights file (optional)
 
 training:
-  device: cuda                  # Options: cuda, cpu
-  shuffle: true                 # Shuffle the training data
-  batch_size: 32                # Batch size for training
-  weighted_sampling: false      # Use weighted sampling to handle class imbalance
-  drop_last: false              # Drop the last incomplete batch
-  epochs: 10                    # Number of training epochs
-  learning_rate: 0.001          # Learning rate
-  momentum: 0.9                 # Momentum for SGD optimizer
-  weight_decay: 0.0001          # Weight decay (L2 regularization)
-  optimizer: adam               # Options: sgd, adam, adamw
-  lr_scheduler: ~               # Options: step, cosine, plateau (optional)
-  cosine_scheduler: ~           # Cosine annealing learning rate scheduler
-  #   t_max: 10                 # Maximum number of iterations
-  #   eta_min: 0                # Minimum learning rate
-  step_scheduler: ~             # Step learning rate scheduler
-  #   step_size: 7              # Step size for learning rate decay
-  #   gamma: 0.1                # Decay factor
-  plateau_scheduler: ~          # Learning rate scheduler that reduces LR when a metric has stopped improving
-  #   mode: min                 # Mode for plateau scheduler (min or max)
-  #   factor: 0.1               # Decay factor
-  #   patience: 10              # Number of epochs with no improvement
-  #   threshold: 0.0001         # Threshold for measuring improvement
-  #   threshold_mode: rel       # Options: rel, abs
-  #   cooldown: 0               # Number of epochs to wait before resuming normal operation
-  #   min_lr: 0                 # Minimum learning rate
-  #   eps: 1e-08                # Minimum decay applied to lr
-  early_stopping: true          # Enable early stopping
-  early_stopping_patience: 5    # Number of epochs with no improvement before stopping
-  early_stopping_min_delta: 0.0 # Minimum change to qualify as an improvement
-  early_stopping_target: loss   # Options: loss, accuracy, precision, recall, f1
-  label_smoothing: 0.0          # Label smoothing factor (0.0 means no smoothing)
+  device: cpu                # Options: cuda, cpu
+  shuffle: true              # Shuffle the training data
+  batch_size: 32             # Batch size for training
+  weighted_sampling: false   # Use weighted sampling to handle class imbalance
+  drop_last: false           # Drop the last incomplete batch
+  epochs: 10                 # Number of training epochs
+  learning_rate: 0.001       # Learning rate
+  momentum: 0.9              # Momentum for SGD optimizer
+  weight_decay: 0.0001       # Weight decay (L2 regularization)
+  optimizer: adam            # Options: sgd, adam, adamw
+  lr_scheduler: ~            # Options: step, cosine, plateau (optional)
+  cosine_scheduler: ~        # Cosine annealing learning rate scheduler
+  #   t_max: 10              # Maximum number of iterations
+  #   eta_min: 0             # Minimum learning rate
+  step_scheduler: ~          # Step learning rate scheduler
+  #   step_size: 7           # Step size for learning rate decay
+  #   gamma: 0.1             # Decay factor
+  plateau_scheduler: ~       # Learning rate scheduler that reduces LR when a metric has stopped improving
+  #   mode: min              # Mode for plateau scheduler (min or max)
+  #   factor: 0.1            # Decay factor
+  #   patience: 10           # Number of epochs with no improvement
+  #   threshold: 0.0001      # Threshold for measuring improvement
+  #   threshold_mode: rel    # Options: rel, abs
+  #   cooldown: 0            # Number of epochs to wait before resuming normal operation
+  #   min_lr: 0              # Minimum learning rate
+  #   eps: 1e-08             # Minimum decay applied to lr
+  early_stopping: true       # Enable early stopping
+  early_stopping_patience: 5 # Number of epochs with no improvement before stopping
+  label_smoothing: 0.0       # Label smoothing factor (0.0 means no smoothing)
 
 testing:
   batch_size: 32 # Batch size for testing
@@ -73,7 +71,7 @@ data:
   val_dir: ./data/val     # Path to validation data directory
   test_dir: ./data/test   # Path to test data directory
   num_workers: 4          # Number of workers for data loading
-  pin_memory: true        # Pin memory for data loading
+  pin_memory: false       # Pin memory for data loading
 
 resize:
   size: 224              # Resize size
@@ -130,6 +128,6 @@ augmentation:
     p: 0.5         # Probability of applying MixUp
 
 output:
-  output_dir: ./output             # Directory to save outputs
-  experiment_name: vision-research # Experiment name
-  checkpoint_frequency: 10         # Frequency (in epochs) to save model checkpoints
+  output_dir: ./output     # Directory to save outputs
+  experiment_name: auto    # Experiment name
+  checkpoint_frequency: 10 # Frequency (in epochs) to save model checkpoints
