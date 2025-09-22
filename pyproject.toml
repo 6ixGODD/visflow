@@ -1,6 +1,6 @@
 [project]
 name = "visflow"
-version = "1.0.3"
+version = "1.0.4"
 description = "A comprehensive computer vision framework for training, evaluation, and visualization with support for multiple architectures and GradCAM analysis"
 authors = [
     {name = "BoChen SHEN", email = "6goddddddd@gmail.com"}
