@@ -78,12 +78,12 @@ def compute_metric(
                 specificities.append(class_specificity)
 
             # Macro average
-            sensitivity = sum(sensitivities) / len(
-                sensitivities
-            ) if sensitivities else 0.0
-            specificity = sum(specificities) / len(
-                specificities
-            ) if specificities else 0.0
+            sensitivity = (
+                sum(sensitivities) / len(sensitivities) if sensitivities else 0.0
+            )
+            specificity = (
+                sum(specificities) / len(specificities) if specificities else 0.0
+            )
 
         else:
             # Binary classification
