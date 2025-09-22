@@ -94,3 +94,6 @@ pyrightconfig.json
 data/
 !data/.gitkeep
 !/visflow/providers/
+!/data/train/README.md
+!/data/val/README.md
+!/data/test/README.md
