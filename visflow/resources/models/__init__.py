@@ -1,9 +1,11 @@
 from __future__ import annotations
 
 import abc
+import importlib
 import logging
 import os
 import pathlib as p
+import pkgutil
 import typing as t
 
 import torch
@@ -72,6 +74,7 @@ _C = t.TypeVar("_C", bound=BaseClassifier)
 
 def register_model(name: str) -> t.Callable[[t.Type[_C]], t.Type[_C]]:
     def decorator(cls: t.Type[_C]) -> t.Type[_C]:
+        global MODEL_REGISTRY
         if not issubclass(cls, BaseClassifier):
             raise TypeError(f"{cls.__name__} must inherit from BaseClassifier")
         MODEL_REGISTRY[name] = cls
@@ -365,3 +368,9 @@ def load_model_from_ckpt(
     model = make_model(model_name, num_classes=num_classes, **kwargs)
     model.load(ckpt, strict=strict)
     return model
+
+
+_package_dir = p.Path(__file__).parent
+for _, module_name, ispkg in pkgutil.iter_modules([str(_package_dir)]):
+    if not ispkg and module_name not in {"__init__", "base"}:
+        importlib.import_module(f"{__name__}.{module_name}")
