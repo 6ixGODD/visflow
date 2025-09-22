@@ -6,7 +6,7 @@ from visflow import __version__
 
 
 def parse_args() -> argparse.Namespace:
-    from visflow._cli.commands import train, gradcam
+    from visflow._cli.commands import train, gradcam, init
 
     parser = argparse.ArgumentParser(
         description="VisFlow",
@@ -28,6 +28,7 @@ def parse_args() -> argparse.Namespace:
     )
     train.register(subparser)
     gradcam.register(subparser)
+    init.register(subparser)
 
     def _print_help(args_: argparse.Namespace) -> None:
         parser.print_help()

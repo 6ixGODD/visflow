@@ -55,6 +55,7 @@ class GradCAMPipeline(BasePipeline):
         aug_smooth: bool = False,
         device: t.Literal["cpu", "cuda"] | None = None,
     ):
+        self._completed = False
         self.ckpt_path = p.Path(ckpt_path)
         if not self.ckpt_path.exists():
             raise FileNotFoundError(f"Checkpoint file not found: {self.ckpt_path}")
@@ -78,7 +79,9 @@ class GradCAMPipeline(BasePipeline):
                 )
         else:
             raise ValueError(
-                f"Image path is neither a file nor a directory: " f"{self.image_path}"
+                f"Image path is neither a file nor a directory: "
+                f""
+                f"{self.image_path}"
             )
 
         self.output_dir = p.Path(output_dir or "./output") / "gradcam"
@@ -198,3 +201,5 @@ class GradCAMPipeline(BasePipeline):
         else:
             output_type = "heatmaps" if self.heatmap_only else "Grad-CAM images"
             spinner.succeed(f"{total_images} {output_type} saved to {self.output_dir}")
+
+        self._completed = True
