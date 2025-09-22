@@ -5,6 +5,21 @@ All notable changes to this project will be documented in file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.5] - 2025-09-22
+
+### Added
+
+- Add Init pipeline: A new pipeline to initialize project structure and download config files
+
+### Changed
+
+- Update .config.example.yml to contain all possible config options with comments
+
+### Fixed
+
+- Fixed AlexNet model loading issue
+- Fixed bugs and improved code quality
+
 ## [1.0.4] - 2025-09-22
 
 ### Added
@@ -87,7 +102,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Custom model implementation guide
 - Installation and setup instructions
 
-[unreleased]: https://github.com/6ixGODD/visflow/compare/v1.0.4...HEAD
+[unreleased]: https://github.com/6ixGODD/visflow/compare/v1.0.5...HEAD
+
+[1.0.5]: https://github.com/6ixGODD/visflow/compare/v1.0.4...v1.0.5
 
 [1.0.4]: https://github.com/6ixGODD/visflow/compare/v1.0.3...v1.0.4
 
