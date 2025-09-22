@@ -13,7 +13,7 @@ from visflow.context import Metrics
 def compute_metric(
     outputs: torch.Tensor,
     targets: torch.Tensor,
-    loss: float,
+    loss: float | None = None,
     num_classes: int | None = None,
 ) -> Metrics:
     with torch.no_grad():

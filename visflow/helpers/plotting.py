@@ -163,6 +163,137 @@ def plot_roc_curve(
     return auc_scores
 
 
+def plot_combined_roc_curves(
+    checkpoint_results: t.Dict[str, t.Tuple[torch.Tensor, torch.Tensor]],
+    num_classes: int,
+    class_names: t.List[str] | None = None,
+    save_path: p.Path | None = None,
+    show: bool = True,
+) -> t.Dict[str, t.Dict[str, float]]:
+    """
+    Plot ROC curves for multiple checkpoints on the same figure.
+
+    Args:
+        checkpoint_results: Dict mapping checkpoint names to (y_true, y_pred_probs) tuples
+        num_classes: Number of classes
+        class_names: Optional list of class names
+        save_path: Path to save the plot
+        show: Whether to show the plot
+
+    Returns:
+        Dictionary mapping checkpoint names to their AUC scores
+    """
+    if num_classes > 2:
+        # Multi-class ROC curves
+        fig, axes = plt.subplots(2, (num_classes + 1) // 2, figsize=(15, 10))
+        if num_classes == 1:
+            axes = [axes]
+        elif (num_classes + 1) // 2 == 1:
+            axes = [axes]
+        else:
+            axes = axes.flatten()
+
+        all_auc_scores = {}
+        colors = plt.cm.Set1(np.linspace(0, 1, len(checkpoint_results)))  # type: ignore
+
+        # Plot for each class
+        for class_idx in range(num_classes):
+            ax = axes[class_idx]
+            class_name = class_names[
+                class_idx] if class_names else f"Class {class_idx}"
+
+            for i, (checkpoint_name, (y_true, y_pred_probs)) in enumerate(
+                checkpoint_results.items()
+                ):
+                y_true_np = y_true.cpu().numpy()
+                y_pred_probs_np = y_pred_probs.cpu().numpy()
+
+                # Binarize for this class
+                y_true_bin = label_binarize(
+                    y_true_np,
+                    classes=range(num_classes)
+                    )
+
+                fpr, tpr, _ = roc_curve(
+                    y_true_bin[:, class_idx],
+                    y_pred_probs_np[:, class_idx]
+                    )
+                roc_auc = auc(fpr, tpr)
+
+                if checkpoint_name not in all_auc_scores:
+                    all_auc_scores[checkpoint_name] = {}
+                all_auc_scores[checkpoint_name][f"class_{class_idx}"] = roc_auc
+
+                ax.plot(
+                    fpr, tpr,
+                    color=colors[i],
+                    linewidth=2,
+                    label=f"{checkpoint_name} (AUC={roc_auc:.3f})"
+                )
+
+            ax.plot([0, 1], [0, 1], color="gray", linestyle="--", linewidth=1)
+            ax.set_xlim([0.0, 1.0])
+            ax.set_ylim([0.0, 1.05])
+            ax.set_xlabel("False Positive Rate")
+            ax.set_ylabel("True Positive Rate")
+            ax.set_title(f"ROC Curve - {class_name}")
+            ax.legend(loc="lower right", fontsize=10)
+            ax.grid(True, alpha=0.3)
+
+        # Remove empty subplots
+        for i in range(num_classes, len(axes)):
+            fig.delaxes(axes[i])
+
+    else:
+        # Binary classification
+        plt.figure(figsize=(10, 8))
+
+        all_auc_scores = {}
+        colors = plt.cm.Set1(np.linspace(0, 1, len(checkpoint_results)))  # type: ignore
+
+        for i, (checkpoint_name, (y_true, y_pred_probs)) in enumerate(
+            checkpoint_results.items()
+            ):
+            y_true_np = y_true.cpu().numpy()
+            y_pred_probs_np = y_pred_probs.cpu().numpy()
+
+            if y_pred_probs_np.shape[1] == 2:
+                y_pred_probs_binary = y_pred_probs_np[:, 1]
+            else:
+                y_pred_probs_binary = y_pred_probs_np.flatten()
+
+            fpr, tpr, _ = roc_curve(y_true_np, y_pred_probs_binary)
+            roc_auc = auc(fpr, tpr)
+            all_auc_scores[checkpoint_name] = {"binary": roc_auc}
+
+            plt.plot(
+                fpr, tpr,
+                color=colors[i],
+                linewidth=2,
+                label=f"{checkpoint_name} (AUC={roc_auc:.3f})"
+            )
+
+        plt.plot([0, 1], [0, 1], color="gray", linestyle="--", linewidth=1)
+        plt.xlim([0.0, 1.0])
+        plt.ylim([0.0, 1.05])
+        plt.xlabel("False Positive Rate")
+        plt.ylabel("True Positive Rate")
+        plt.title("ROC Curves Comparison")
+        plt.legend(loc="lower right")
+        plt.grid(True, alpha=0.3)
+
+    plt.tight_layout()
+
+    if save_path:
+        plt.savefig(save_path, dpi=300, bbox_inches='tight')
+
+    if show:
+        plt.show()
+    else:
+        plt.close()
+
+    return all_auc_scores
+
 def plot_confusion_matrix(
     confusion_matrix: np.ndarray,
     class_names: t.List[str] | None = None,
