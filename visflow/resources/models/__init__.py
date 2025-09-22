@@ -135,6 +135,10 @@ class TorchVisionClassifier(BaseClassifier):
             num_features = m.fc.in_features
             m.fc = nn.Linear(num_features, num_classes)
 
+        elif isinstance(m, models.AlexNet):
+            num_features = m.classifier[6].in_features
+            m.classifier[6] = nn.Linear(num_features, num_classes)
+
         elif isinstance(m, models.VGG):
             num_features = m.classifier[6].in_features
             m.classifier[6] = nn.Linear(num_features, num_classes)
@@ -211,6 +215,12 @@ class TorchVisionClassifier(BaseClassifier):
                 raise NotImplementedError(
                     "`gradcam_layer` not implemented for this ResNet block " "type."
                 )
+
+        elif isinstance(m, models.AlexNet):
+            for layer in reversed(m.features):
+                if isinstance(layer, nn.Conv2d):
+                    return layer
+            raise NotImplementedError("No Conv2d layer found in AlexNet features.")
 
         elif isinstance(m, models.VGG):
             for layer in reversed(t.cast(nn.Sequential, m.features)):
