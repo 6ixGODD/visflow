@@ -157,11 +157,7 @@ class ImageDatamodule:
             )
 
     @property
-    def loaders(
-        self,
-    ) -> t.Tuple[
-        DataLoader[torch.Tensor], DataLoader[torch.Tensor], DataLoader[torch.Tensor]
-    ]:
+    def train_loader(self) -> DataLoader[torch.Tensor]:
         if self.config.training.weighted_sampling:
             labels = [label for _, label in self.train_set.samples]
             class_weights = compute_class_weights(labels)
@@ -171,7 +167,7 @@ class ImageDatamodule:
             sampler = WeightedRandomSampler(sample_weights, len(sample_weights))
         else:
             sampler = None
-        train_loader = DataLoader(
+        return DataLoader(
             dataset=self.train_set,
             batch_size=self.config.training.batch_size,
             shuffle=self.config.training.shuffle,
@@ -180,7 +176,10 @@ class ImageDatamodule:
             drop_last=self.config.training.drop_last,
             sampler=sampler,
         )
-        val_loader = DataLoader(
+
+    @property
+    def val_loader(self) -> DataLoader[torch.Tensor]:
+        return DataLoader(
             dataset=self.val_set,
             batch_size=self.config.training.batch_size,
             shuffle=False,
@@ -188,7 +187,10 @@ class ImageDatamodule:
             pin_memory=self.config.data.pin_memory,
             drop_last=False,
         )
-        test_loader = DataLoader(
+
+    @property
+    def test_loader(self) -> DataLoader[torch.Tensor]:
+        return DataLoader(
             dataset=self.test_set,
             batch_size=self.config.testing.batch_size,
             shuffle=False,
@@ -196,7 +198,14 @@ class ImageDatamodule:
             pin_memory=self.config.data.pin_memory,
             drop_last=False,
         )
-        return train_loader, val_loader, test_loader
+
+    @property
+    def loaders(
+        self,
+    ) -> t.Tuple[
+        DataLoader[torch.Tensor], DataLoader[torch.Tensor], DataLoader[torch.Tensor]
+    ]:
+        return self.train_loader, self.val_loader, self.test_loader
 
     @property
     def info(self) -> DatasetInfo:
@@ -209,9 +218,9 @@ class ImageDatamodule:
         )
 
     @property
-    def classes(self) -> list[str]:
+    def classes(self) -> t.List[str]:
         return self.train_set.classes
 
     @property
-    def class_to_idx(self) -> dict[str, int]:
+    def class_to_idx(self) -> t.Dict[str, int]:
         return self.train_set.class_to_idx
