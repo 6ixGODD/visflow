@@ -17,8 +17,7 @@ from visflow.utils import spinner
 
 
 def get_colormap(
-    cm: t.Literal["jet", "turbo", "viridis", "inferno", "plasma"],
-) -> cv2.ColormapTypes:
+        cm: t.Literal["jet", "turbo", "viridis", "inferno", "plasma"]) -> cv2.ColormapTypes:
     colormaps = {
         "jet": cv2.COLORMAP_JET,
         "turbo": cv2.COLORMAP_TURBO,
@@ -73,16 +72,12 @@ class GradCAMPipeline(BasePipeline):
         elif self.image_path.is_dir():
             self.image_files = self._find_image(self.image_path)
             if not self.image_files:
-                raise ValueError(
-                    f"No supported image files found in directory: "
-                    f"{self.image_path}"
-                )
+                raise ValueError(f"No supported image files found in directory: "
+                                 f"{self.image_path}")
         else:
-            raise ValueError(
-                f"Image path is neither a file nor a directory: "
-                f""
-                f"{self.image_path}"
-            )
+            raise ValueError(f"Image path is neither a file nor a directory: "
+                             f""
+                             f"{self.image_path}")
 
         self.output_dir = p.Path(output_dir or "./output") / "gradcam"
         self.output_dir.mkdir(parents=True, exist_ok=True)
@@ -99,10 +94,7 @@ class GradCAMPipeline(BasePipeline):
     def _find_image(self, directory: p.Path) -> list[p.Path]:
         image_files = []
         for file_path in directory.rglob("*"):
-            if (
-                file_path.is_file()
-                and file_path.suffix.lower() in self.SUPPORTED_EXTENSIONS
-            ):
+            if file_path.is_file() and file_path.suffix.lower() in self.SUPPORTED_EXTENSIONS:
                 image_files.append(file_path)
         return sorted(image_files)
 
@@ -122,11 +114,8 @@ class GradCAMPipeline(BasePipeline):
         input_tensor = transform(image).unsqueeze(0)  # Add batch dimension
         input_tensor = input_tensor.to(self.device or "cpu")
 
-        relative_path = (
-            image_file.relative_to(self.image_path)
-            if self.image_path.is_dir()
-            else image_file
-        )
+        relative_path = (image_file.relative_to(self.image_path)
+                         if self.image_path.is_dir() else image_file)
         output_subdir = self.output_dir / relative_path.parent
         output_subdir.mkdir(parents=True, exist_ok=True)
 
@@ -142,13 +131,10 @@ class GradCAMPipeline(BasePipeline):
             )
         else:
             save_path = output_subdir / f"{image_file.stem}_cam.png"
-            ori_image = (
-                cv2.cvtColor(
-                    cv2.resize(cv2.imread(str(image_file)), (224, 224)),
-                    cv2.COLOR_BGR2RGB,
-                )
-                / 255.0
-            )
+            ori_image = (cv2.cvtColor(
+                cv2.resize(cv2.imread(str(image_file)), (224, 224)),
+                cv2.COLOR_BGR2RGB,
+            ) / 255.0)
             gradcam.save_cam(
                 input_tensor=input_tensor,
                 original_image=ori_image,
@@ -177,19 +163,14 @@ class GradCAMPipeline(BasePipeline):
             target_class = self.target_class
         config = ckpt.get("config")
         model = load_model_from_ckpt(ckpt)
-        gradcam = GraphCAM(
-            model=model, device=self.device, target_layer=self.target_layer
-        )
+        gradcam = GraphCAM(model=model, device=self.device, target_layer=self.target_layer)
         train_config = TrainConfig.model_validate(config)
         transform = ImageDatamodule(
-            train_config
-        ).val_transforms  # Val transforms is fit for inference
+            train_config).val_transforms  # Val transforms is fit for inference
 
         for idx, image_file in enumerate(self.image_files, 1):
             try:
-                self._step(
-                    image_file, gradcam, transform, idx, total_images, target_class
-                )
+                self._step(image_file, gradcam, transform, idx, total_images, target_class)
                 spinner.info(f"Processed {image_file} ({idx}/{total_images})")
             except Exception as e:
                 spinner.warn(f"Failed to process {image_file}: {e}")

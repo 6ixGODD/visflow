@@ -138,8 +138,6 @@ class Args(BaseArgs):
 
 
 def register(subparser: _SubParsersAction[argparse.ArgumentParser]) -> None:
-    parser = subparser.add_parser(
-        "gradcam", help="Visualize model predictions using Grad-CAM"
-    )
+    parser = subparser.add_parser("gradcam", help="Visualize model predictions using Grad-CAM")
     Args.add_args(parser)
     parser.set_defaults(func=Args.func)

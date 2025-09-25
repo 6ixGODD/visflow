@@ -4,17 +4,14 @@ import pydantic as pydt
 
 
 class DataConfig(pydt.BaseModel):
-    train_dir: str = pydt.Field(
-        default="./data/train", description="Path to the training dataset directory."
-    )
+    train_dir: str = pydt.Field(default="./data/train",
+                                description="Path to the training dataset directory.")
 
-    val_dir: str = pydt.Field(
-        default="./data/val", description="Path to the validation dataset directory."
-    )
+    val_dir: str = pydt.Field(default="./data/val",
+                              description="Path to the validation dataset directory.")
 
-    test_dir: str = pydt.Field(
-        default="./data/test", description="Path to the test dataset directory."
-    )
+    test_dir: str = pydt.Field(default="./data/test",
+                               description="Path to the test dataset directory.")
 
     num_workers: int = pydt.Field(
         default=4,
@@ -23,6 +20,5 @@ class DataConfig(pydt.BaseModel):
         description="Number of worker processes for data loading.",
     )
 
-    pin_memory: bool = pydt.Field(
-        default=True, description="Whether to pin memory in data loaders."
-    )
+    pin_memory: bool = pydt.Field(default=True,
+                                  description="Whether to pin memory in data loaders.")

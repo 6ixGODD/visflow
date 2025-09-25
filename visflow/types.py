@@ -8,9 +8,7 @@ import typing_extensions as te
 
 CriterionFunc = t.Callable[[t.Any, t.Any], torch.Tensor]
 
-PixelValue: t.TypeAlias = (
-    int | t.Tuple[int, int, int] | float | t.Tuple[float, float, float]
-)
+PixelValue: t.TypeAlias = int | t.Tuple[int, int, int] | float | t.Tuple[float, float, float]
 
 
 def pixel_float(value: PixelValue, /) -> t.Tuple[float, float, float]:

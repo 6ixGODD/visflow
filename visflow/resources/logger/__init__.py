@@ -18,6 +18,7 @@ F = t.TypeVar("F", bound=t.Callable[..., t.Any])
 
 
 class LogContext:
+
     @staticmethod
     def add(**ctx: t.Any) -> None:
         current_ctx = _context.get({})
@@ -54,9 +55,7 @@ class LoggerBackend(abc.ABC):
 
 class _LoggerContext:
 
-    def __init__(
-        self, backend: LoggerBackend, initial_ctx: t.Dict[str, t.Any] | None = None
-    ):
+    def __init__(self, backend: LoggerBackend, initial_ctx: t.Dict[str, t.Any] | None = None):
         self._backend = backend
         self._context = initial_ctx or {}
 
@@ -132,6 +131,7 @@ class _LoggerContext:
     ) -> t.Callable[[F], F]:
 
         def decorator(fn: F) -> t.Any:
+
             @ft.wraps(fn)
             def wrapper(*args: t.Any, **kwargs: t.Any) -> t.Any:
                 func_name = fn.__name__
@@ -161,9 +161,7 @@ class _LoggerContext:
                     bound_args.apply_defaults()
 
                     filtered_args = {
-                        k: v
-                        for k, v in bound_args.arguments.items()
-                        if k not in ("self", "cls")
+                        k: v for k, v in bound_args.arguments.items() if k not in ("self", "cls")
                     }
                     base_ctx["arguments"] = filtered_args
 
@@ -190,9 +188,7 @@ class _LoggerContext:
                             try:
                                 if hasattr(result, "__dict__"):
                                     success_context["result"] = str(result)
-                                elif isinstance(
-                                    result, (str, int, float, bool, list, dict)
-                                ):
+                                elif isinstance(result, (str, int, float, bool, list, dict)):
                                     success_context["result"] = result
                                 else:
                                     success_context["result"] = str(result)
@@ -245,6 +241,7 @@ class _LoggerContext:
 
 
 class BaseLogger(_LoggerContext):
+
     def __init__(
         self,
         backend: LoggerBackend,
@@ -292,6 +289,7 @@ class BaseLogger(_LoggerContext):
 
 
 class Logger(BaseLogger):
+
     def __init__(self, config: LoggingConfig):
         self.config = config
 
@@ -304,9 +302,7 @@ class Logger(BaseLogger):
 
             backend = loguru.LoguruBackend()
         else:
-            raise ValueError(
-                f"Unsupported logging backend: {self.config.backend}",
-            )
+            raise ValueError(f"Unsupported logging backend: {self.config.backend}",)
 
         super().__init__(backend=backend, initial_ctx=self.config.extra_context)
         self.add_target(LoggingTarget(logname="stdout", loglevel=self.config.loglevel))

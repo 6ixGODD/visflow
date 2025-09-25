@@ -18,6 +18,6 @@ class OutputConfig(pydt.BaseModel):
         "name based on model achitecture.",
     )
 
-    checkpoint_frequency: int = pydt.Field(
-        default=10, ge=1, description="Frequency of model checkpoint saving."
-    )
+    checkpoint_frequency: int = pydt.Field(default=10,
+                                           ge=1,
+                                           description="Frequency of model checkpoint saving.")

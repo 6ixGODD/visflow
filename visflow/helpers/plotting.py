@@ -95,13 +95,9 @@ def plot_roc_curve(
 
         # Calculate macro-average ROC curve and AUC
         all_fpr = np.unique(
-            np.concatenate(
-                [
-                    roc_curve(y_true_bin[:, i], y_pred_probs_np[:, i])[0]
-                    for i in range(num_classes)
-                ]
-            )
-        )
+            np.concatenate([
+                roc_curve(y_true_bin[:, i], y_pred_probs_np[:, i])[0] for i in range(num_classes)
+            ]))
         mean_tpr = np.zeros_like(all_fpr)
 
         for i in range(num_classes):
@@ -199,37 +195,28 @@ def plot_combined_roc_curves(
         # Plot for each class
         for class_idx in range(num_classes):
             ax = axes[class_idx]
-            class_name = class_names[
-                class_idx] if class_names else f"Class {class_idx}"
+            class_name = class_names[class_idx] if class_names else f"Class {class_idx}"
 
-            for i, (checkpoint_name, (y_true, y_pred_probs)) in enumerate(
-                checkpoint_results.items()
-                ):
+            for i, (checkpoint_name, (y_true,
+                                      y_pred_probs)) in enumerate(checkpoint_results.items()):
                 y_true_np = y_true.cpu().numpy()
                 y_pred_probs_np = y_pred_probs.cpu().numpy()
 
                 # Binarize for this class
-                y_true_bin = label_binarize(
-                    y_true_np,
-                    classes=range(num_classes)
-                    )
+                y_true_bin = label_binarize(y_true_np, classes=range(num_classes))
 
-                fpr, tpr, _ = roc_curve(
-                    y_true_bin[:, class_idx],
-                    y_pred_probs_np[:, class_idx]
-                    )
+                fpr, tpr, _ = roc_curve(y_true_bin[:, class_idx], y_pred_probs_np[:, class_idx])
                 roc_auc = auc(fpr, tpr)
 
                 if checkpoint_name not in all_auc_scores:
                     all_auc_scores[checkpoint_name] = {}
                 all_auc_scores[checkpoint_name][f"class_{class_idx}"] = roc_auc
 
-                ax.plot(
-                    fpr, tpr,
-                    color=colors[i],
-                    linewidth=2,
-                    label=f"{checkpoint_name} (AUC={roc_auc:.3f})"
-                )
+                ax.plot(fpr,
+                        tpr,
+                        color=colors[i],
+                        linewidth=2,
+                        label=f"{checkpoint_name} (AUC={roc_auc:.3f})")
 
             ax.plot([0, 1], [0, 1], color="gray", linestyle="--", linewidth=1)
             ax.set_xlim([0.0, 1.0])
@@ -251,9 +238,7 @@ def plot_combined_roc_curves(
         all_auc_scores = {}
         colors = plt.cm.Set1(np.linspace(0, 1, len(checkpoint_results)))  # type: ignore
 
-        for i, (checkpoint_name, (y_true, y_pred_probs)) in enumerate(
-            checkpoint_results.items()
-            ):
+        for i, (checkpoint_name, (y_true, y_pred_probs)) in enumerate(checkpoint_results.items()):
             y_true_np = y_true.cpu().numpy()
             y_pred_probs_np = y_pred_probs.cpu().numpy()
 
@@ -266,12 +251,11 @@ def plot_combined_roc_curves(
             roc_auc = auc(fpr, tpr)
             all_auc_scores[checkpoint_name] = {"binary": roc_auc}
 
-            plt.plot(
-                fpr, tpr,
-                color=colors[i],
-                linewidth=2,
-                label=f"{checkpoint_name} (AUC={roc_auc:.3f})"
-            )
+            plt.plot(fpr,
+                     tpr,
+                     color=colors[i],
+                     linewidth=2,
+                     label=f"{checkpoint_name} (AUC={roc_auc:.3f})")
 
         plt.plot([0, 1], [0, 1], color="gray", linestyle="--", linewidth=1)
         plt.xlim([0.0, 1.0])
@@ -294,6 +278,7 @@ def plot_combined_roc_curves(
 
     return all_auc_scores
 
+
 def plot_confusion_matrix(
     confusion_matrix: np.ndarray,
     class_names: t.List[str] | None = None,
@@ -302,10 +287,8 @@ def plot_confusion_matrix(
     show: bool = True,
 ) -> None:
     if normalize:
-        confusion_matrix = (
-            confusion_matrix.astype("float")
-            / confusion_matrix.sum(axis=1)[:, np.newaxis]
-        )
+        confusion_matrix = (confusion_matrix.astype("float") /
+                            confusion_matrix.sum(axis=1)[:, np.newaxis])
         title = "Normalized Confusion Matrix"
         fmt = ".2f"
     else:

@@ -12,10 +12,9 @@ class LoggingConfig(pydt.BaseModel):
         "library logging module, 'loguru' uses the Loguru library.",
     )
 
-    extra_context: t.Dict[str, t.Any] = pydt.Field(
-        default_factory=dict, description="Extra context to include in log records"
-    )
+    extra_context: t.Dict[str,
+                          t.Any] = pydt.Field(default_factory=dict,
+                                              description="Extra context to include in log records")
 
-    loglevel: t.Literal["debug", "info", "warning", "error", "critical"] = pydt.Field(
-        default="info", description="Global log level"
-    )
+    loglevel: t.Literal["debug", "info", "warning", "error",
+                        "critical"] = pydt.Field(default="info", description="Global log level")

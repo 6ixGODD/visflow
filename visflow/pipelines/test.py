@@ -41,12 +41,9 @@ class TestPipeline(BasePipeline):
         self._completed = False
         self.config = config
         self.logger = Logger(config.logging)
-        self.device = torch.device(
-            "cuda" if torch.cuda.is_available() else "cpu"
-        )
+        self.device = torch.device(config.device)
 
         # Will be initialized from first checkpoint
-        self.datamodule = None
         self.checkpoint_results = []  # type: t.List[CheckpointTestLog]
         self.start_time = 0.0
 
@@ -67,41 +64,32 @@ class TestPipeline(BasePipeline):
             timestamp=time.strftime("%Y%m%dT%H%M%S", time.localtime()),
         )
 
-        self.logger.add_target(
-            LoggingTarget(logname=exp_dir / ".log.json", loglevel="info"),
-        )
+        self.logger.add_target(LoggingTarget(logname=exp_dir / ".log.json", loglevel="info"),)
         logger = self.logger.with_context(TAG="test", **context)
         env = env_info()
         spinner.succeed("Test experiment setup completed.")
 
         # Load first checkpoint to get configuration
         spinner.start("Loading checkpoint configurations...")
-        first_checkpoint = self.load(
-            self.config.checkpoint_files[0]
-        )
+        first_checkpoint = self.load(self.config.checkpoint_files[0])
 
         # Initialize datamodule from first checkpoint config
         # Assuming the checkpoint contains the training config
         checkpoint_config = first_checkpoint.get("config", {})
-        self.datamodule = self._create_datamodule_from_checkpoint_config(
-            checkpoint_config
-        )
+        self.datamodule = self._create_datamodule_from_checkpoint_config(checkpoint_config)
 
         # Get test data loader
         test_loader = self.test_loader()
         spinner.succeed("Data loader ready.")
 
         # Store results for combined plotting
-        checkpoint_outputs: t.Dict[
-            str, t.Tuple[torch.Tensor, torch.Tensor]] = {}
+        checkpoint_outputs: t.Dict[str, t.Tuple[torch.Tensor, torch.Tensor]] = {}
 
         # Test each checkpoint
         for i, checkpoint_path in enumerate(self.config.checkpoint_files):
-            spinner.start(
-                f"Testing checkpoint {i + 1}/"
-                f"{len(self.config.checkpoint_files)}: "
-                f"{p_.Path(checkpoint_path).name}"
-            )
+            spinner.start(f"Testing checkpoint {i + 1}/"
+                          f"{len(self.config.checkpoint_files)}: "
+                          f"{p_.Path(checkpoint_path).name}")
 
             checkpoint_result = self.test_ckpt(
                 checkpoint_path=checkpoint_path,
@@ -119,9 +107,7 @@ class TestPipeline(BasePipeline):
             # This would need to be returned from _test_checkpoint:
             # checkpoint_outputs[checkpoint_name] = (test_targets, test_outputs)
 
-            spinner.succeed(
-                f"Checkpoint {checkpoint_name} tested successfully."
-            )
+            spinner.succeed(f"Checkpoint {checkpoint_name} tested successfully.")
 
         # Generate combined visualizations
         spinner.start("Generating comparison visualizations...")
@@ -131,10 +117,7 @@ class TestPipeline(BasePipeline):
         self.save(exp_dir)
 
         # Log final results
-        best_checkpoint = max(
-            self.checkpoint_results,
-            key=lambda x: x["test_metrics"]["accuracy"]
-        )
+        best_checkpoint = max(self.checkpoint_results, key=lambda x: x["test_metrics"]["accuracy"])
         total_time = time.time() - self.start_time
 
         end_log = TestEndLog(
@@ -159,9 +142,7 @@ class TestPipeline(BasePipeline):
         return checkpoint
 
     def _create_datamodule_from_checkpoint_config(
-        self,
-        checkpoint_config: t.Dict[str, t.Any]
-    ) -> ImageDatamodule:
+            self, checkpoint_config: t.Dict[str, t.Any]) -> ImageDatamodule:
         """Create datamodule using config from checkpoint."""
         # You'll need to reconstruct the config object from the checkpoint
         # This is a simplified version - you might need to adapt based on
@@ -172,12 +153,12 @@ class TestPipeline(BasePipeline):
         # You might want to only use relevant parts like data paths, resize,
         # etc.
         config_dict = checkpoint_config.copy()
-        config_dict.update(
-            {
-                "training": {"batch_size": self.config.batch_size},
-                # Override batch size
-            }
-        )
+        config_dict.update({
+            "training": {
+                "batch_size": self.config.batch_size
+            },
+            # Override batch size
+        })
 
         # Convert back to config object
         train_config = TrainConfig.from_dict(config_dict)
@@ -201,22 +182,19 @@ class TestPipeline(BasePipeline):
     ) -> CheckpointTestLog:
         """Test a single checkpoint."""
         # Load checkpoint
-        checkpoint = self.load(checkpoint_path)
+        ckpt: Checkpoint = self.load(checkpoint_path)
         checkpoint_name = p_.Path(checkpoint_path).stem
 
         # Create model
         model = make_model(
-            name=checkpoint.get("config", {}).get("model", {}).get(
-                "architecture",
-                "resnet18"
-            ),
+            name=ckpt["config"].get("model", {}).get("architecture", "resnet18"),
             pretrained=False,
-            num_classes=len(checkpoint.get("classes", [])),
+            num_classes=len(ckpt["classes"]),
             weights_path=None,
         ).to(self.device)
 
         # Load model weights
-        model.load_state_dict(checkpoint["model_state_dict"])
+        model.load_state_dict(ckpt["model_state_dict"])
         model.eval()
 
         # Count parameters
@@ -224,14 +202,11 @@ class TestPipeline(BasePipeline):
 
         # Run inference
         start_time = time.time()
-        test_metrics, test_outputs, test_targets = self.eval(
-            model,
-            test_loader
-        )
+        test_metrics, test_outputs, test_targets = self.eval(model, test_loader)
         inference_time = time.time() - start_time
 
         # Generate individual confusion matrix
-        class_names = checkpoint.get("classes", [])
+        class_names = ckpt.get("classes", [])
         cm_path = exp_dir / f"confusion_matrix_{checkpoint_name}.png"
         plot_confusion_matrix(
             confusion_matrix=np.array(test_metrics["confusion_matrix"]),
@@ -247,7 +222,7 @@ class TestPipeline(BasePipeline):
         result = CheckpointTestLog(
             checkpoint_path=checkpoint_path,
             checkpoint_name=checkpoint_name,
-            epoch=checkpoint.get("epoch", 0),
+            epoch=ckpt.get("epoch", 0),
             test_metrics=test_metrics,
             inference_time_sec=inference_time,
             model_params=model_params,
@@ -256,11 +231,8 @@ class TestPipeline(BasePipeline):
         logger.info(f"Checkpoint {checkpoint_name} tested", **result)
         return result
 
-    def eval(
-        self,
-        model: nn.Module,
-        dataloader: DataLoader
-    ) -> t.Tuple[Metrics, torch.Tensor, torch.Tensor]:
+    def eval(self, model: nn.Module,
+             dataloader: DataLoader) -> t.Tuple[Metrics, torch.Tensor, torch.Tensor]:
         """Evaluate model on dataloader."""
         model.eval()
         all_outputs = []
@@ -284,11 +256,8 @@ class TestPipeline(BasePipeline):
 
         return metrics, outputs_tensor, targets_tensor
 
-    def plots(
-        self,
-        exp_dir: p_.Path,
-        checkpoint_outputs: t.Dict[str, t.Tuple[torch.Tensor, torch.Tensor]]
-    ) -> None:
+    def plots(self, exp_dir: p_.Path,
+              checkpoint_outputs: t.Dict[str, t.Tuple[torch.Tensor, torch.Tensor]]) -> None:
         """Generate comparison plots for all checkpoints."""
         if not checkpoint_outputs:
             return

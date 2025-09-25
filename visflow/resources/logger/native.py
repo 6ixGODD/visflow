@@ -149,12 +149,10 @@ class ContextFormatter(logging.Formatter):
             full_display = f"{truncated_name}.{truncated_tag}"
 
             if self.use_colors:
-                colored_name = ansi.ANSIFormatter.format(
-                    truncated_name, *self.COMPONENT_STYLES["logger"]
-                )
-                colored_tag = ansi.ANSIFormatter.format(
-                    truncated_tag, *self.COMPONENT_STYLES["tag"]
-                )
+                colored_name = ansi.ANSIFormatter.format(truncated_name,
+                                                         *self.COMPONENT_STYLES["logger"])
+                colored_tag = ansi.ANSIFormatter.format(truncated_tag,
+                                                        *self.COMPONENT_STYLES["tag"])
                 colored_dot = ansi.ANSIFormatter.format(".", ansi.ANSIFormatter.FG.GRAY)
                 display = f"{colored_name}{colored_dot}{colored_tag}"
             else:
@@ -176,9 +174,7 @@ class ContextFormatter(logging.Formatter):
             display = f"{truncated_name:<20}"  # Left-align and pad to 20
 
             if self.use_colors:
-                display = ansi.ANSIFormatter.format(
-                    display, *self.COMPONENT_STYLES["logger"]
-                )
+                display = ansi.ANSIFormatter.format(display, *self.COMPONENT_STYLES["logger"])
 
         return display
 
@@ -201,9 +197,7 @@ class ContextFormatter(logging.Formatter):
         for k, v in ctx.items():
             line = f"{k}={v}"
             if self.use_colors:
-                line = ansi.ANSIFormatter.format(
-                    line, *self.COMPONENT_STYLES["context"]
-                )
+                line = ansi.ANSIFormatter.format(line, *self.COMPONENT_STYLES["context"])
             lines.append(f"\n{indent}{arrow} {line}")
 
         return "".join(lines)
@@ -221,9 +215,7 @@ class ContextFormatter(logging.Formatter):
         else:
             return self._format_json(record, context)
 
-    def _format_console(
-        self, record: logging.LogRecord, context: t.Dict[str, t.Any]
-    ) -> str:
+    def _format_console(self, record: logging.LogRecord, context: t.Dict[str, t.Any]) -> str:
         timestamp = self.formatTime(record, self.datefmt)
         logger_name = self._format_with_tag(record.name, context)
         level_name = f"{record.levelname:<8}"
@@ -231,12 +223,9 @@ class ContextFormatter(logging.Formatter):
 
         # Apply colors
         if self.use_colors:
-            timestamp = ansi.ANSIFormatter.format(
-                timestamp, *self.COMPONENT_STYLES["timestamp"]
-            )
-            level_name = ansi.ANSIFormatter.format(
-                level_name, *self.LEVEL_COLORS.get(record.levelno, ())
-            )
+            timestamp = ansi.ANSIFormatter.format(timestamp, *self.COMPONENT_STYLES["timestamp"])
+            level_name = ansi.ANSIFormatter.format(level_name,
+                                                   *self.LEVEL_COLORS.get(record.levelno, ()))
             arrow = ansi.ANSIFormatter.format("=>", *self.COMPONENT_STYLES["arrow"])
         else:
             arrow = "=>"
@@ -245,7 +234,9 @@ class ContextFormatter(logging.Formatter):
         plain_timestamp = self.formatTime(record, self.datefmt)
         plain_level = f"{record.levelname:<8}"
         prefix_len = self._get_prefix_length(
-            plain_timestamp, "visflow" + 13 * " ", plain_level  # Max 20-char logger
+            plain_timestamp,
+            "visflow" + 13 * " ",
+            plain_level  # Max 20-char logger
         )  # Use consistent 20-char logger
         indent = " " * (prefix_len - 3)
 
@@ -277,16 +268,13 @@ class ContextFormatter(logging.Formatter):
             for line in exc_lines:
                 colored_line = line
                 if self.use_colors:
-                    colored_line = ansi.ANSIFormatter.format(
-                        line, ansi.ANSIFormatter.FG.RED, ansi.ANSIFormatter.STYLE.DIM
-                    )
+                    colored_line = ansi.ANSIFormatter.format(line, ansi.ANSIFormatter.FG.RED,
+                                                             ansi.ANSIFormatter.STYLE.DIM)
                 log_line += f"{indent}{arrow} {colored_line}\n"
 
         return log_line.rstrip("\n")
 
-    def _format_json(
-        self, record: logging.LogRecord, context: t.Dict[str, t.Any]
-    ) -> str:
+    def _format_json(self, record: logging.LogRecord, context: t.Dict[str, t.Any]) -> str:
         """Format for file output as JSON."""
         data = {
             "timestamp": self.formatTime(record, self.datefmt),
@@ -327,6 +315,7 @@ def _create_handler(target: LoggingTarget) -> logging.Handler:
 
 
 class NativeLoggingBackend(LoggerBackend):
+
     def __init__(self) -> None:
         self._logger = logging.getLogger("visflow")
         self._logger.setLevel(logging.DEBUG)
@@ -386,6 +375,7 @@ class NativeLoggingBackend(LoggerBackend):
 
 
 class NativeLogger(BaseLogger):
+
     def __init__(
         self,
         targets: t.Sequence[LoggingTarget] | None = None,

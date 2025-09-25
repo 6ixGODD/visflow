@@ -6,9 +6,8 @@ import pydantic as pydt
 
 
 class NormalizationConfig(pydt.BaseModel):
-    enabled: bool = pydt.Field(
-        default=True, description="Whether to apply normalization to input images."
-    )
+    enabled: bool = pydt.Field(default=True,
+                               description="Whether to apply normalization to input images.")
 
     mean: t.Tuple[float, float, float] = pydt.Field(
         default=(0.485, 0.456, 0.406),

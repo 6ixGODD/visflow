@@ -16,6 +16,7 @@ from visflow.types import PathLikes
 
 
 class GraphCAM:
+
     def __init__(
         self,
         model: BaseClassifier,
@@ -23,9 +24,7 @@ class GraphCAM:
         target_layer: str | None = None,
     ):
         self.model = model
-        self.device = torch.device(
-            str(device) or ("cuda" if torch.cuda.is_available() else "cpu")
-        )
+        self.device = torch.device(str(device) or ("cuda" if torch.cuda.is_available() else "cpu"))
         self.model.to(self.device)
         self.model.eval()
 
@@ -41,11 +40,9 @@ class GraphCAM:
             try:
                 return self.model.gradcam_layer
             except NotImplementedError as e:
-                raise ValueError(
-                    f"Model {type(self.model).__name__} does not implement "
-                    f"gradcam_layer() "
-                    f"and no target_layer was provided. {e}"
-                )
+                raise ValueError(f"Model {type(self.model).__name__} does not implement "
+                                 f"gradcam_layer() "
+                                 f"and no target_layer was provided. {e}")
 
         # Parse target layer dynamically
         try:
@@ -66,10 +63,8 @@ class GraphCAM:
             return layer
 
         except (AttributeError, SyntaxError, NameError) as e:
-            raise ValueError(
-                f"Cannot access target layer '{target_layer}' in model "
-                f"{type(self.model).__name__}: {e}"
-            )
+            raise ValueError(f"Cannot access target layer '{target_layer}' in model "
+                             f"{type(self.model).__name__}: {e}")
 
     def cam(
         self,

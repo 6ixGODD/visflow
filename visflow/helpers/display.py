@@ -34,18 +34,14 @@ def make_model_summary_table(model_summary: ModelSummary) -> rtable.Table:
 
     table.add_row("Total Parameters", f"{model_summary['total_params']:,}")
     table.add_row("Trainable Parameters", f"{model_summary['trainable_params']:,}")
-    table.add_row(
-        "Non-trainable Parameters", f"{model_summary['non_trainable_params']:,}"
-    )
+    table.add_row("Non-trainable Parameters", f"{model_summary['non_trainable_params']:,}")
     table.add_row("Input Size (MB)", f"{model_summary['input_size_mb']:.2f}")
     table.add_row(
         "Forward/Backward Pass (MB)",
         f"{model_summary['forward_backward_pass_size_mb']:.2f}",
     )
     table.add_row("Parameters Size (MB)", f"{model_summary['params_size_mb']:.2f}")
-    table.add_row(
-        "Estimated Total Size (MB)", f"{model_summary['estimated_total_size_mb']:.2f}"
-    )
+    table.add_row("Estimated Total Size (MB)", f"{model_summary['estimated_total_size_mb']:.2f}")
 
     return table
 
@@ -60,12 +56,12 @@ def make_final_metrics_table(end_log: ExperimentEndLog) -> rtable.Table:
     best_metrics = end_log["best_metrics"]
 
     for metric_name in [
-        "loss",
-        "accuracy",
-        "precision",
-        "recall",
-        "f1_score",
-        "auc_roc",
+            "loss",
+            "accuracy",
+            "precision",
+            "recall",
+            "f1_score",
+            "auc_roc",
     ]:
         final_val = final_metrics.get(metric_name)  # type: ignore
         best_val = best_metrics.get(metric_name)  # type: ignore
@@ -118,9 +114,7 @@ def make_env_table(env_info: EnvironmentInfo) -> rtable.Table:
         if "gpu_memory_gb" in env_info:
             table.add_row("GPU Memory (GB)", f"{env_info['gpu_memory_gb']:.1f}")
         if "gpu_memory_usage_gb" in env_info:
-            table.add_row(
-                "GPU Memory Usage (GB)", f"{env_info['gpu_memory_usage_gb']:.1f}"
-            )
+            table.add_row("GPU Memory Usage (GB)", f"{env_info['gpu_memory_usage_gb']:.1f}")
 
     table.add_row("Python Version", env_info["python_version"])
     table.add_row("PyTorch Version", env_info["torch_version"])
@@ -210,9 +204,7 @@ def make_layers_table(layers: t.Dict[str, LayerInfo]) -> rtable.Table:
     return table
 
 
-def make_experiment_info_table(
-    exp_id: str, exp_name: str, timestamp: str
-) -> rtable.Table:
+def make_experiment_info_table(exp_id: str, exp_name: str, timestamp: str) -> rtable.Table:
     table = rtable.Table(box=rbox.SIMPLE, show_header=False, padding=(0, 1))
     table.add_column("Key", style="cyan", no_wrap=True)
     table.add_column("Value", style="white")
@@ -221,15 +213,14 @@ def make_experiment_info_table(
     table.add_row("Experiment Name", exp_name)
     table.add_row("Start Time", timestamp)
 
-    current_time = datetime.datetime.now(datetime.timezone.utc).strftime(
-        "%Y-%m-%d %H:%M:%S"
-    )
+    current_time = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
     table.add_row("Current Time (UTC)", current_time)
 
     return table
 
 
 class Display:
+
     def __init__(self, context: Context):
         self.console = rconsole.Console()
         self.context = context
@@ -324,9 +315,7 @@ class Display:
         # Separator
         separator = "─" * 80
         self.console.print(rtext.Text(separator, style="dim"), justify="center")
-        self.console.print(
-            rtext.Text("🚀 Experiment Started", style="bold green"), justify="center"
-        )
+        self.console.print(rtext.Text("🚀 Experiment Started", style="bold green"), justify="center")
         self.console.print(rtext.Text(separator, style="dim"), justify="center")
         self.console.print()
 
@@ -338,9 +327,8 @@ class Display:
         # Create progress indicator
         progress_bar = "█" * int((current_epoch / total_epochs) * 40)
         remaining_bar = "░" * (40 - int((current_epoch / total_epochs) * 40))
-        progress_str = (
-            f"[{progress_bar}{remaining_bar}] {current_epoch}/" f"{total_epochs}"
-        )
+        progress_str = (f"[{progress_bar}{remaining_bar}] {current_epoch}/"
+                        f"{total_epochs}")
 
         # Epoch header
         epoch_header = f"Epoch {current_epoch}/{total_epochs}"
@@ -364,14 +352,14 @@ class Display:
 
         # Display main metrics
         for metric_name in [
-            "loss",
-            "accuracy",
-            "precision",
-            "recall",
-            "f1_score",
-            "auc_roc",
-            "sensitivity",
-            "specificity",
+                "loss",
+                "accuracy",
+                "precision",
+                "recall",
+                "f1_score",
+                "auc_roc",
+                "sensitivity",
+                "specificity",
         ]:
             train_val = train_metrics.get(metric_name)  # type: ignore
             val_val = val_metrics.get(metric_name)  # type: ignore
@@ -398,19 +386,13 @@ class Display:
                 )
 
         # Display extra metrics if available
-        train_extras = (
-            train_metrics.get("extras", {}) if "extras" in train_metrics else {}
-        )
+        train_extras = (train_metrics.get("extras", {}) if "extras" in train_metrics else {})
         val_extras = val_metrics.get("extras", {}) if "extras" in val_metrics else {}
-        best_extras = (
-            best_val_metrics.get("extras", {})
-            if best_val_metrics and "extras" in best_val_metrics
-            else {}
-        )
+        best_extras = (best_val_metrics.get("extras", {})
+                       if best_val_metrics and "extras" in best_val_metrics else {})
 
-        all_extra_keys = (
-            set(train_extras.keys()) | set(val_extras.keys()) | set(best_extras.keys())
-        )
+        all_extra_keys = (set(train_extras.keys()) | set(val_extras.keys()) |
+                          set(best_extras.keys()))
 
         if all_extra_keys:
             metrics_table.add_row("", "", "", "")  # Separator
@@ -424,8 +406,7 @@ class Display:
                 best_str = f"{best_extra:.4f}" if best_extra is not None else "N/A"
 
                 metrics_table.add_row(
-                    extra_metric.replace("_", " ").title(), train_str, val_str, best_str
-                )
+                    extra_metric.replace("_", " ").title(), train_str, val_str, best_str)
 
         self.console.print(metrics_table)
 
@@ -456,9 +437,8 @@ class Display:
         # Separator
         separator = "─" * 80
         self.console.print(rtext.Text(separator, style="dim"), justify="center")
-        self.console.print(
-            rtext.Text("🎯 Experiment Completed", style="bold green"), justify="center"
-        )
+        self.console.print(rtext.Text("🎯 Experiment Completed", style="bold green"),
+                           justify="center")
         self.console.print(rtext.Text(separator, style="dim"), justify="center")
         self.console.print()
 

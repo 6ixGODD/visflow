@@ -6,9 +6,10 @@ import numpy as np
 import torch
 
 
-def mixup(
-    x: torch.Tensor, y: torch.Tensor, *, alpha: float = 1.0
-) -> t.Tuple[torch.Tensor, torch.Tensor, torch.Tensor, float]:
+def mixup(x: torch.Tensor,
+          y: torch.Tensor,
+          *,
+          alpha: float = 1.0) -> t.Tuple[torch.Tensor, torch.Tensor, torch.Tensor, float]:
     """Apply MixUp augmentation to a batch of images and labels.
 
     Args:
@@ -43,7 +44,8 @@ def compute_class_weights(labels: t.Sequence[int]) -> t.Dict[int, float]:
     total_samples = len(labels_tensor)
 
     class_weights = {
-        cls: total_samples / count.item()  # type: ignore
+        cls:
+            total_samples / count.item()  # type: ignore
         for cls, count in enumerate(class_counts)
         if count.item() > 0  # type: ignore
     }

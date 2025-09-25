@@ -31,26 +31,24 @@ def compute_metric(
         # Precision, Recall, F1
         if num_classes and num_classes > 2:
             # Multi-class
-            precision, recall, f1, _ = precision_recall_fscore_support(
-                y_true, y_pred, average="weighted", zero_division=0
-            )
+            precision, recall, f1, _ = precision_recall_fscore_support(y_true,
+                                                                       y_pred,
+                                                                       average="weighted",
+                                                                       zero_division=0)
             # AUC-ROC for multi-class (one-vs-rest)
             try:
-                auc_roc = roc_auc_score(
-                    y_true, y_prob, multi_class="ovr", average="weighted"
-                )
+                auc_roc = roc_auc_score(y_true, y_prob, multi_class="ovr", average="weighted")
             except ValueError:
                 auc_roc = None
         else:
             # Binary classification
-            precision, recall, f1, _ = precision_recall_fscore_support(
-                y_true, y_pred, average="binary", zero_division=0
-            )
+            precision, recall, f1, _ = precision_recall_fscore_support(y_true,
+                                                                       y_pred,
+                                                                       average="binary",
+                                                                       zero_division=0)
             # AUC-ROC for binary
             try:
-                auc_roc = roc_auc_score(
-                    y_true, y_prob[:, 1] if y_prob.shape[1] > 1 else y_prob
-                )
+                auc_roc = roc_auc_score(y_true, y_prob[:, 1] if y_prob.shape[1] > 1 else y_prob)
             except (ValueError, IndexError):
                 auc_roc = None
 
@@ -78,12 +76,8 @@ def compute_metric(
                 specificities.append(class_specificity)
 
             # Macro average
-            sensitivity = (
-                sum(sensitivities) / len(sensitivities) if sensitivities else 0.0
-            )
-            specificity = (
-                sum(specificities) / len(specificities) if specificities else 0.0
-            )
+            sensitivity = (sum(sensitivities) / len(sensitivities) if sensitivities else 0.0)
+            specificity = (sum(specificities) / len(specificities) if specificities else 0.0)
 
         else:
             # Binary classification

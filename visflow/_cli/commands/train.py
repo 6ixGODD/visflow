@@ -43,9 +43,7 @@ class Args(BaseArgs):
         spinner.succeed("Training pipeline bootstrapped.")
         pipeline()
 
-    def _overrides(
-        self, config_dict: t.Dict[str, t.Any], overrides: t.List[str]
-    ) -> None:
+    def _overrides(self, config_dict: t.Dict[str, t.Any], overrides: t.List[str]) -> None:
         i = 0
         while i < len(overrides):
             key = overrides[i]

@@ -17,7 +17,8 @@ class TrainingConfig(pydt.BaseModel):
 
     shuffle: bool = pydt.Field(
         default=True,
-        description="Whether to shuffle the dataset at the beginning of " "each epoch.",
+        description="Whether to shuffle the dataset at the beginning of "
+        "each epoch.",
     )
 
     batch_size: int = pydt.Field(
@@ -29,7 +30,8 @@ class TrainingConfig(pydt.BaseModel):
 
     weighted_sampling: bool = pydt.Field(
         default=False,
-        description="Whether to use weighted sampling to handle class " "imbalance.",
+        description="Whether to use weighted sampling to handle class "
+        "imbalance.",
     )
 
     drop_last: bool = pydt.Field(
@@ -38,9 +40,7 @@ class TrainingConfig(pydt.BaseModel):
         "dataset size is not divisible by the batch size.",
     )
 
-    epochs: int = pydt.Field(
-        default=10, ge=1, description="Maximum number of training epochs."
-    )
+    epochs: int = pydt.Field(default=10, ge=1, description="Maximum number of training epochs.")
 
     learning_rate: float = pydt.Field(
         default=1e-3,
@@ -49,9 +49,10 @@ class TrainingConfig(pydt.BaseModel):
         description="Initial learning rate for optimization.",
     )
 
-    momentum: float = pydt.Field(
-        default=0.9, ge=0.0, le=1.0, description="Momentum factor for SGD optimizer."
-    )
+    momentum: float = pydt.Field(default=0.9,
+                                 ge=0.0,
+                                 le=1.0,
+                                 description="Momentum factor for SGD optimizer.")
 
     weight_decay: float = pydt.Field(
         default=1e-4,
@@ -59,25 +60,20 @@ class TrainingConfig(pydt.BaseModel):
         description="L2 regularization strength to prevent overfitting.",
     )
 
-    optimizer: t.Literal["sgd", "adam", "adamw"] = pydt.Field(
-        default="adam", description="Optimization algorithm."
-    )
+    optimizer: t.Literal["sgd", "adam", "adamw"] = pydt.Field(default="adam",
+                                                              description="Optimization algorithm.")
 
     lr_scheduler: t.Literal["step", "cosine", "plateau"] | None = pydt.Field(
-        default=None, description="Learning rate scheduling strategy."
-    )
+        default=None, description="Learning rate scheduling strategy.")
 
     cosine_scheduler: CosineConfig | None = pydt.Field(
-        default=None, description="Configuration for cosine learning rate scheduler."
-    )
+        default=None, description="Configuration for cosine learning rate scheduler.")
 
     step_scheduler: StepConfig | None = pydt.Field(
-        default=None, description="Configuration for step learning rate scheduler."
-    )
+        default=None, description="Configuration for step learning rate scheduler.")
 
     plateau_scheduler: PlateauConfig | None = pydt.Field(
-        default=None, description="Configuration for plateau learning rate scheduler."
-    )
+        default=None, description="Configuration for plateau learning rate scheduler.")
 
     early_stopping: bool = pydt.Field(
         default=True,
@@ -99,13 +95,13 @@ class TrainingConfig(pydt.BaseModel):
         "an improvement.",
     )
 
-    early_stopping_target: t.Literal[
-        "loss", "accuracy", "f1", "precision", "recall"
-    ] = pydt.Field(default="loss", description="Metric to monitor for early stopping.")
+    early_stopping_target: t.Literal["loss", "accuracy", "f1", "precision", "recall"] = pydt.Field(
+        default="loss", description="Metric to monitor for early stopping.")
 
     label_smoothing: float = pydt.Field(
         default=0.1,
         ge=0.0,
         le=1.0,
-        description="Label smoothing factor to prevent overconfident " "predictions.",
+        description="Label smoothing factor to prevent overconfident "
+        "predictions.",
     )

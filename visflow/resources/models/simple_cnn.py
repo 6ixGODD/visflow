@@ -8,6 +8,7 @@ from visflow.resources.models import BaseClassifier, register_model
 
 @register_model('simple_cnn')
 class SimpleCNN(BaseClassifier):
+
     def __init__(self, num_classes: int):
         super().__init__(num_classes)
         self.features = nn.Sequential(

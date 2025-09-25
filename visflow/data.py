@@ -14,6 +14,7 @@ from visflow.utils.functional import compute_class_weights
 
 
 class ImageDatamodule:
+
     def __init__(self, config: TrainConfig):
         self.config = config
         if isinstance(self.config.resize.size, int):  # square resize
@@ -44,28 +45,22 @@ class ImageDatamodule:
                     pad_if_needed=True,
                     fill=self.config.augmentation.crop.fill,
                     padding_mode=self.config.augmentation.crop.padding_mode,
-                )
-            )
+                ))
 
         if self.config.augmentation.horizontal_flip.enabled:
             train_transforms.append(
-                transforms.RandomHorizontalFlip(
-                    p=self.config.augmentation.horizontal_flip.p
-                )
-            )
+                transforms.RandomHorizontalFlip(p=self.config.augmentation.horizontal_flip.p))
 
         if self.config.augmentation.rotation.enabled:
             train_transforms.append(
                 transforms.RandomRotation(
                     degrees=self.config.augmentation.rotation.degrees,
                     interpolation=InterpolationMode(
-                        self.config.augmentation.rotation.interpolation
-                    ),
+                        self.config.augmentation.rotation.interpolation),
                     expand=self.config.augmentation.rotation.expand,
                     center=self.config.augmentation.rotation.center,
                     fill=self.config.augmentation.rotation.fill,
-                )
-            )
+                ))
 
         if self.config.augmentation.color_jitter.enabled:
             train_transforms.append(
@@ -74,8 +69,7 @@ class ImageDatamodule:
                     contrast=self.config.augmentation.color_jitter.contrast,
                     saturation=self.config.augmentation.color_jitter.saturation,
                     hue=self.config.augmentation.color_jitter.hue,
-                )
-            )
+                ))
 
         if self.config.augmentation.affine.enabled:
             train_transforms.append(
@@ -84,13 +78,10 @@ class ImageDatamodule:
                     translate=self.config.augmentation.affine.translate,
                     scale=self.config.augmentation.affine.scale,
                     shear=self.config.augmentation.affine.shear,
-                    interpolation=InterpolationMode(
-                        self.config.augmentation.affine.interpolation
-                    ),
+                    interpolation=InterpolationMode(self.config.augmentation.affine.interpolation),
                     fill=self.config.augmentation.affine.fill,
                     center=self.config.augmentation.affine.center,
-                )
-            )
+                ))
 
         # ToTensor should be the last transform before normalization
         train_transforms.append(transforms.ToTensor())
@@ -101,8 +92,7 @@ class ImageDatamodule:
                     mean=self.config.normalization.mean,
                     std=self.config.normalization.std,
                     inplace=self.config.normalization.inplace,
-                )
-            )
+                ))
 
         if self.config.augmentation.erasing.enabled:
             train_transforms.append(
@@ -112,8 +102,7 @@ class ImageDatamodule:
                     ratio=self.config.augmentation.erasing.ratio,
                     value=self.config.augmentation.erasing.value,
                     inplace=self.config.augmentation.erasing.inplace,
-                )
-            )
+                ))
 
         # Compose all transforms
         self.train_transforms = transforms.Compose(train_transforms)
@@ -134,36 +123,24 @@ class ImageDatamodule:
                     mean=self.config.normalization.mean,
                     std=self.config.normalization.std,
                     inplace=self.config.normalization.inplace,
-                )
-            )
+                ))
 
         self.val_transforms = transforms.Compose(val_transforms)
 
-        self.train_set = ImageFolder(
-            root=self.config.data.train_dir, transform=self.train_transforms
-        )
-        self.val_set = ImageFolder(
-            root=self.config.data.val_dir, transform=self.val_transforms
-        )
-        self.test_set = ImageFolder(
-            root=self.config.data.test_dir, transform=self.val_transforms
-        )
-        if (
-            self.train_set.classes != self.val_set.classes
-            or self.train_set.classes != self.test_set.classes
-        ):
-            raise ValueError(
-                "Train, validation, and test sets must have the same classes"
-            )
+        self.train_set = ImageFolder(root=self.config.data.train_dir,
+                                     transform=self.train_transforms)
+        self.val_set = ImageFolder(root=self.config.data.val_dir, transform=self.val_transforms)
+        self.test_set = ImageFolder(root=self.config.data.test_dir, transform=self.val_transforms)
+        if (self.train_set.classes != self.val_set.classes
+                or self.train_set.classes != self.test_set.classes):
+            raise ValueError("Train, validation, and test sets must have the same classes")
 
     @property
     def train_loader(self) -> DataLoader[torch.Tensor]:
         if self.config.training.weighted_sampling:
             labels = [label for _, label in self.train_set.samples]
             class_weights = compute_class_weights(labels)
-            sample_weights = [
-                class_weights[label] for _, label in self.train_set.samples
-            ]
+            sample_weights = [class_weights[label] for _, label in self.train_set.samples]
             sampler = WeightedRandomSampler(sample_weights, len(sample_weights))
         else:
             sampler = None
@@ -202,9 +179,7 @@ class ImageDatamodule:
     @property
     def loaders(
         self,
-    ) -> t.Tuple[
-        DataLoader[torch.Tensor], DataLoader[torch.Tensor], DataLoader[torch.Tensor]
-    ]:
+    ) -> t.Tuple[DataLoader[torch.Tensor], DataLoader[torch.Tensor], DataLoader[torch.Tensor]]:
         return self.train_loader, self.val_loader, self.test_loader
 
     @property

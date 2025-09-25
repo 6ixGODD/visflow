@@ -65,6 +65,7 @@ def utc_now() -> dt.datetime:
 
 
 class classproperty(property):
+
     def __get__(self, __instance: t.Any, __owner: type | None = None) -> t.Any:
         if not callable(self.fget):
             raise TypeError("fget must be callable")
@@ -76,9 +77,9 @@ def _get_func_params(fn: t.Callable[..., t.Any]) -> t.Set[str]:
     return set(inspect.signature(fn).parameters.keys())
 
 
-def filter_kwargs(
-    fn: t.Callable[..., t.Any], kwargs: t.Dict[str, t.Any], pref: str = ""
-) -> t.Dict[str, t.Any]:
+def filter_kwargs(fn: t.Callable[..., t.Any],
+                  kwargs: t.Dict[str, t.Any],
+                  pref: str = "") -> t.Dict[str, t.Any]:
     """
     Filter out invalid keyword arguments for a given function by comparing
     the provided keyword arguments to the function's signature. Only valid
@@ -100,7 +101,7 @@ def filter_kwargs(
         filtered = {}
         for key, value in kwargs.items():
             if key.startswith(pref):
-                param_name = key[len(pref) :]
+                param_name = key[len(pref):]
                 if param_name in valid_params and param_name not in {"self", "cls"}:
                     filtered[param_name] = value
         return filtered
@@ -114,6 +115,7 @@ def filter_kwargs(
 
 
 class Unset:
+
     def __repr__(self) -> str:
         return "<UNSET>"
 

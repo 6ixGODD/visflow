@@ -18,6 +18,7 @@ from visflow.types import CriterionFunc
 
 
 class MixUpLoss(nn.Module):
+
     def __init__(self, criterion: CriterionFunc):
         super().__init__()
         self.criterion = criterion
@@ -30,9 +31,7 @@ class MixUpLoss(nn.Module):
         lam: float | None = None,
     ) -> torch.Tensor:
         if target_b is not None and lam is not None:
-            return lam * self.criterion(pred, target_a) + (1 - lam) * self.criterion(
-                pred, target_b
-            )
+            return lam * self.criterion(pred, target_a) + (1 - lam) * self.criterion(pred, target_b)
         else:
             return self.criterion(pred, target_a)
 
@@ -43,10 +42,11 @@ def summary(
     batch_size: int = -1,
     device: t.Literal["cuda", "cpu"] = "cuda",
 ) -> ModelSummary:
+
     def register_hook(module: nn.Module) -> None:
-        def hook(
-            module: nn.Module, input: t.Tuple[torch.Tensor, ...], output: torch.Tensor
-        ) -> None:
+
+        def hook(module: nn.Module, input: t.Tuple[torch.Tensor, ...],
+                 output: torch.Tensor) -> None:
             class_name = str(module.__class__).split(".")[-1].split("'")[0]
             module_idx = len(layer_summary)
 
@@ -60,14 +60,12 @@ def summary(
             params = torch.tensor(0)
             trainable = False
             if hasattr(module, "weight") and hasattr(module.weight, "size"):
-                params += torch.prod(
-                    torch.LongTensor(list(module.weight.size()))  # type: ignore
-                )
+                params += torch.prod(torch.LongTensor(list(module.weight.size()))  # type: ignore
+                                    )
                 trainable = bool(module.weight.requires_grad)
             if hasattr(module, "bias") and hasattr(module.bias, "size"):
-                params += torch.prod(
-                    torch.LongTensor(list(module.bias.size()))  # type: ignore
-                )
+                params += torch.prod(torch.LongTensor(list(module.bias.size()))  # type: ignore
+                                    )
 
             nb_params = int(params)
             layer_summary[m_key] = LayerInfo(
@@ -77,18 +75,11 @@ def summary(
                 trainable=trainable,
             )
 
-        if (
-            not isinstance(module, nn.Sequential)
-            and not isinstance(module, nn.ModuleList)
-            and not (module == model)
-        ):
+        if (not isinstance(module, nn.Sequential) and not isinstance(module, nn.ModuleList)
+                and not (module == model)):
             hooks.append(module.register_forward_hook(hook))
 
-    if (
-        device == "cuda"
-        and torch.cuda.is_available()
-        and hasattr(torch.cuda, "FloatTensor")
-    ):
+    if (device == "cuda" and torch.cuda.is_available() and hasattr(torch.cuda, "FloatTensor")):
         dtype = torch.cuda.FloatTensor
     else:
         dtype = torch.FloatTensor
@@ -160,19 +151,11 @@ def env_info() -> EnvironmentInfo:
         memory_gb=round(psutil.virtual_memory().total / (1024**3), 2),
         memory_usage_gb=round(psutil.virtual_memory().used / (1024**3), 2),
         gpu_available=torch.cuda.is_available(),
-        gpu_model=(
-            torch.cuda.get_device_name(0) if torch.cuda.is_available() else "N/A"
-        ),
-        gpu_memory_gb=(
-            round(torch.cuda.get_device_properties(0).total_memory / (1024**3), 2)
-            if torch.cuda.is_available()
-            else 0
-        ),
-        gpu_memory_usage_gb=(
-            round(torch.cuda.memory_allocated(0) / (1024**3), 2)
-            if torch.cuda.is_available()
-            else 0
-        ),
+        gpu_model=(torch.cuda.get_device_name(0) if torch.cuda.is_available() else "N/A"),
+        gpu_memory_gb=(round(torch.cuda.get_device_properties(0).total_memory /
+                             (1024**3), 2) if torch.cuda.is_available() else 0),
+        gpu_memory_usage_gb=(round(torch.cuda.memory_allocated(0) /
+                                   (1024**3), 2) if torch.cuda.is_available() else 0),
         python_version=platform.python_version(),
         torch_version=torch.__version__,
         torchvision_version=torchvision.__version__,

@@ -8,6 +8,7 @@ import pydantic as pydt
 
 
 class BaseArgs(pydt.BaseModel, abc.ABC):
+
     @classmethod
     def func(cls, args: argparse.Namespace) -> None:
         instance = cls.from_args(args)

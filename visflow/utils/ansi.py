@@ -109,11 +109,8 @@ class ANSIFormatter:
         if plat == "win32":
             # Windows 10 with VT sequences enabled
             return bool(
-                os.environ.get("TERM_PROGRAM", "")
-                or "ANSICON" in os.environ
-                or "WT_SESSION" in os.environ
-                or os.environ.get("ConEmuANSI") == "ON"
-            )
+                os.environ.get("TERM_PROGRAM", "") or "ANSICON" in os.environ
+                or "WT_SESSION" in os.environ or os.environ.get("ConEmuANSI") == "ON")
 
         # Most Unix-like systems support colors
         return True

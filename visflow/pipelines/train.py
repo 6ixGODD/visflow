@@ -92,11 +92,8 @@ class TrainPipeline(BasePipeline):
 
         output_dir = p.Path(self.config.output.output_dir)
         output_dir.mkdir(parents=True, exist_ok=True)
-        exp_name = (
-            self.config.output.experiment_name
-            if self.config.output.experiment_name != "auto"
-            else self.config.model.architecture
-        )
+        exp_name = (self.config.output.experiment_name if self.config.output.experiment_name
+                    != "auto" else self.config.model.architecture)
         exp_dir = incr_path(output_dir, exp_name)
 
         context = Context(
@@ -105,9 +102,7 @@ class TrainPipeline(BasePipeline):
             timestamp=time.strftime("%Y%m%dT%H%M%S", time.localtime()),
         )
         display = Display(context)
-        self.logger.add_target(
-            LoggingTarget(logname=exp_dir / ".log.json", loglevel="info"),
-        )
+        self.logger.add_target(LoggingTarget(logname=exp_dir / ".log.json", loglevel="info"),)
         logger = self.logger.with_context(TAG="train", **context)
         self.config.to_file(fpath=exp_dir / ".config.json")
         env = env_info()
@@ -158,8 +153,7 @@ class TrainPipeline(BasePipeline):
             patience=self.config.training.early_stopping_patience,
             min_delta=self.config.training.early_stopping_min_delta,
             mode=(  # type: ignore
-                "min" if self.config.training.early_stopping_target == "loss" else "max"
-            ),
+                "min" if self.config.training.early_stopping_target == "loss" else "max"),
         )
 
         val_acc = 0.0  # Initialize val_acc for first epoch
@@ -168,14 +162,11 @@ class TrainPipeline(BasePipeline):
             epoch_start_time = time.time()
 
             # Training
-            train_loss, train_acc = self.train(
-                model, train_loader, epoch, optimizer, criterion, logger
-            )
+            train_loss, train_acc = self.train(model, train_loader, epoch, optimizer, criterion,
+                                               logger)
 
             # Validation
-            val_loss, val_metrics, val_outputs, val_targets = self.val(
-                model, val_loader, criterion
-            )
+            val_loss, val_metrics, val_outputs, val_targets = self.val(model, val_loader, criterion)
             val_acc = val_metrics["accuracy"]
 
             # Update scheduler
@@ -192,9 +183,7 @@ class TrainPipeline(BasePipeline):
                 self.best_val_outputs = val_outputs
                 self.best_val_targets = val_targets
                 # Save best checkpoint
-                self.save(
-                    logger, exp_dir, epoch, model, optimizer, scheduler, val_acc, "best"
-                )
+                self.save(logger, exp_dir, epoch, model, optimizer, scheduler, val_acc, "best")
 
             # Always update final metrics (last epoch)
             self.final_metrics = val_metrics
@@ -248,31 +237,23 @@ class TrainPipeline(BasePipeline):
             elif self.config.training.early_stopping_target == "recall":
                 score = val_metrics["recall"]
             else:
-                raise ValueError(
-                    f"Unsupported early_stopping_target: "
-                    f"{self.config.training.early_stopping_target}"
-                )
+                raise ValueError(f"Unsupported early_stopping_target: "
+                                 f"{self.config.training.early_stopping_target}")
             if early_stopping.step(score):
-                logger.info(
-                    f"Early stopping triggered at epoch {epoch}. "
-                    f"No improvement in "
-                    f"{self.config.training.early_stopping_target} for "
-                    f"{self.config.training.early_stopping_patience} epochs."
-                )
+                logger.info(f"Early stopping triggered at epoch {epoch}. "
+                            f"No improvement in "
+                            f"{self.config.training.early_stopping_target} for "
+                            f"{self.config.training.early_stopping_patience} epochs.")
                 break
         # Save final checkpoint
         self.save(logger, exp_dir, epoch, model, optimizer, scheduler, val_acc, "final")
 
         # Test evaluation ------------------------------------------------------
-        test_metrics, test_outputs, test_targets = self.test(
-            model, test_loader, criterion
-        )
+        test_metrics, test_outputs, test_targets = self.test(model, test_loader, criterion)
 
         # Generate plots -------------------------------------------------------
         class_names = self.datamodule.classes
-        self.plots(
-            logger, exp_dir, class_names, test_outputs, test_targets, test_metrics
-        )
+        self.plots(logger, exp_dir, class_names, test_outputs, test_targets, test_metrics)
 
         # Save comprehensive metrics -------------------------------------------
         self.save_comprehensive_metrics(logger, exp_dir, test_metrics)
@@ -296,9 +277,7 @@ class TrainPipeline(BasePipeline):
         """Setup loss function."""
         criterion: nn.Module
         if self.config.training.label_smoothing > 0:
-            criterion = nn.CrossEntropyLoss(
-                label_smoothing=self.config.training.label_smoothing
-            )
+            criterion = nn.CrossEntropyLoss(label_smoothing=self.config.training.label_smoothing)
         else:
             criterion = nn.CrossEntropyLoss()
 
@@ -314,13 +293,9 @@ class TrainPipeline(BasePipeline):
         weight_decay = self.config.training.weight_decay
 
         if optimizer_name == "adam":
-            return torch.optim.Adam(
-                model.parameters(), lr=lr, weight_decay=weight_decay
-            )
+            return torch.optim.Adam(model.parameters(), lr=lr, weight_decay=weight_decay)
         elif optimizer_name == "adamw":
-            return torch.optim.AdamW(
-                model.parameters(), lr=lr, weight_decay=weight_decay
-            )
+            return torch.optim.AdamW(model.parameters(), lr=lr, weight_decay=weight_decay)
         elif optimizer_name == "sgd":
             return torch.optim.SGD(
                 model.parameters(),
@@ -332,8 +307,7 @@ class TrainPipeline(BasePipeline):
             raise ValueError(f"Unsupported optimizer: {optimizer_name}")
 
     def _setup_scheduler(
-        self, optimizer: torch.optim.Optimizer
-    ) -> torch.optim.lr_scheduler.LRScheduler | None:
+            self, optimizer: torch.optim.Optimizer) -> torch.optim.lr_scheduler.LRScheduler | None:
         """Setup learning rate scheduler."""
         lr_scheduler = self.config.training.lr_scheduler
         if not lr_scheduler:
@@ -349,17 +323,14 @@ class TrainPipeline(BasePipeline):
             )
         elif lr_scheduler == "cosine":
             if not self.config.training.cosine_scheduler:
-                raise ValueError(
-                    "CosineAnnealingLR scheduler requires cosine_scheduler " "config."
-                )
+                raise ValueError("CosineAnnealingLR scheduler requires cosine_scheduler "
+                                 "config.")
             return torch.optim.lr_scheduler.CosineAnnealingLR(
-                optimizer, T_max=self.config.training.cosine_scheduler.t_max
-            )
+                optimizer, T_max=self.config.training.cosine_scheduler.t_max)
         elif lr_scheduler == "plateau":
             if not self.config.training.plateau_scheduler:
-                raise ValueError(
-                    "ReduceLROnPlateau scheduler requires plateau_scheduler " "config."
-                )
+                raise ValueError("ReduceLROnPlateau scheduler requires plateau_scheduler "
+                                 "config.")
             return torch.optim.lr_scheduler.ReduceLROnPlateau(
                 optimizer,
                 mode=self.config.training.plateau_scheduler.mode,
@@ -369,21 +340,18 @@ class TrainPipeline(BasePipeline):
         else:
             raise ValueError(f"Unsupported lr_scheduler: {lr_scheduler}")
 
-    def _update_scheduler(
-        self, scheduler: torch.optim.lr_scheduler.LRScheduler | None, val_acc: float
-    ) -> None:
+    def _update_scheduler(self, scheduler: torch.optim.lr_scheduler.LRScheduler | None,
+                          val_acc: float) -> None:
         """Update learning rate scheduler."""
         if scheduler:
             if self.config.training.lr_scheduler == "plateau" and isinstance(
-                scheduler, torch.optim.lr_scheduler.ReduceLROnPlateau
-            ):
+                    scheduler, torch.optim.lr_scheduler.ReduceLROnPlateau):
                 scheduler.step(val_acc)
             else:
                 scheduler.step()
 
-    def _update_histories(
-        self, train_loss: float, train_acc: float, val_loss: float, val_acc: float
-    ) -> None:
+    def _update_histories(self, train_loss: float, train_acc: float, val_loss: float,
+                          val_acc: float) -> None:
         """Update training histories."""
         self.train_loss_history.append(train_loss)
         self.train_acc_history.append(train_acc)
@@ -412,10 +380,8 @@ class TrainPipeline(BasePipeline):
             )
 
             # Handle mixup augmentation
-            use_mixup = (
-                self.config.augmentation.mixup.enabled
-                and random.random() < self.config.augmentation.mixup.p
-            )
+            use_mixup = (self.config.augmentation.mixup.enabled
+                         and random.random() < self.config.augmentation.mixup.p)
 
             if use_mixup:
                 loss, batch_acc = self._train_step_mixup(
@@ -427,9 +393,7 @@ class TrainPipeline(BasePipeline):
                     criterion,
                 )
             else:
-                loss, batch_acc = self._train_step(
-                    data, target, model, optimizer, criterion
-                )
+                loss, batch_acc = self._train_step(data, target, model, optimizer, criterion)
 
             # Update metrics
             running_loss += loss.item() * data.size(0)
@@ -471,9 +435,7 @@ class TrainPipeline(BasePipeline):
         if isinstance(criterion, MixUpLoss):
             loss = criterion(output, target_a, target_b, lam)
         else:
-            loss = lam * criterion(output, target_a) + (1 - lam) * criterion(
-                output, target_b
-            )
+            loss = lam * criterion(output, target_a) + (1 - lam) * criterion(output, target_b)
 
         loss.backward()
         optimizer.step()
@@ -523,18 +485,12 @@ class TrainPipeline(BasePipeline):
 
         # Calculate gradient norm
         total_norm = sum(
-            p.grad.data.norm(2).item() ** 2
-            for p in model.parameters()
-            if p.grad is not None
-        )
+            p.grad.data.norm(2).item()**2 for p in model.parameters() if p.grad is not None)
         gradient_norm = total_norm**0.5
 
         # GPU memory usage
-        gpu_memory_usage = (
-            torch.cuda.memory_allocated() / (1024**3)
-            if torch.cuda.is_available()
-            else 0.0
-        )
+        gpu_memory_usage = (torch.cuda.memory_allocated() /
+                            (1024**3) if torch.cuda.is_available() else 0.0)
 
         batch_log = BatchLog(
             epoch=epoch,
@@ -651,11 +607,8 @@ class TrainPipeline(BasePipeline):
         # Plot ROC curves for validation (best), validation (final), and test
         if self.best_val_outputs is not None:
             plot_roc_curve(
-                y_true=(
-                    self.best_val_targets
-                    if self.best_val_targets is not None
-                    else torch.tensor([])
-                ),
+                y_true=(self.best_val_targets
+                        if self.best_val_targets is not None else torch.tensor([])),
                 y_pred_probs=torch.softmax(self.best_val_outputs, dim=1),
                 num_classes=self.config.model.num_classes,
                 class_names=class_names,
@@ -665,11 +618,8 @@ class TrainPipeline(BasePipeline):
 
         if self.final_val_outputs is not None:
             plot_roc_curve(
-                y_true=(
-                    self.final_val_targets
-                    if self.final_val_targets is not None
-                    else torch.tensor([])
-                ),
+                y_true=(self.final_val_targets
+                        if self.final_val_targets is not None else torch.tensor([])),
                 y_pred_probs=torch.softmax(self.final_val_outputs, dim=1),
                 num_classes=self.config.model.num_classes,
                 class_names=class_names,
@@ -692,9 +642,8 @@ class TrainPipeline(BasePipeline):
 
         logger.info(f"Plots saved to: {plots_dir}")
 
-    def _plot_confusion_matrices(
-        self, plots_dir: p.Path, class_names: t.List[str], test_metrics: Metrics
-    ) -> None:
+    def _plot_confusion_matrices(self, plots_dir: p.Path, class_names: t.List[str],
+                                 test_metrics: Metrics) -> None:
         """Plot confusion matrices for different datasets."""
         # Test confusion matrix
         if test_metrics:
@@ -818,15 +767,11 @@ class TrainPipeline(BasePipeline):
                 "architecture": self.config.model.architecture,
                 "epoch": self.config.training.epochs,
                 **{
-                    k: v
-                    for k, v in test_metrics.items()
-                    if k != "confusion_matrix"
+                    k: v for k, v in test_metrics.items() if k != "confusion_matrix"
                 },
                 **{
-                    f"cm_{i}": v
-                    for i, v in enumerate(
-                        np.array(test_metrics["confusion_matrix"]).flatten()
-                    )
+                    f"cm_{i}": v for i, v in enumerate(
+                        np.array(test_metrics["confusion_matrix"]).flatten())
                 },
             }
             metrics_data.append(test_row)
@@ -838,15 +783,11 @@ class TrainPipeline(BasePipeline):
                 "architecture": self.config.model.architecture,
                 "epoch": self.best_epoch,
                 **{
-                    k: v
-                    for k, v in self.best_metrics.items()
-                    if k != "confusion_matrix"
+                    k: v for k, v in self.best_metrics.items() if k != "confusion_matrix"
                 },
                 **{
-                    f"cm_{i}": v
-                    for i, v in enumerate(
-                        np.array(self.best_metrics["confusion_matrix"]).flatten()
-                    )
+                    f"cm_{i}": v for i, v in enumerate(
+                        np.array(self.best_metrics["confusion_matrix"]).flatten())
                 },
             }
             metrics_data.append(best_val_row)
@@ -858,15 +799,11 @@ class TrainPipeline(BasePipeline):
                 "architecture": self.config.model.architecture,
                 "epoch": self.config.training.epochs,
                 **{
-                    k: v
-                    for k, v in self.final_metrics.items()
-                    if k != "confusion_matrix"
+                    k: v for k, v in self.final_metrics.items() if k != "confusion_matrix"
                 },
                 **{
-                    f"cm_{i}": v
-                    for i, v in enumerate(
-                        np.array(self.final_metrics["confusion_matrix"]).flatten()
-                    )
+                    f"cm_{i}": v for i, v in enumerate(
+                        np.array(self.final_metrics["confusion_matrix"]).flatten())
                 },
             }
             metrics_data.append(final_val_row)

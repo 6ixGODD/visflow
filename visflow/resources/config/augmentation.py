@@ -8,9 +8,7 @@ from visflow.types import PixelValue
 
 
 class CropConfig(pydt.BaseModel):
-    enabled: bool = pydt.Field(
-        default=False, description="Whether to apply random cropping."
-    )
+    enabled: bool = pydt.Field(default=False, description="Whether to apply random cropping.")
     margin: int | t.Tuple[int, int] = pydt.Field(
         default=0,
         ge=0,
@@ -29,14 +27,12 @@ class CropConfig(pydt.BaseModel):
         "used for the R, G, B channels respectively.",
     )
     padding_mode: t.Literal["constant", "edge", "reflect", "symmetric"] = pydt.Field(
-        default="constant", description="Padding mode to use if padding is applied."
-    )
+        default="constant", description="Padding mode to use if padding is applied.")
 
 
 class HorizontalFlipConfig(pydt.BaseModel):
-    enabled: bool = pydt.Field(
-        default=False, description="Whether to apply random horizontal flip."
-    )
+    enabled: bool = pydt.Field(default=False,
+                               description="Whether to apply random horizontal flip.")
 
     p: float = pydt.Field(
         default=0.5,
@@ -47,9 +43,7 @@ class HorizontalFlipConfig(pydt.BaseModel):
 
 
 class RotationConfig(pydt.BaseModel):
-    enabled: bool = pydt.Field(
-        default=False, description="Whether to apply random rotation."
-    )
+    enabled: bool = pydt.Field(default=False, description="Whether to apply random rotation.")
 
     degrees: float | t.Tuple[float, float] = pydt.Field(
         default=15.0,
@@ -57,9 +51,8 @@ class RotationConfig(pydt.BaseModel):
         "the range will be (-degrees, +degrees).",
     )
 
-    interpolation: t.Literal["nearest", "nearest-exact", "bilinear", "bicubic"] = (
-        pydt.Field(default="nearest", description="Interpolation method for rotation.")
-    )
+    interpolation: t.Literal["nearest", "nearest-exact", "bilinear", "bicubic"] = (pydt.Field(
+        default="nearest", description="Interpolation method for rotation."))
 
     expand: bool = pydt.Field(
         default=False,
@@ -69,7 +62,8 @@ class RotationConfig(pydt.BaseModel):
 
     center: t.Tuple[float, float] | None = pydt.Field(
         default=None,
-        description="Optional center of rotation. Origin is the upper left " "corner.",
+        description="Optional center of rotation. Origin is the upper left "
+        "corner.",
     )
 
     fill: PixelValue = pydt.Field(
@@ -79,9 +73,8 @@ class RotationConfig(pydt.BaseModel):
 
 
 class ColorJitterConfig(pydt.BaseModel):
-    enabled: bool = pydt.Field(
-        default=False, description="Whether to apply random color jittering."
-    )
+    enabled: bool = pydt.Field(default=False,
+                               description="Whether to apply random color jittering.")
 
     brightness: float | t.Tuple[float, float] = pydt.Field(
         default=0.2,
@@ -111,13 +104,11 @@ class ColorJitterConfig(pydt.BaseModel):
 
 
 class AffineConfig(pydt.BaseModel):
-    enabled: bool = pydt.Field(
-        default=False, description="Whether to apply random affine transformations."
-    )
+    enabled: bool = pydt.Field(default=False,
+                               description="Whether to apply random affine transformations.")
 
     degrees: float | t.Tuple[float, float] = pydt.Field(
-        default=0.0, description="Range of degrees to select from for rotation."
-    )
+        default=0.0, description="Range of degrees to select from for rotation.")
 
     translate: t.Tuple[float, float] | None = pydt.Field(
         default=None,
@@ -125,13 +116,11 @@ class AffineConfig(pydt.BaseModel):
         "vertical translations.",
     )
 
-    scale: t.Tuple[float, float] | None = pydt.Field(
-        default=None, description="Scaling factor interval."
-    )
+    scale: t.Tuple[float, float] | None = pydt.Field(default=None,
+                                                     description="Scaling factor interval.")
 
     shear: float | t.Tuple[float, float] | None = pydt.Field(
-        default=None, description="Range of degrees to select from for shearing."
-    )
+        default=None, description="Range of degrees to select from for shearing.")
 
     interpolation: t.Literal["nearest", "bilinear", "bicubic"] = pydt.Field(
         default="bilinear",
@@ -140,19 +129,19 @@ class AffineConfig(pydt.BaseModel):
 
     fill: PixelValue = pydt.Field(
         default=0.0,
-        description="Pixel fill value for the area outside the transformed " "image.",
+        description="Pixel fill value for the area outside the transformed "
+        "image.",
     )
 
     center: t.Tuple[float, float] | None = pydt.Field(
         default=None,
-        description="Optional center of rotation. Origin is the upper left " "corner.",
+        description="Optional center of rotation. Origin is the upper left "
+        "corner.",
     )
 
 
 class ErasingConfig(pydt.BaseModel):
-    enabled: bool = pydt.Field(
-        default=False, description="Whether to apply random erasing."
-    )
+    enabled: bool = pydt.Field(default=False, description="Whether to apply random erasing.")
 
     p: float = pydt.Field(
         default=0.5,
@@ -167,9 +156,8 @@ class ErasingConfig(pydt.BaseModel):
         description="Range of proportion of erased area against input image.",
     )
 
-    ratio: t.Tuple[float, float] = pydt.Field(
-        default=(0.3, 3.3), description="Range of aspect ratio of erased area."
-    )
+    ratio: t.Tuple[float, float] = pydt.Field(default=(0.3, 3.3),
+                                              description="Range of aspect ratio of erased area.")
 
     value: PixelValue | t.Literal["random"] = pydt.Field(
         default=0,
@@ -180,15 +168,13 @@ class ErasingConfig(pydt.BaseModel):
         "If 'random', erasing value is random for each pixel.",
     )
 
-    inplace: bool = pydt.Field(
-        default=False, description="Whether to make this operation in-place."
-    )
+    inplace: bool = pydt.Field(default=False,
+                               description="Whether to make this operation in-place.")
 
 
 class MixupConfig(pydt.BaseModel):
-    enabled: bool = pydt.Field(
-        default=False, description="Whether to apply MixUp data augmentation."
-    )
+    enabled: bool = pydt.Field(default=False,
+                               description="Whether to apply MixUp data augmentation.")
 
     alpha: float = pydt.Field(
         default=0.2,
@@ -197,37 +183,28 @@ class MixupConfig(pydt.BaseModel):
         description="MixUp interpolation strength parameter.",
     )
 
-    p: float = pydt.Field(
-        default=0.5, ge=0.0, le=1.0, description="Probability of applying MixUp."
-    )
+    p: float = pydt.Field(default=0.5, ge=0.0, le=1.0, description="Probability of applying MixUp.")
 
 
 class AugmentationConfig(pydt.BaseModel):
-    crop: CropConfig = pydt.Field(
-        default_factory=CropConfig, description="Random crop configuration."
-    )
+    crop: CropConfig = pydt.Field(default_factory=CropConfig,
+                                  description="Random crop configuration.")
 
     horizontal_flip: HorizontalFlipConfig = pydt.Field(
         default_factory=HorizontalFlipConfig,
         description="Horizontal flip configuration.",
     )
 
-    rotation: RotationConfig = pydt.Field(
-        default_factory=RotationConfig, description="Rotation configuration."
-    )
+    rotation: RotationConfig = pydt.Field(default_factory=RotationConfig,
+                                          description="Rotation configuration.")
 
-    color_jitter: ColorJitterConfig = pydt.Field(
-        default_factory=ColorJitterConfig, description="Color jitter configuration."
-    )
+    color_jitter: ColorJitterConfig = pydt.Field(default_factory=ColorJitterConfig,
+                                                 description="Color jitter configuration.")
 
-    affine: AffineConfig = pydt.Field(
-        default_factory=AffineConfig, description="Affine transformation configuration."
-    )
+    affine: AffineConfig = pydt.Field(default_factory=AffineConfig,
+                                      description="Affine transformation configuration.")
 
-    erasing: ErasingConfig = pydt.Field(
-        default_factory=ErasingConfig, description="Random erasing configuration."
-    )
+    erasing: ErasingConfig = pydt.Field(default_factory=ErasingConfig,
+                                        description="Random erasing configuration.")
 
-    mixup: MixupConfig = pydt.Field(
-        default_factory=MixupConfig, description="MixUp configuration."
-    )
+    mixup: MixupConfig = pydt.Field(default_factory=MixupConfig, description="MixUp configuration.")

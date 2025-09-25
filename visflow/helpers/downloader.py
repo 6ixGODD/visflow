@@ -7,9 +7,7 @@ import typing as t
 import httpx
 import tenacity
 
-ContentLike: t.TypeAlias = t.Union[
-    str, bytes, t.Iterable[bytes], t.AsyncIterable[bytes]
-]
+ContentLike: t.TypeAlias = t.Union[str, bytes, t.Iterable[bytes], t.AsyncIterable[bytes]]
 
 
 class DownloadTask(t.NamedTuple):
@@ -30,6 +28,7 @@ class DownloadTask(t.NamedTuple):
 
 
 class HTTPDownloader:
+
     def __init__(
         self,
         base_url: str | None = None,
@@ -80,6 +79,7 @@ class HTTPDownloader:
         max_retries: int = 3,
         retry_wait: float = 1.0,
     ) -> bytes:
+
         @tenacity.retry(
             stop=tenacity.stop_after_attempt(max_retries),
             wait=tenacity.wait_fixed(retry_wait),
@@ -87,20 +87,21 @@ class HTTPDownloader:
         )
         async def _download() -> bytes:
             async with self.http_client.stream(
-                method,
-                url,
-                content=content,
-                data=data,
-                headers=headers,
-                params=params,
-                cookies=cookies,
-                auth=auth,
-                timeout=timeout,
+                    method,
+                    url,
+                    content=content,
+                    data=data,
+                    headers=headers,
+                    params=params,
+                    cookies=cookies,
+                    auth=auth,
+                    timeout=timeout,
             ) as response:
                 response = t.cast(httpx.Response, response)
                 if response.status_code != httpx.codes.OK:
                     raise httpx.HTTPStatusError(
-                        f"Failed to download {url}: " f"HTTP {response.status_code}",
+                        f"Failed to download {url}: "
+                        f"HTTP {response.status_code}",
                         request=response.request,
                         response=response,
                     )
@@ -108,9 +109,7 @@ class HTTPDownloader:
                 buffer = bytearray()
                 async for chunk in response.aiter_bytes():
                     if limit_bytes and len(buffer) + len(chunk) > limit_bytes:
-                        raise ValueError(
-                            "Downloaded content exceeds the specified limit."
-                        )
+                        raise ValueError("Downloaded content exceeds the specified limit.")
                     buffer.extend(chunk)
 
                 if not buffer:
@@ -127,24 +126,21 @@ class HTTPDownloader:
             return data
 
     async def downloads(self, *tasks: DownloadTask) -> t.List[bytes]:
-        return await aio.gather(
-            *[
-                self.download(
-                    t_.url,
-                    *t_.save_to,
-                    method=t_.method,
-                    content=t_.content,
-                    data=t_.data,
-                    headers=t_.headers,
-                    params=t_.params,
-                    cookies=t_.cookies,
-                    auth=t_.auth,
-                    save_url=t_.save_url,
-                    limit_bytes=t_.limit_bytes,
-                    timeout=t_.timeout,
-                    max_retries=t_.max_retries,
-                    retry_wait=t_.retry_wait,
-                )
-                for t_ in tasks
-            ]
-        )
+        return await aio.gather(*[
+            self.download(
+                t_.url,
+                *t_.save_to,
+                method=t_.method,
+                content=t_.content,
+                data=t_.data,
+                headers=t_.headers,
+                params=t_.params,
+                cookies=t_.cookies,
+                auth=t_.auth,
+                save_url=t_.save_url,
+                limit_bytes=t_.limit_bytes,
+                timeout=t_.timeout,
+                max_retries=t_.max_retries,
+                retry_wait=t_.retry_wait,
+            ) for t_ in tasks
+        ])
