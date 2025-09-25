@@ -6,12 +6,10 @@ import typing as t
 class FieldInfo:
     __slots__ = ("default", "default_factory", "required")
 
-    def __init__(
-        self,
-        default: t.Any | ellipsis = Ellipsis,
-        default_factory: t.Callable[[], t.Any] | None = None,
-        required: bool = True,
-    ):
+    def __init__(self,
+                 default: t.Any | ellipsis = Ellipsis,
+                 default_factory: t.Callable[[], t.Any] | None = None,
+                 required: bool = True):
         self.default = default
         self.default_factory = default_factory
         self.required = required

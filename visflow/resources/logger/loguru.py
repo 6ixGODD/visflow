@@ -89,10 +89,8 @@ class LoguruBackend(LoggerBackend):
 
 class LoguruLogger(BaseLogger):
 
-    def __init__(
-        self,
-        targets: t.Sequence[LoggingTarget] | None = None,
-        initial_ctx: t.Dict[str, t.Any] | None = None,
-    ):
+    def __init__(self,
+                 targets: t.Sequence[LoggingTarget] | None = None,
+                 initial_ctx: t.Dict[str, t.Any] | None = None):
         backend = LoguruBackend()
         super().__init__(backend, targets, initial_ctx)

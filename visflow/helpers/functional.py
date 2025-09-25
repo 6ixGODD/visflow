@@ -23,25 +23,21 @@ class MixUpLoss(nn.Module):
         super().__init__()
         self.criterion = criterion
 
-    def forward(
-        self,
-        pred: torch.Tensor,
-        target_a: torch.Tensor,
-        target_b: t.Optional[torch.Tensor] = None,
-        lam: float | None = None,
-    ) -> torch.Tensor:
+    def forward(self,
+                pred: torch.Tensor,
+                target_a: torch.Tensor,
+                target_b: t.Optional[torch.Tensor] = None,
+                lam: float | None = None) -> torch.Tensor:
         if target_b is not None and lam is not None:
             return lam * self.criterion(pred, target_a) + (1 - lam) * self.criterion(pred, target_b)
         else:
             return self.criterion(pred, target_a)
 
 
-def summary(
-    model: nn.Module,
-    input_size: t.Tuple[int, ...] | t.List[t.Tuple[int, ...]],
-    batch_size: int = -1,
-    device: t.Literal["cuda", "cpu"] = "cuda",
-) -> ModelSummary:
+def summary(model: nn.Module,
+            input_size: t.Tuple[int, ...] | t.List[t.Tuple[int, ...]],
+            batch_size: int = -1,
+            device: t.Literal["cuda", "cpu"] = "cuda") -> ModelSummary:
 
     def register_hook(module: nn.Module) -> None:
 
@@ -60,12 +56,10 @@ def summary(
             params = torch.tensor(0)
             trainable = False
             if hasattr(module, "weight") and hasattr(module.weight, "size"):
-                params += torch.prod(torch.LongTensor(list(module.weight.size()))  # type: ignore
-                                    )
+                params += torch.prod(torch.LongTensor(list(module.weight.size())))
                 trainable = bool(module.weight.requires_grad)
             if hasattr(module, "bias") and hasattr(module.bias, "size"):
-                params += torch.prod(torch.LongTensor(list(module.bias.size()))  # type: ignore
-                                    )
+                params += torch.prod(torch.LongTensor(list(module.bias.size())))
 
             nb_params = int(params)
             layer_summary[m_key] = LayerInfo(
@@ -79,7 +73,7 @@ def summary(
                 and not (module == model)):
             hooks.append(module.register_forward_hook(hook))
 
-    if (device == "cuda" and torch.cuda.is_available() and hasattr(torch.cuda, "FloatTensor")):
+    if device == "cuda" and torch.cuda.is_available() and hasattr(torch.cuda, "FloatTensor"):
         dtype = torch.cuda.FloatTensor
     else:
         dtype = torch.FloatTensor
@@ -128,16 +122,14 @@ def summary(
     total_params_size = abs(total_params * 4.0 / (1024**2.0))
     total_size = total_params_size + total_output_size + total_input_size
 
-    return ModelSummary(
-        layers=layer_summary,
-        total_params=total_params,
-        trainable_params=trainable_params,
-        non_trainable_params=total_params - trainable_params,
-        input_size_mb=round(total_input_size, 2),
-        forward_backward_pass_size_mb=round(total_output_size, 2),
-        params_size_mb=round(total_params_size, 2),
-        estimated_total_size_mb=round(total_size, 2),
-    )
+    return ModelSummary(layers=layer_summary,
+                        total_params=total_params,
+                        trainable_params=trainable_params,
+                        non_trainable_params=total_params - trainable_params,
+                        input_size_mb=round(total_input_size, 2),
+                        forward_backward_pass_size_mb=round(total_output_size, 2),
+                        params_size_mb=round(total_params_size, 2),
+                        estimated_total_size_mb=round(total_size, 2))
 
 
 @ft.lru_cache(maxsize=1)
@@ -160,5 +152,4 @@ def env_info() -> EnvironmentInfo:
         torch_version=torch.__version__,
         torchvision_version=torchvision.__version__,
         cuda_version=torch.version.cuda or "N/A",
-        cudnn_version=torch.backends.cudnn.version() or "N/A",  # type: ignore
-    )
+        cudnn_version=torch.backends.cudnn.version() or "N/A")

@@ -23,7 +23,7 @@ def get_colormap(
         "turbo": cv2.COLORMAP_TURBO,
         "viridis": cv2.COLORMAP_VIRIDIS,
         "inferno": cv2.COLORMAP_INFERNO,
-        "plasma": cv2.COLORMAP_PLASMA,
+        "plasma": cv2.COLORMAP_PLASMA
     }
     return colormaps[cm]
 
@@ -39,21 +39,19 @@ class GradCAMPipeline(BasePipeline):
         ".webp",
     }
 
-    def __init__(
-        self,
-        *,
-        ckpt_path: PathLikes,
-        image_path: PathLikes,
-        output_dir: PathLikes | None = None,
-        target_layer: str | None = None,
-        heatmap_only: bool = False,
-        target_class: str | int | None = None,
-        alpha: float = 0.5,
-        colormap: t.Literal["jet", "turbo", "viridis", "inferno", "plasma"] = "jet",
-        eigen_smooth: bool = False,
-        aug_smooth: bool = False,
-        device: t.Literal["cpu", "cuda"] | None = None,
-    ):
+    def __init__(self,
+                 *,
+                 ckpt_path: PathLikes,
+                 image_path: PathLikes,
+                 output_dir: PathLikes | None = None,
+                 target_layer: str | None = None,
+                 heatmap_only: bool = False,
+                 target_class: str | int | None = None,
+                 alpha: float = 0.5,
+                 colormap: t.Literal["jet", "turbo", "viridis", "inferno", "plasma"] = "jet",
+                 eigen_smooth: bool = False,
+                 aug_smooth: bool = False,
+                 device: t.Literal["cpu", "cuda"] | None = None):
         self._completed = False
         self.ckpt_path = p.Path(ckpt_path)
         if not self.ckpt_path.exists():
@@ -98,15 +96,13 @@ class GradCAMPipeline(BasePipeline):
                 image_files.append(file_path)
         return sorted(image_files)
 
-    def _step(
-        self,
-        image_file: p.Path,
-        gradcam: GraphCAM,
-        transform: t.Any,
-        current_idx: int,
-        total_count: int,
-        target_class: int | None = None,
-    ) -> None:
+    def _step(self,
+              image_file: p.Path,
+              gradcam: GraphCAM,
+              transform: t.Any,
+              current_idx: int,
+              total_count: int,
+              target_class: int | None = None) -> None:
         progress_info = f"({current_idx}/{total_count}) {image_file.name}"
         spinner.text = f"Generating Grad-CAM... {progress_info}"
 
@@ -121,30 +117,24 @@ class GradCAMPipeline(BasePipeline):
 
         if self.heatmap_only:
             save_path = output_subdir / f"{image_file.stem}_heatmap.png"
-            gradcam.save_heatmap(
-                input_tensor=input_tensor,
-                target_class=target_class,
-                eigen_smooth=self.eigen_smooth,
-                aug_smooth=self.aug_smooth,
-                colormap=self.colormap,
-                save_path=save_path,
-            )
+            gradcam.save_heatmap(input_tensor=input_tensor,
+                                 target_class=target_class,
+                                 eigen_smooth=self.eigen_smooth,
+                                 aug_smooth=self.aug_smooth,
+                                 colormap=self.colormap,
+                                 save_path=save_path)
         else:
             save_path = output_subdir / f"{image_file.stem}_cam.png"
-            ori_image = (cv2.cvtColor(
-                cv2.resize(cv2.imread(str(image_file)), (224, 224)),
-                cv2.COLOR_BGR2RGB,
-            ) / 255.0)
-            gradcam.save_cam(
-                input_tensor=input_tensor,
-                original_image=ori_image,
-                target_class=target_class,
-                alpha=self.alpha,
-                eigen_smooth=self.eigen_smooth,
-                aug_smooth=self.aug_smooth,
-                colormap=self.colormap,
-                save_path=save_path,
-            )
+            ori_image = (cv2.cvtColor(cv2.resize(cv2.imread(str(image_file)),
+                                                 (224, 224)), cv2.COLOR_BGR2RGB) / 255.0)
+            gradcam.save_cam(input_tensor=input_tensor,
+                             original_image=ori_image,
+                             target_class=target_class,
+                             alpha=self.alpha,
+                             eigen_smooth=self.eigen_smooth,
+                             aug_smooth=self.aug_smooth,
+                             colormap=self.colormap,
+                             save_path=save_path)
 
     def __call__(self) -> None:
         total_images = len(self.image_files)

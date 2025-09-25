@@ -10,54 +10,43 @@ import pandas as pd
 import torch
 import torch.nn as nn
 
-from visflow.context import (
-    BatchLog,
-    Context,
-    EpochLog,
-    ExperimentEndLog,
-    ExperimentStartLog,
-    Metrics,
-)
+from visflow.context import BatchLog
+from visflow.context import Context
+from visflow.context import EpochLog
+from visflow.context import ExperimentEndLog
+from visflow.context import ExperimentStartLog
+from visflow.context import Metrics
 from visflow.data import ImageDatamodule
 from visflow.helpers.display import Display
 from visflow.helpers.early_stopping import EarlyStopping
-from visflow.helpers.functional import env_info, MixUpLoss, summary
+from visflow.helpers.functional import env_info
+from visflow.helpers.functional import MixUpLoss
+from visflow.helpers.functional import summary
 from visflow.helpers.metrics import compute_metric
-from visflow.helpers.plotting import (
-    plot_confusion_matrix,
-    plot_roc_curve,
-    plot_training_curves,
-)
+from visflow.helpers.plotting import plot_confusion_matrix
+from visflow.helpers.plotting import plot_roc_curve
+from visflow.helpers.plotting import plot_training_curves
 from visflow.pipelines import BasePipeline
 from visflow.resources.config import TrainConfig
-from visflow.resources.logger import _LoggerContext, Logger
+from visflow.resources.logger import _LoggerContext
+from visflow.resources.logger import Logger
 from visflow.resources.logger.types import LoggingTarget
-from visflow.resources.models import BaseClassifier, make_model
+from visflow.resources.models import BaseClassifier
+from visflow.resources.models import make_model
 from visflow.types import Checkpoint
-from visflow.utils import gen_id, incr_path, seed, spinner
+from visflow.utils import gen_id
+from visflow.utils import incr_path
+from visflow.utils import seed
+from visflow.utils import spinner
 from visflow.utils.functional import mixup
 
 
 class TrainPipeline(BasePipeline):
     __slots__ = BasePipeline.__slots__ + (
-        "config",
-        "logger",
-        "device",
-        "datamodule",
-        "best_acc",
-        "train_loss_history",
-        "train_acc_history",
-        "val_loss_history",
-        "val_acc_history",
-        "best_epoch",
-        "best_metrics",
-        "final_metrics",
-        "start_time",
-        "best_val_outputs",
-        "best_val_targets",
-        "final_val_outputs",
-        "final_val_targets",
-    )
+        "config", "logger", "device", "datamodule", "best_acc", "train_loss_history",
+        "train_acc_history", "val_loss_history", "val_acc_history", "best_epoch", "best_metrics",
+        "final_metrics", "start_time", "best_val_outputs", "best_val_targets", "final_val_outputs",
+        "final_val_targets")
 
     def __init__(self, config: TrainConfig):
         self._completed = False
@@ -96,11 +85,9 @@ class TrainPipeline(BasePipeline):
                     != "auto" else self.config.model.architecture)
         exp_dir = incr_path(output_dir, exp_name)
 
-        context = Context(
-            experiment_id=exp_id,
-            experiment_name=exp_name,
-            timestamp=time.strftime("%Y%m%dT%H%M%S", time.localtime()),
-        )
+        context = Context(experiment_id=exp_id,
+                          experiment_name=exp_name,
+                          timestamp=time.strftime("%Y%m%dT%H%M%S", time.localtime()))
         display = Display(context)
         self.logger.add_target(LoggingTarget(logname=exp_dir / ".log.json", loglevel="info"),)
         logger = self.logger.with_context(TAG="train", **context)
@@ -115,12 +102,10 @@ class TrainPipeline(BasePipeline):
 
         # Initialize model -----------------------------------------------------
         spinner.start("Initializing model...")
-        model = make_model(
-            name=self.config.model.architecture,
-            pretrained=self.config.model.pretrained,
-            num_classes=self.config.model.num_classes,
-            weights_path=self.config.model.weights_path,
-        ).to(self.device)
+        model = make_model(name=self.config.model.architecture,
+                           pretrained=self.config.model.pretrained,
+                           num_classes=self.config.model.num_classes,
+                           weights_path=self.config.model.weights_path).to(self.device)
 
         size = self.config.resize.size
         if isinstance(size, tuple):
@@ -136,12 +121,10 @@ class TrainPipeline(BasePipeline):
         scheduler = self._setup_scheduler(optimizer)
 
         # Log experiment start -------------------------------------------------
-        startlog = ExperimentStartLog(
-            env=env,
-            dataset=self.datamodule.info,
-            config=self.config.to_dict(),
-            model_summary=model_summary,
-        )
+        startlog = ExperimentStartLog(env=env,
+                                      dataset=self.datamodule.info,
+                                      config=self.config.to_dict(),
+                                      model_summary=model_summary)
         display.display_start(startlog)
         logger.info("Experiment started", **startlog)
 
@@ -153,8 +136,7 @@ class TrainPipeline(BasePipeline):
             patience=self.config.training.early_stopping_patience,
             min_delta=self.config.training.early_stopping_min_delta,
             mode=(  # type: ignore
-                "min" if self.config.training.early_stopping_target == "loss" else "max"),
-        )
+                "min" if self.config.training.early_stopping_target == "loss" else "max"))
 
         val_acc = 0.0  # Initialize val_acc for first epoch
         epoch = 0  # cache epoch for saving final checkpoint
@@ -192,16 +174,7 @@ class TrainPipeline(BasePipeline):
 
             # Save checkpoint based on frequency
             if checkpoint_freq > 0 and epoch % checkpoint_freq == 0:
-                self.save(
-                    logger,
-                    exp_dir,
-                    epoch,
-                    model,
-                    optimizer,
-                    scheduler,
-                    val_acc,
-                    "frequent",
-                )
+                self.save(logger, exp_dir, epoch, model, optimizer, scheduler, val_acc, "frequent")
 
             epoch_time = time.time() - epoch_start_time
 
@@ -260,14 +233,12 @@ class TrainPipeline(BasePipeline):
 
         # Final experiment log -------------------------------------------------
         total_time = time.time() - self.start_time
-        endlog = ExperimentEndLog(
-            total_epochs=self.config.training.epochs,
-            total_time_sec=total_time,
-            final_metrics=t.cast(Metrics, self.final_metrics),
-            best_metrics=t.cast(Metrics, self.best_metrics),
-            test_metrics=test_metrics,
-            best_epoch=self.best_epoch,
-        )
+        endlog = ExperimentEndLog(total_epochs=self.config.training.epochs,
+                                  total_time_sec=total_time,
+                                  final_metrics=t.cast(Metrics, self.final_metrics),
+                                  best_metrics=t.cast(Metrics, self.best_metrics),
+                                  test_metrics=test_metrics,
+                                  best_epoch=self.best_epoch)
 
         display.display_end(endlog)
         logger.info("Training completed", **endlog)
@@ -297,12 +268,10 @@ class TrainPipeline(BasePipeline):
         elif optimizer_name == "adamw":
             return torch.optim.AdamW(model.parameters(), lr=lr, weight_decay=weight_decay)
         elif optimizer_name == "sgd":
-            return torch.optim.SGD(
-                model.parameters(),
-                lr=lr,
-                momentum=self.config.training.momentum,
-                weight_decay=weight_decay,
-            )
+            return torch.optim.SGD(model.parameters(),
+                                   lr=lr,
+                                   momentum=self.config.training.momentum,
+                                   weight_decay=weight_decay)
         else:
             raise ValueError(f"Unsupported optimizer: {optimizer_name}")
 
@@ -335,8 +304,7 @@ class TrainPipeline(BasePipeline):
                 optimizer,
                 mode=self.config.training.plateau_scheduler.mode,
                 patience=self.config.training.plateau_scheduler.patience,
-                factor=self.config.training.plateau_scheduler.factor,
-            )
+                factor=self.config.training.plateau_scheduler.factor)
         else:
             raise ValueError(f"Unsupported lr_scheduler: {lr_scheduler}")
 
@@ -358,15 +326,9 @@ class TrainPipeline(BasePipeline):
         self.val_loss_history.append(val_loss)
         self.val_acc_history.append(val_acc)
 
-    def train(
-        self,
-        model: BaseClassifier,
-        train_loader: torch.utils.data.DataLoader[torch.Tensor],
-        epoch: int,
-        optimizer: torch.optim.Optimizer,
-        criterion: nn.Module,
-        logger: _LoggerContext,
-    ) -> t.Tuple[float, float]:
+    def train(self, model: BaseClassifier, train_loader: torch.utils.data.DataLoader[torch.Tensor],
+              epoch: int, optimizer: torch.optim.Optimizer, criterion: nn.Module,
+              logger: _LoggerContext) -> t.Tuple[float, float]:
         model.train()
         running_loss = 0.0
         running_corrects = 0
@@ -376,22 +338,15 @@ class TrainPipeline(BasePipeline):
             batch_start_time = time.time()
             data, target = (
                 data.to(self.device),  # type: ignore
-                target.to(self.device),
-            )
+                target.to(self.device))
 
             # Handle mixup augmentation
             use_mixup = (self.config.augmentation.mixup.enabled
                          and random.random() < self.config.augmentation.mixup.p)
 
             if use_mixup:
-                loss, batch_acc = self._train_step_mixup(
-                    self.config.augmentation.mixup.alpha,
-                    data,
-                    target,
-                    model,
-                    optimizer,
-                    criterion,
-                )
+                loss, batch_acc = self._train_step_mixup(self.config.augmentation.mixup.alpha, data,
+                                                         target, model, optimizer, criterion)
             else:
                 loss, batch_acc = self._train_step(data, target, model, optimizer, criterion)
 
@@ -401,32 +356,17 @@ class TrainPipeline(BasePipeline):
             total_samples += data.size(0)
 
             # Log batch information
-            self._log_batch(
-                batch,
-                epoch,
-                loss,
-                batch_acc,
-                model,
-                optimizer,
-                data,
-                batch_start_time,
-                train_loader,
-                logger,
-            )
+            self._log_batch(batch, epoch, loss, batch_acc, model, optimizer, data, batch_start_time,
+                            train_loader, logger)
 
         epoch_loss = running_loss / total_samples
         epoch_acc = running_corrects / total_samples
         return epoch_loss, epoch_acc
 
     @staticmethod
-    def _train_step_mixup(
-        alpha: float,
-        data: torch.Tensor,
-        target: torch.Tensor,
-        model: BaseClassifier,
-        optimizer: torch.optim.Optimizer,
-        criterion: nn.Module,
-    ) -> t.Tuple[torch.Tensor, float]:
+    def _train_step_mixup(alpha: float, data: torch.Tensor, target: torch.Tensor,
+                          model: BaseClassifier, optimizer: torch.optim.Optimizer,
+                          criterion: nn.Module) -> t.Tuple[torch.Tensor, float]:
         mixed_data, target_a, target_b, lam = mixup(data, target, alpha=alpha)
 
         optimizer.zero_grad()
@@ -449,13 +389,9 @@ class TrainPipeline(BasePipeline):
         return loss, batch_acc
 
     @staticmethod
-    def _train_step(
-        data: torch.Tensor,
-        target: torch.Tensor,
-        model: BaseClassifier,
-        optimizer: torch.optim.Optimizer,
-        criterion: nn.Module,
-    ) -> t.Tuple[torch.Tensor, float]:
+    def _train_step(data: torch.Tensor, target: torch.Tensor, model: BaseClassifier,
+                    optimizer: torch.optim.Optimizer,
+                    criterion: nn.Module) -> t.Tuple[torch.Tensor, float]:
         optimizer.zero_grad()
         output = model(data)
         loss = criterion(output, target)
@@ -467,19 +403,10 @@ class TrainPipeline(BasePipeline):
 
         return loss, batch_acc
 
-    def _log_batch(
-        self,
-        batch: int,
-        epoch: int,
-        loss: torch.Tensor,
-        batch_acc: float,
-        model: BaseClassifier,
-        optimizer: torch.optim.Optimizer,
-        data: torch.Tensor,
-        batch_start_time: float,
-        train_loader: torch.utils.data.DataLoader[torch.Tensor],
-        logger: _LoggerContext,
-    ) -> None:
+    def _log_batch(self, batch: int, epoch: int, loss: torch.Tensor, batch_acc: float,
+                   model: BaseClassifier, optimizer: torch.optim.Optimizer, data: torch.Tensor,
+                   batch_start_time: float, train_loader: torch.utils.data.DataLoader[torch.Tensor],
+                   logger: _LoggerContext) -> None:
         """Log batch information."""
         batch_time = time.time() - batch_start_time
 
@@ -504,22 +431,15 @@ class TrainPipeline(BasePipeline):
             batch_time_sec=batch_time,
             forward_time_sec=0.0,  # Could be tracked separately if needed
             backward_time_sec=0.0,  # Could be tracked separately if needed
-            samples_per_sec=data.size(0) / batch_time,
-        )
+            samples_per_sec=data.size(0) / batch_time)
 
         logger.info(
             f"[Epoch {epoch}/{self.config.training.epochs}] "
             f"Batch {batch}/{len(train_loader)} - "
-            f"Loss: {loss.item():.4f}, Acc: {batch_acc:.4f}",
-            **batch_log,
-        )
+            f"Loss: {loss.item():.4f}, Acc: {batch_acc:.4f}", **batch_log)
 
-    def val(
-        self,
-        model: BaseClassifier,
-        val_loader: torch.utils.data.DataLoader[torch.Tensor],
-        criterion: nn.Module,
-    ) -> t.Tuple[float, Metrics, torch.Tensor, torch.Tensor]:
+    def val(self, model: BaseClassifier, val_loader: torch.utils.data.DataLoader[torch.Tensor],
+            criterion: nn.Module) -> t.Tuple[float, Metrics, torch.Tensor, torch.Tensor]:
         model.eval()
         val_loss = 0.0
         total_samples = 0
@@ -547,12 +467,8 @@ class TrainPipeline(BasePipeline):
         )
         return val_loss, metrics, all_outputs_tensor, all_targets_tensor
 
-    def test(
-        self,
-        model: BaseClassifier,
-        test_loader: torch.utils.data.DataLoader[torch.Tensor],
-        criterion: nn.Module,
-    ) -> t.Tuple[Metrics, torch.Tensor, torch.Tensor]:
+    def test(self, model: BaseClassifier, test_loader: torch.utils.data.DataLoader[torch.Tensor],
+             criterion: nn.Module) -> t.Tuple[Metrics, torch.Tensor, torch.Tensor]:
         """Test the model and return metrics, outputs, and targets."""
         spinner.start("Evaluating on test set...")
         model.eval()
@@ -572,70 +488,54 @@ class TrainPipeline(BasePipeline):
         all_targets_tensor = torch.cat(all_targets, dim=0)
         test_loss /= len(all_targets)
 
-        test_metrics = compute_metric(
-            all_outputs_tensor,
-            all_targets_tensor,
-            test_loss,
-            num_classes=self.config.model.num_classes,
-        )
+        test_metrics = compute_metric(all_outputs_tensor,
+                                      all_targets_tensor,
+                                      test_loss,
+                                      num_classes=self.config.model.num_classes)
         spinner.succeed("Test evaluation completed.")
         return test_metrics, all_outputs_tensor, all_targets_tensor
 
-    def plots(
-        self,
-        logger: _LoggerContext,
-        exp_dir: p.Path,
-        class_names: t.List[str],
-        test_outputs: torch.Tensor,
-        test_targets: torch.Tensor,
-        test_metrics: Metrics,
-    ) -> None:
+    def plots(self, logger: _LoggerContext, exp_dir: p.Path, class_names: t.List[str],
+              test_outputs: torch.Tensor, test_targets: torch.Tensor,
+              test_metrics: Metrics) -> None:
         """Generate and save all plots."""
         plots_dir = exp_dir / "plots"
         plots_dir.mkdir(exist_ok=True)
 
         # Plot training curves
-        plot_training_curves(
-            train_loss_history=self.train_loss_history,
-            val_loss_history=self.val_loss_history,
-            train_acc_history=self.train_acc_history,
-            val_acc_history=self.val_acc_history,
-            save_path=plots_dir / "training_curves.png",
-            show=False,
-        )
+        plot_training_curves(train_loss_history=self.train_loss_history,
+                             val_loss_history=self.val_loss_history,
+                             train_acc_history=self.train_acc_history,
+                             val_acc_history=self.val_acc_history,
+                             save_path=plots_dir / "training_curves.png",
+                             show=False)
 
         # Plot ROC curves for validation (best), validation (final), and test
         if self.best_val_outputs is not None:
-            plot_roc_curve(
-                y_true=(self.best_val_targets
-                        if self.best_val_targets is not None else torch.tensor([])),
-                y_pred_probs=torch.softmax(self.best_val_outputs, dim=1),
-                num_classes=self.config.model.num_classes,
-                class_names=class_names,
-                save_path=plots_dir / "roc_curve_best_val.png",
-                show=False,
-            )
+            plot_roc_curve(y_true=(self.best_val_targets
+                                   if self.best_val_targets is not None else torch.tensor([])),
+                           y_pred_probs=torch.softmax(self.best_val_outputs, dim=1),
+                           num_classes=self.config.model.num_classes,
+                           class_names=class_names,
+                           save_path=plots_dir / "roc_curve_best_val.png",
+                           show=False)
 
         if self.final_val_outputs is not None:
-            plot_roc_curve(
-                y_true=(self.final_val_targets
-                        if self.final_val_targets is not None else torch.tensor([])),
-                y_pred_probs=torch.softmax(self.final_val_outputs, dim=1),
-                num_classes=self.config.model.num_classes,
-                class_names=class_names,
-                save_path=plots_dir / "roc_curve_final_val.png",
-                show=False,
-            )
+            plot_roc_curve(y_true=(self.final_val_targets
+                                   if self.final_val_targets is not None else torch.tensor([])),
+                           y_pred_probs=torch.softmax(self.final_val_outputs, dim=1),
+                           num_classes=self.config.model.num_classes,
+                           class_names=class_names,
+                           save_path=plots_dir / "roc_curve_final_val.png",
+                           show=False)
 
         if test_outputs is not None and test_targets is not None:
-            plot_roc_curve(
-                y_true=test_targets,
-                y_pred_probs=torch.softmax(test_outputs, dim=1),
-                num_classes=self.config.model.num_classes,
-                class_names=class_names,
-                save_path=plots_dir / "roc_curve_test.png",
-                show=False,
-            )
+            plot_roc_curve(y_true=test_targets,
+                           y_pred_probs=torch.softmax(test_outputs, dim=1),
+                           num_classes=self.config.model.num_classes,
+                           class_names=class_names,
+                           save_path=plots_dir / "roc_curve_test.png",
+                           show=False)
 
         # Plot confusion matrices
         self._plot_confusion_matrices(plots_dir, class_names, test_metrics)
@@ -649,73 +549,56 @@ class TrainPipeline(BasePipeline):
         if test_metrics:
             cm = np.array(test_metrics["confusion_matrix"])
 
-            plot_confusion_matrix(
-                confusion_matrix=cm,
-                class_names=class_names,
-                normalize=False,
-                save_path=plots_dir / "confusion_matrix_test.png",
-                show=False,
-            )
+            plot_confusion_matrix(confusion_matrix=cm,
+                                  class_names=class_names,
+                                  normalize=False,
+                                  save_path=plots_dir / "confusion_matrix_test.png",
+                                  show=False)
 
-            plot_confusion_matrix(
-                confusion_matrix=cm,
-                class_names=class_names,
-                normalize=True,
-                save_path=plots_dir / "confusion_matrix_test_normalized.png",
-                show=False,
-            )
+            plot_confusion_matrix(confusion_matrix=cm,
+                                  class_names=class_names,
+                                  normalize=True,
+                                  save_path=plots_dir / "confusion_matrix_test_normalized.png",
+                                  show=False)
 
         # Best validation confusion matrix
         if self.best_metrics:
             cm = np.array(self.best_metrics["confusion_matrix"])
 
-            plot_confusion_matrix(
-                confusion_matrix=cm,
-                class_names=class_names,
-                normalize=False,
-                save_path=plots_dir / "confusion_matrix_best_val.png",
-                show=False,
-            )
+            plot_confusion_matrix(confusion_matrix=cm,
+                                  class_names=class_names,
+                                  normalize=False,
+                                  save_path=plots_dir / "confusion_matrix_best_val.png",
+                                  show=False)
 
-            plot_confusion_matrix(
-                confusion_matrix=cm,
-                class_names=class_names,
-                normalize=True,
-                save_path=(plots_dir / "confusion_matrix_best_val_normalized.png"),
-                show=False,
-            )
+            plot_confusion_matrix(confusion_matrix=cm,
+                                  class_names=class_names,
+                                  normalize=True,
+                                  save_path=(plots_dir /
+                                             "confusion_matrix_best_val_normalized.png"),
+                                  show=False)
 
         # Final validation confusion matrix
         if self.final_metrics:
             cm = np.array(self.final_metrics["confusion_matrix"])
 
-            plot_confusion_matrix(
-                confusion_matrix=cm,
-                class_names=class_names,
-                normalize=False,
-                save_path=plots_dir / "confusion_matrix_final_val.png",
-                show=False,
-            )
+            plot_confusion_matrix(confusion_matrix=cm,
+                                  class_names=class_names,
+                                  normalize=False,
+                                  save_path=plots_dir / "confusion_matrix_final_val.png",
+                                  show=False)
 
-            plot_confusion_matrix(
-                confusion_matrix=cm,
-                class_names=class_names,
-                normalize=True,
-                save_path=(plots_dir / "confusion_matrix_final_val_normalized.png"),
-                show=False,
-            )
+            plot_confusion_matrix(confusion_matrix=cm,
+                                  class_names=class_names,
+                                  normalize=True,
+                                  save_path=(plots_dir /
+                                             "confusion_matrix_final_val_normalized.png"),
+                                  show=False)
 
-    def save(
-        self,
-        logger: _LoggerContext,
-        exp_dir: p.Path,
-        epoch: int,
-        model: BaseClassifier,
-        optimizer: torch.optim.Optimizer,
-        scheduler: torch.optim.lr_scheduler.LRScheduler | None,
-        accuracy: float,
-        mode: t.Literal["best", "final", "frequent"],
-    ) -> None:
+    def save(self, logger: _LoggerContext, exp_dir: p.Path, epoch: int, model: BaseClassifier,
+             optimizer: torch.optim.Optimizer,
+             scheduler: torch.optim.lr_scheduler.LRScheduler | None, accuracy: float,
+             mode: t.Literal["best", "final", "frequent"]) -> None:
         """Save model checkpoint."""
         ckpt_dir = exp_dir / "checkpoints"
         ckpt_dir.mkdir(exist_ok=True)
@@ -731,27 +614,21 @@ class TrainPipeline(BasePipeline):
         else:
             raise ValueError(f"Unsupported save mode: {mode}")
 
-        ckpt = Checkpoint(
-            epoch=epoch,
-            model_state_dict=model.state_dict(),
-            optimizer_state_dict=optimizer.state_dict(),
-            scheduler_state_dict=scheduler.state_dict() if scheduler else None,
-            accuracy=accuracy,
-            config=self.config.to_dict(),
-            classes=self.datamodule.classes,
-            class_to_idx=self.datamodule.class_to_idx,
-        )
+        ckpt = Checkpoint(epoch=epoch,
+                          model_state_dict=model.state_dict(),
+                          optimizer_state_dict=optimizer.state_dict(),
+                          scheduler_state_dict=scheduler.state_dict() if scheduler else None,
+                          accuracy=accuracy,
+                          config=self.config.to_dict(),
+                          classes=self.datamodule.classes,
+                          class_to_idx=self.datamodule.class_to_idx)
 
         checkpoint_path = ckpt_dir / f"{fname}.pth"
         torch.save(ckpt, checkpoint_path)
         logger.info(f"Checkpoint saved: {checkpoint_path}")
 
-    def save_comprehensive_metrics(
-        self,
-        logger: _LoggerContext,
-        exp_dir: p.Path,
-        test_metrics: Metrics,
-    ) -> None:
+    def save_comprehensive_metrics(self, logger: _LoggerContext, exp_dir: p.Path,
+                                   test_metrics: Metrics) -> None:
         """Save comprehensive metrics including test, best validation,
         and final validation."""
         metric_dir = exp_dir / "metrics"
@@ -772,7 +649,7 @@ class TrainPipeline(BasePipeline):
                 **{
                     f"cm_{i}": v for i, v in enumerate(
                         np.array(test_metrics["confusion_matrix"]).flatten())
-                },
+                }
             }
             metrics_data.append(test_row)
 
@@ -788,7 +665,7 @@ class TrainPipeline(BasePipeline):
                 **{
                     f"cm_{i}": v for i, v in enumerate(
                         np.array(self.best_metrics["confusion_matrix"]).flatten())
-                },
+                }
             }
             metrics_data.append(best_val_row)
 
@@ -804,7 +681,7 @@ class TrainPipeline(BasePipeline):
                 **{
                     f"cm_{i}": v for i, v in enumerate(
                         np.array(self.final_metrics["confusion_matrix"]).flatten())
-                },
+                }
             }
             metrics_data.append(final_val_row)
 

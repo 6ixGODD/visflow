@@ -52,12 +52,10 @@ class ContextFormatter(logging.Formatter):
         # Same as arrow for consistency
     }
 
-    def __init__(
-        self,
-        is_console: bool = False,
-        use_colors: bool = True,
-        verbose: bool | None = None,
-    ):
+    def __init__(self,
+                 is_console: bool = False,
+                 use_colors: bool = True,
+                 verbose: bool | None = None):
         super().__init__(datefmt="%Y-%m-%d %H:%M:%S")
         self.is_console = is_console
         self.use_colors = use_colors
@@ -72,28 +70,9 @@ class ContextFormatter(logging.Formatter):
     def _extract_context(record: logging.LogRecord, /) -> t.Dict[str, t.Any]:
         """Extract context from log record, excluding standard fields."""
         excluded = {
-            "name",
-            "msg",
-            "args",
-            "levelname",
-            "levelno",
-            "pathname",
-            "filename",
-            "module",
-            "lineno",
-            "funcName",
-            "created",
-            "msecs",
-            "relativeCreated",
-            "thread",
-            "threadName",
-            "processName",
-            "process",
-            "getMessage",
-            "exc_info",
-            "exc_text",
-            "stack_info",
-            "message",
+            "name", "msg", "args", "levelname", "levelno", "pathname", "filename", "module",
+            "lineno", "funcName", "created", "msecs", "relativeCreated", "thread", "threadName",
+            "processName", "process", "getMessage", "exc_info", "exc_text", "stack_info", "message"
         }
 
         context = {}
@@ -282,7 +261,7 @@ class ContextFormatter(logging.Formatter):
             "message": record.getMessage(),
             "module": record.module,
             "function": record.funcName,
-            "line": record.lineno,
+            "line": record.lineno
         }
 
         if context:
@@ -341,15 +320,13 @@ class NativeLoggingBackend(LoggerBackend):
 
     def log(self, msg: str, /, level: LogLevel, **context: t.Any) -> None:
         log_level = _LEVEL_MAP.get(level, logging.INFO)
-        record = self._logger.makeRecord(
-            name=self._logger.name,
-            level=log_level,
-            fn="",
-            lno=0,
-            msg=msg,
-            args=(),
-            exc_info=None,
-        )
+        record = self._logger.makeRecord(name=self._logger.name,
+                                         level=log_level,
+                                         fn="",
+                                         lno=0,
+                                         msg=msg,
+                                         args=(),
+                                         exc_info=None)
 
         # Add context to record
         for key, value in context.items():
@@ -376,11 +353,9 @@ class NativeLoggingBackend(LoggerBackend):
 
 class NativeLogger(BaseLogger):
 
-    def __init__(
-        self,
-        targets: t.Sequence[LoggingTarget] | None = None,
-        initial_ctx: t.Dict[str, t.Any] | None = None,
-    ):
+    def __init__(self,
+                 targets: t.Sequence[LoggingTarget] | None = None,
+                 initial_ctx: t.Dict[str, t.Any] | None = None):
         backend = NativeLoggingBackend()
         super().__init__(backend, targets, initial_ctx)
 

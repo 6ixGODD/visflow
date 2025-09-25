@@ -98,7 +98,7 @@ class _LoggerContext:
         msg: str,
         /,
         exc: type[BaseException] | t.Tuple[type[BaseException], ...] = Exception,
-        excl_exc: type[BaseException] | t.Tuple[type[BaseException], ...] = (),
+        excl_exc: type[BaseException] | t.Tuple[type[BaseException], ...] = ()
     ) -> t.Generator[None, None, None]:
         try:
             yield
@@ -113,22 +113,20 @@ class _LoggerContext:
             )
             raise
 
-    def log_method(
-        self,
-        msg: str | None = None,
-        level: LogLevel = "info",
-        *,
-        exc: type[BaseException] | t.Tuple[type[BaseException], ...] = Exception,
-        excl_exc: type[BaseException] | t.Tuple[type[BaseException], ...] = (),
-        logargs: bool = False,
-        logres: bool = False,
-        logdur: bool = True,
-        incl_ctx: bool = True,
-        success_level: LogLevel = "info",
-        error_level: LogLevel = "error",
-        pre_exec: bool = True,
-        post_exec: bool = True,
-    ) -> t.Callable[[F], F]:
+    def log_method(self,
+                   msg: str | None = None,
+                   level: LogLevel = "info",
+                   *,
+                   exc: type[BaseException] | t.Tuple[type[BaseException], ...] = Exception,
+                   excl_exc: type[BaseException] | t.Tuple[type[BaseException], ...] = (),
+                   logargs: bool = False,
+                   logres: bool = False,
+                   logdur: bool = True,
+                   incl_ctx: bool = True,
+                   success_level: LogLevel = "info",
+                   error_level: LogLevel = "error",
+                   pre_exec: bool = True,
+                   post_exec: bool = True) -> t.Callable[[F], F]:
 
         def decorator(fn: F) -> t.Any:
 
@@ -242,12 +240,10 @@ class _LoggerContext:
 
 class BaseLogger(_LoggerContext):
 
-    def __init__(
-        self,
-        backend: LoggerBackend,
-        targets: t.Sequence[LoggingTarget] | None = None,
-        initial_ctx: t.Dict[str, t.Any] | None = None,
-    ):
+    def __init__(self,
+                 backend: LoggerBackend,
+                 targets: t.Sequence[LoggingTarget] | None = None,
+                 initial_ctx: t.Dict[str, t.Any] | None = None):
         super().__init__(backend, initial_ctx)
         self._targets = list(targets or [])
         self._backend.setup_handlers(self._targets)
@@ -277,13 +273,8 @@ class BaseLogger(_LoggerContext):
     def __enter__(self) -> t.Self:
         return self
 
-    def __exit__(
-        self,
-        exc_type: type[BaseException] | None,
-        exc_value: BaseException | None,
-        traceback: types.TracebackType | None,
-        /,
-    ) -> t.Literal[False]:
+    def __exit__(self, exc_type: type[BaseException] | None, exc_value: BaseException | None,
+                 traceback: types.TracebackType | None, /) -> t.Literal[False]:
         self.close()
         return False
 

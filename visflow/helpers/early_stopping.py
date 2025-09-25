@@ -5,12 +5,10 @@ import typing as t
 
 class EarlyStopping:
 
-    def __init__(
-        self,
-        patience: int = 7,
-        min_delta: float = 0.0,
-        mode: t.Literal["min", "max"] = "min",
-    ) -> None:
+    def __init__(self,
+                 patience: int = 7,
+                 min_delta: float = 0.0,
+                 mode: t.Literal["min", "max"] = "min") -> None:
         """
         Early stopping utility for training loops.
 

@@ -19,14 +19,12 @@ class Args(BaseArgs):
 
     @classmethod
     def add_args(cls, parser: argparse.ArgumentParser) -> None:
-        parser.add_argument(
-            "--proxy",
-            "-p",
-            type=str,
-            default=None,
-            help="Proxy server to use for downloading files (e.g., "
-            "http://proxyserver:port)",
-        )
+        parser.add_argument("--proxy",
+                            "-p",
+                            type=str,
+                            default=None,
+                            help="Proxy server to use for downloading files (e.g., "
+                            "http://proxyserver:port)")
 
 
 def register(subparser: _SubParsersAction[argparse.ArgumentParser]) -> None:

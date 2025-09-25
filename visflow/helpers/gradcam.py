@@ -17,12 +17,10 @@ from visflow.types import PathLikes
 
 class GraphCAM:
 
-    def __init__(
-        self,
-        model: BaseClassifier,
-        device: t.Literal["cpu", "cuda"] | None = None,
-        target_layer: str | None = None,
-    ):
+    def __init__(self,
+                 model: BaseClassifier,
+                 device: t.Literal["cpu", "cuda"] | None = None,
+                 target_layer: str | None = None):
         self.model = model
         self.device = torch.device(str(device) or ("cuda" if torch.cuda.is_available() else "cpu"))
         self.model.to(self.device)
@@ -30,10 +28,7 @@ class GraphCAM:
 
         self.target_layer = self._parse_target_layer(target_layer)
 
-        self.gcam = gradcam.GradCAM(
-            model=self.model,
-            target_layers=[self.target_layer],
-        )
+        self.gcam = gradcam.GradCAM(model=self.model, target_layers=[self.target_layer])
 
     def _parse_target_layer(self, target_layer: str | None) -> nn.Module:
         if target_layer is None:
@@ -66,13 +61,11 @@ class GraphCAM:
             raise ValueError(f"Cannot access target layer '{target_layer}' in model "
                              f"{type(self.model).__name__}: {e}")
 
-    def cam(
-        self,
-        input_tensor: torch.Tensor,
-        target_class: int | None = None,
-        eigen_smooth: bool = False,
-        aug_smooth: bool = False,
-    ) -> np.ndarray:
+    def cam(self,
+            input_tensor: torch.Tensor,
+            target_class: int | None = None,
+            eigen_smooth: bool = False,
+            aug_smooth: bool = False) -> np.ndarray:
         """
         Generate GradCAM heatmap for input tensor.
 
@@ -94,26 +87,22 @@ class GraphCAM:
             targets = [ClassifierOutputTarget(target_class)]
 
         # Generate GradCAM
-        grayscale_cam = self.gcam(
-            input_tensor=input_tensor,
-            targets=targets,
-            eigen_smooth=eigen_smooth,
-            aug_smooth=aug_smooth,
-        )
+        grayscale_cam = self.gcam(input_tensor=input_tensor,
+                                  targets=targets,
+                                  eigen_smooth=eigen_smooth,
+                                  aug_smooth=aug_smooth)
 
         return grayscale_cam
 
-    def save_cam(
-        self,
-        input_tensor: torch.Tensor,
-        original_image: np.ndarray,
-        save_path: PathLikes,
-        target_class: int | None = None,
-        alpha: float = 0.4,
-        colormap: cv2.ColormapTypes = cv2.COLORMAP_JET,
-        eigen_smooth: bool = False,
-        aug_smooth: bool = False,
-    ) -> None:
+    def save_cam(self,
+                 input_tensor: torch.Tensor,
+                 original_image: np.ndarray,
+                 save_path: PathLikes,
+                 target_class: int | None = None,
+                 alpha: float = 0.4,
+                 colormap: cv2.ColormapTypes = cv2.COLORMAP_JET,
+                 eigen_smooth: bool = False,
+                 aug_smooth: bool = False) -> None:
         """
         Generate and save GradCAM visualization overlaid on original image.
 
@@ -128,25 +117,21 @@ class GraphCAM:
             aug_smooth: Whether to use augmentation smoothing
         """
         # Generate GradCAM
-        grayscale_cam = self.cam(
-            input_tensor=input_tensor,
-            target_class=target_class,
-            eigen_smooth=eigen_smooth,
-            aug_smooth=aug_smooth,
-        )
+        grayscale_cam = self.cam(input_tensor=input_tensor,
+                                 target_class=target_class,
+                                 eigen_smooth=eigen_smooth,
+                                 aug_smooth=aug_smooth)
 
         # Take the first image if batch
         if len(grayscale_cam.shape) > 2:
             grayscale_cam = grayscale_cam[0]
 
         # Create visualization
-        visualization = show_cam_on_image(
-            img=original_image,
-            mask=grayscale_cam,
-            use_rgb=True,
-            colormap=colormap,
-            image_weight=1 - alpha,
-        )
+        visualization = show_cam_on_image(img=original_image,
+                                          mask=grayscale_cam,
+                                          use_rgb=True,
+                                          colormap=colormap,
+                                          image_weight=1 - alpha)
 
         # Save visualization
         save_path = p.Path(save_path)
@@ -156,15 +141,13 @@ class GraphCAM:
         visualization_bgr = cv2.cvtColor(visualization, cv2.COLOR_RGB2BGR)
         cv2.imwrite(str(save_path), visualization_bgr)
 
-    def save_heatmap(
-        self,
-        input_tensor: torch.Tensor,
-        save_path: PathLikes,
-        target_class: int | None = None,
-        colormap: cv2.ColormapTypes = cv2.COLORMAP_JET,
-        eigen_smooth: bool = False,
-        aug_smooth: bool = False,
-    ) -> None:
+    def save_heatmap(self,
+                     input_tensor: torch.Tensor,
+                     save_path: PathLikes,
+                     target_class: int | None = None,
+                     colormap: cv2.ColormapTypes = cv2.COLORMAP_JET,
+                     eigen_smooth: bool = False,
+                     aug_smooth: bool = False) -> None:
         """
         Generate and save only the GradCAM heatmap without overlay.
 

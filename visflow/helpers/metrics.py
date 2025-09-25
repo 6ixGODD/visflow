@@ -10,12 +10,10 @@ from sklearn.metrics import (
 from visflow.context import Metrics
 
 
-def compute_metric(
-    outputs: torch.Tensor,
-    targets: torch.Tensor,
-    loss: float | None = None,
-    num_classes: int | None = None,
-) -> Metrics:
+def compute_metric(outputs: torch.Tensor,
+                   targets: torch.Tensor,
+                   loss: float | None = None,
+                   num_classes: int | None = None) -> Metrics:
     with torch.no_grad():
         # Get predictions
         _, preds = torch.max(outputs, 1)
@@ -94,14 +92,12 @@ def compute_metric(
                 sensitivity = 0.0
                 specificity = 0.0
 
-        return Metrics(
-            loss=loss,
-            accuracy=accuracy,
-            precision=precision,
-            recall=recall,
-            auc_roc=auc_roc,
-            f1_score=f1,
-            confusion_matrix=cm.tolist(),
-            sensitivity=sensitivity,
-            specificity=specificity,
-        )
+        return Metrics(loss=loss,
+                       accuracy=accuracy,
+                       precision=precision,
+                       recall=recall,
+                       auc_roc=auc_roc,
+                       f1_score=f1,
+                       confusion_matrix=cm.tolist(),
+                       sensitivity=sensitivity,
+                       specificity=specificity)

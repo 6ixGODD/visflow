@@ -14,16 +14,14 @@ import rich.table as rtable
 import rich.text as rtext
 
 from visflow import __project__
-from visflow.context import (
-    Context,
-    DatasetInfo,
-    EnvironmentInfo,
-    EpochLog,
-    ExperimentEndLog,
-    ExperimentStartLog,
-    LayerInfo,
-    ModelSummary,
-)
+from visflow.context import Context
+from visflow.context import DatasetInfo
+from visflow.context import EnvironmentInfo
+from visflow.context import EpochLog
+from visflow.context import ExperimentEndLog
+from visflow.context import ExperimentStartLog
+from visflow.context import LayerInfo
+from visflow.context import ModelSummary
 from visflow.utils import flatten_dict
 
 
@@ -36,10 +34,8 @@ def make_model_summary_table(model_summary: ModelSummary) -> rtable.Table:
     table.add_row("Trainable Parameters", f"{model_summary['trainable_params']:,}")
     table.add_row("Non-trainable Parameters", f"{model_summary['non_trainable_params']:,}")
     table.add_row("Input Size (MB)", f"{model_summary['input_size_mb']:.2f}")
-    table.add_row(
-        "Forward/Backward Pass (MB)",
-        f"{model_summary['forward_backward_pass_size_mb']:.2f}",
-    )
+    table.add_row("Forward/Backward Pass (MB)",
+                  f"{model_summary['forward_backward_pass_size_mb']:.2f}")
     table.add_row("Parameters Size (MB)", f"{model_summary['params_size_mb']:.2f}")
     table.add_row("Estimated Total Size (MB)", f"{model_summary['estimated_total_size_mb']:.2f}")
 
@@ -55,14 +51,7 @@ def make_final_metrics_table(end_log: ExperimentEndLog) -> rtable.Table:
     final_metrics = end_log["final_metrics"]
     best_metrics = end_log["best_metrics"]
 
-    for metric_name in [
-            "loss",
-            "accuracy",
-            "precision",
-            "recall",
-            "f1_score",
-            "auc_roc",
-    ]:
+    for metric_name in ["loss", "accuracy", "precision", "recall", "f1_score", "auc_roc"]:
         final_val = final_metrics.get(metric_name)  # type: ignore
         best_val = best_metrics.get(metric_name)  # type: ignore
 
@@ -233,82 +222,66 @@ class Display:
 
         # ASCII Art
         ascii_art = make_ascii_art()
-        ascii_panel = rpanel.Panel(
-            ralign.Align.center(rtext.Text(ascii_art, style="bold blue")),
-            box=rbox.DOUBLE,
-            padding=(1, 2),
-        )
+        ascii_panel = rpanel.Panel(ralign.Align.center(rtext.Text(ascii_art, style="bold blue")),
+                                   box=rbox.DOUBLE,
+                                   padding=(1, 2))
         self.console.print(ascii_panel)
         self.console.print()
 
         # Experiment Information
-        exp_info = make_experiment_info_table(
-            self.context.get("experiment_id", "N/A"),
-            self.context.get("experiment_name", "N/A"),
-            self.context.get("timestamp", "N/A"),
-        )
-        exp_panel = rpanel.Panel(
-            exp_info,
-            title="[bold cyan]Experiment Information[/bold cyan]",
-            box=rbox.ROUNDED,
-            padding=(1, 2),
-        )
+        exp_info = make_experiment_info_table(self.context.get("experiment_id", "N/A"),
+                                              self.context.get("experiment_name", "N/A"),
+                                              self.context.get("timestamp", "N/A"))
+        exp_panel = rpanel.Panel(exp_info,
+                                 title="[bold cyan]Experiment Information[/bold cyan]",
+                                 box=rbox.ROUNDED,
+                                 padding=(1, 2))
         self.console.print(exp_panel)
         self.console.print()
 
         # Environment Information
         env_table = make_env_table(start_log["env"])
-        env_panel = rpanel.Panel(
-            env_table,
-            title="[bold cyan]Environment Information[/bold cyan]",
-            box=rbox.ROUNDED,
-            padding=(1, 2),
-        )
+        env_panel = rpanel.Panel(env_table,
+                                 title="[bold cyan]Environment Information[/bold cyan]",
+                                 box=rbox.ROUNDED,
+                                 padding=(1, 2))
         self.console.print(env_panel)
         self.console.print()
 
         # Dataset Information
         dataset_table = make_dataset_table(start_log["dataset"])
-        dataset_panel = rpanel.Panel(
-            dataset_table,
-            title="[bold cyan]Dataset Information[/bold cyan]",
-            box=rbox.ROUNDED,
-            padding=(1, 2),
-        )
+        dataset_panel = rpanel.Panel(dataset_table,
+                                     title="[bold cyan]Dataset Information[/bold cyan]",
+                                     box=rbox.ROUNDED,
+                                     padding=(1, 2))
         self.console.print(dataset_panel)
         self.console.print()
 
         # Configuration Information
         config_table = make_config_table(start_log["config"])
-        config_panel = rpanel.Panel(
-            config_table,
-            title="[bold cyan]Configuration[/bold cyan]",
-            box=rbox.ROUNDED,
-            padding=(1, 2),
-        )
+        config_panel = rpanel.Panel(config_table,
+                                    title="[bold cyan]Configuration[/bold cyan]",
+                                    box=rbox.ROUNDED,
+                                    padding=(1, 2))
         self.console.print(config_panel)
         self.console.print()
 
         # Model Architecture (if layers are provided)
         if start_log["model_summary"]["layers"]:
             layers_table = make_layers_table(start_log["model_summary"]["layers"])
-            layers_panel = rpanel.Panel(
-                layers_table,
-                title="[bold cyan]Model Architecture[/bold cyan]",
-                box=rbox.ROUNDED,
-                padding=(1, 2),
-            )
+            layers_panel = rpanel.Panel(layers_table,
+                                        title="[bold cyan]Model Architecture[/bold cyan]",
+                                        box=rbox.ROUNDED,
+                                        padding=(1, 2))
             self.console.print(layers_panel)
             self.console.print()
 
         # Model Summary
         model_table = make_model_summary_table(start_log["model_summary"])
-        model_panel = rpanel.Panel(
-            model_table,
-            title="[bold cyan]Model Summary[/bold cyan]",
-            box=rbox.ROUNDED,
-            padding=(1, 2),
-        )
+        model_panel = rpanel.Panel(model_table,
+                                   title="[bold cyan]Model Summary[/bold cyan]",
+                                   box=rbox.ROUNDED,
+                                   padding=(1, 2))
         self.console.print(model_panel)
         self.console.print()
 
@@ -352,14 +325,8 @@ class Display:
 
         # Display main metrics
         for metric_name in [
-                "loss",
-                "accuracy",
-                "precision",
-                "recall",
-                "f1_score",
-                "auc_roc",
-                "sensitivity",
-                "specificity",
+                "loss", "accuracy", "precision", "recall", "f1_score", "auc_roc", "sensitivity",
+                "specificity"
         ]:
             train_val = train_metrics.get(metric_name)  # type: ignore
             val_val = val_metrics.get(metric_name)  # type: ignore
@@ -379,11 +346,7 @@ class Display:
                         indicator = " ⬆️"  # Higher is better for other metrics
 
                 metrics_table.add_row(
-                    metric_name.replace("_", " ").title(),
-                    train_str,
-                    val_str + indicator,
-                    best_str,
-                )
+                    metric_name.replace("_", " ").title(), train_str, val_str + indicator, best_str)
 
         # Display extra metrics if available
         train_extras = (train_metrics.get("extras", {}) if "extras" in train_metrics else {})
@@ -444,12 +407,10 @@ class Display:
 
         # Final Results
         results_table = make_final_metrics_table(end_log)
-        results_panel = rpanel.Panel(
-            results_table,
-            title="[bold cyan]Experiment Results[/bold cyan]",
-            box=rbox.ROUNDED,
-            padding=(1, 2),
-        )
+        results_panel = rpanel.Panel(results_table,
+                                     title="[bold cyan]Experiment Results[/bold cyan]",
+                                     box=rbox.ROUNDED,
+                                     padding=(1, 2))
         self.console.print(results_panel)
         self.console.print()
 
@@ -460,28 +421,23 @@ class Display:
         time_table.add_column("Value", style="white")
         time_table.add_row("Total Execution Time", f"{execution_time:.2f} seconds")
 
-        time_panel = rpanel.Panel(
-            time_table,
-            title="[bold cyan]Execution Summary[/bold cyan]",
-            box=rbox.ROUNDED,
-            padding=(1, 2),
-        )
+        time_panel = rpanel.Panel(time_table,
+                                  title="[bold cyan]Execution Summary[/bold cyan]",
+                                  box=rbox.ROUNDED,
+                                  padding=(1, 2))
         self.console.print(time_panel)
 
         # Final ASCII art (smaller)
         try:
             final_art = pyfiglet.figlet_format("Complete!", font="small")
-            final_panel = rpanel.Panel(
-                ralign.Align.center(rtext.Text(final_art, style="bold green")),
-                box=rbox.SIMPLE,
-                padding=(0, 1),
-            )
+            final_panel = rpanel.Panel(ralign.Align.center(rtext.Text(final_art,
+                                                                      style="bold green")),
+                                       box=rbox.SIMPLE,
+                                       padding=(0, 1))
             self.console.print(final_panel)
         except:
-            self.console.print(
-                rtext.Text("✨ Experiment Complete! ✨", style="bold green"),
-                justify="center",
-            )
+            self.console.print(rtext.Text("✨ Experiment Complete! ✨", style="bold green"),
+                               justify="center")
 
     @staticmethod
     def clear() -> None:

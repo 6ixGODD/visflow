@@ -18,14 +18,12 @@ plt.rcParams["ytick.labelsize"] = 12
 plt.rcParams["legend.fontsize"] = 12
 
 
-def plot_training_curves(
-    train_loss_history: t.List[float],
-    val_loss_history: t.List[float],
-    train_acc_history: t.List[float],
-    val_acc_history: t.List[float],
-    save_path: p.Path | None = None,
-    show: bool = True,
-) -> None:
+def plot_training_curves(train_loss_history: t.List[float],
+                         val_loss_history: t.List[float],
+                         train_acc_history: t.List[float],
+                         val_acc_history: t.List[float],
+                         save_path: p.Path | None = None,
+                         show: bool = True) -> None:
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(15, 5))
 
     # Plot loss curves
@@ -58,14 +56,12 @@ def plot_training_curves(
         plt.close()
 
 
-def plot_roc_curve(
-    y_true: torch.Tensor,
-    y_pred_probs: torch.Tensor,
-    num_classes: int,
-    class_names: t.List[str] | None = None,
-    save_path: p.Path | None = None,
-    show: bool = True,
-) -> t.Dict[str, float]:
+def plot_roc_curve(y_true: torch.Tensor,
+                   y_pred_probs: torch.Tensor,
+                   num_classes: int,
+                   class_names: t.List[str] | None = None,
+                   save_path: p.Path | None = None,
+                   show: bool = True) -> t.Dict[str, float]:
     # Convert to numpy
     y_true_np = y_true.cpu().numpy()
     y_pred_probs_np = y_pred_probs.cpu().numpy()
@@ -159,13 +155,11 @@ def plot_roc_curve(
     return auc_scores
 
 
-def plot_combined_roc_curves(
-    checkpoint_results: t.Dict[str, t.Tuple[torch.Tensor, torch.Tensor]],
-    num_classes: int,
-    class_names: t.List[str] | None = None,
-    save_path: p.Path | None = None,
-    show: bool = True,
-) -> t.Dict[str, t.Dict[str, float]]:
+def plot_combined_roc_curves(checkpoint_results: t.Dict[str, t.Tuple[torch.Tensor, torch.Tensor]],
+                             num_classes: int,
+                             class_names: t.List[str] | None = None,
+                             save_path: p.Path | None = None,
+                             show: bool = True) -> t.Dict[str, t.Dict[str, float]]:
     """
     Plot ROC curves for multiple checkpoints on the same figure.
 
@@ -279,13 +273,11 @@ def plot_combined_roc_curves(
     return all_auc_scores
 
 
-def plot_confusion_matrix(
-    confusion_matrix: np.ndarray,
-    class_names: t.List[str] | None = None,
-    normalize: bool = False,
-    save_path: p.Path | None = None,
-    show: bool = True,
-) -> None:
+def plot_confusion_matrix(confusion_matrix: np.ndarray,
+                          class_names: t.List[str] | None = None,
+                          normalize: bool = False,
+                          save_path: p.Path | None = None,
+                          show: bool = True) -> None:
     if normalize:
         confusion_matrix = (confusion_matrix.astype("float") /
                             confusion_matrix.sum(axis=1)[:, np.newaxis])
@@ -302,15 +294,13 @@ def plot_confusion_matrix(
     if class_names is None:
         class_names = [f"Class {i}" for i in range(confusion_matrix.shape[0])]
 
-    ax.set(
-        xticks=np.arange(confusion_matrix.shape[1]),
-        yticks=np.arange(confusion_matrix.shape[0]),
-        xticklabels=class_names,
-        yticklabels=class_names,
-        title=title,
-        ylabel="True Label",
-        xlabel="Predicted Label",
-    )
+    ax.set(xticks=np.arange(confusion_matrix.shape[1]),
+           yticks=np.arange(confusion_matrix.shape[0]),
+           xticklabels=class_names,
+           yticklabels=class_names,
+           title=title,
+           ylabel="True Label",
+           xlabel="Predicted Label")
 
     # Rotate the tick labels and set their alignment
     plt.setp(ax.get_xticklabels(), rotation=45, ha="right", rotation_mode="anchor")
@@ -319,14 +309,12 @@ def plot_confusion_matrix(
     thresh = confusion_matrix.max() / 2.0
     for i in range(confusion_matrix.shape[0]):
         for j in range(confusion_matrix.shape[1]):
-            ax.text(
-                j,
-                i,
-                format(confusion_matrix[i, j], fmt),
-                ha="center",
-                va="center",
-                color="white" if confusion_matrix[i, j] > thresh else "black",
-            )
+            ax.text(j,
+                    i,
+                    format(confusion_matrix[i, j], fmt),
+                    ha="center",
+                    va="center",
+                    color="white" if confusion_matrix[i, j] > thresh else "black")
 
     plt.tight_layout()
 

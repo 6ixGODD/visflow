@@ -96,7 +96,9 @@ class TrainingConfig(pydt.BaseModel):
     )
 
     early_stopping_target: t.Literal["loss", "accuracy", "f1", "precision", "recall"] = pydt.Field(
-        default="loss", description="Metric to monitor for early stopping.")
+        default="loss",
+        description="Metric to monitor for early stopping.",
+    )
 
     label_smoothing: float = pydt.Field(
         default=0.1,

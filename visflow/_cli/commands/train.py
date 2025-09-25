@@ -88,31 +88,23 @@ class Args(BaseArgs):
 
     @classmethod
     def add_args(cls, parser: argparse.ArgumentParser) -> None:
-        parser.add_argument(
-            "--config",
-            "-c",
-            type=str,
-            default=None,
-            help="Path to the training configuration file (YAML format). ("
-            "default: %(default)s)",
-        )
-        parser.add_argument(
-            "--verbose",
-            "-v",
-            action="store_true",
-            help="Enable verbose output. (default: %(default)s)",
-        )
-        parser.add_argument(
-            "overrides",
-            nargs="*",
-            help="Configuration overrides in format: key value key value ...",
-        )
+        parser.add_argument("--config",
+                            "-c",
+                            type=str,
+                            default=None,
+                            help="Path to the training configuration file (YAML format). ("
+                            "default: %(default)s)")
+        parser.add_argument("--verbose",
+                            "-v",
+                            action="store_true",
+                            help="Enable verbose output. (default: %(default)s)")
+        parser.add_argument("overrides",
+                            nargs="*",
+                            help="Configuration overrides in format: key value key value ...")
 
 
 def register(subparser: _SubParsersAction[argparse.ArgumentParser]) -> None:
-    parser = subparser.add_parser(
-        "train",
-        help="Train a model using the specified configuration file.",
-    )
+    parser = subparser.add_parser("train",
+                                  help="Train a model using the specified configuration file.")
     Args.add_args(parser)
     parser.set_defaults(func=Args.func)
