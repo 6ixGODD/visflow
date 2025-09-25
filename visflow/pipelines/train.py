@@ -42,6 +42,34 @@ from visflow.utils.functional import mixup
 
 
 class TrainPipeline(BasePipeline):
+    """Training pipeline for image classification models.
+
+    Handles the complete training workflow including data loading, model training,
+    validation, testing, and result visualization.
+
+    Args:
+        config: Training configuration containing all hyperparameters and settings.
+
+    Attributes:
+        config: Training configuration object.
+        logger: Logger instance for experiment tracking.
+        device: PyTorch device for model computation.
+        datamodule: Data module for handling datasets and loaders.
+        best_acc: Best validation accuracy achieved during training.
+        train_loss_history: List of training losses per epoch.
+        train_acc_history: List of training accuracies per epoch.
+        val_loss_history: List of validation losses per epoch.
+        val_acc_history: List of validation accuracies per epoch.
+        best_epoch: Epoch number with best validation performance.
+        best_metrics: Metrics from the best validation epoch.
+        final_metrics: Metrics from the final epoch.
+        start_time: Training start timestamp.
+        best_val_outputs: Model outputs from best validation epoch.
+        best_val_targets: Target labels from best validation epoch.
+        final_val_outputs: Model outputs from final epoch.
+        final_val_targets: Target labels from final epoch.
+    """
+
     __slots__ = BasePipeline.__slots__ + (
         "config", "logger", "device", "datamodule", "best_acc", "train_loss_history",
         "train_acc_history", "val_loss_history", "val_acc_history", "best_epoch", "best_metrics",
@@ -72,6 +100,11 @@ class TrainPipeline(BasePipeline):
         self.final_val_targets = None  # type: torch.Tensor | None
 
     def __call__(self) -> None:
+        """Execute the complete training pipeline.
+
+        Performs experiment setup, data preparation, model initialization,
+        training loop execution, testing, and result generation.
+        """
         self.start_time = time.time()
 
         # Setup experiment -----------------------------------------------------
@@ -329,6 +362,19 @@ class TrainPipeline(BasePipeline):
     def train(self, model: BaseClassifier, train_loader: torch.utils.data.DataLoader[torch.Tensor],
               epoch: int, optimizer: torch.optim.Optimizer, criterion: nn.Module,
               logger: _LoggerContext) -> t.Tuple[float, float]:
+        """Execute one training epoch.
+
+        Args:
+            model: Model to train.
+            train_loader: Training data loader.
+            epoch: Current epoch number.
+            optimizer: Optimizer for parameter updates.
+            criterion: Loss function.
+            logger: Logger context for batch logging.
+
+        Returns:
+            Tuple of (epoch_loss, epoch_accuracy).
+        """
         model.train()
         running_loss = 0.0
         running_corrects = 0
@@ -440,6 +486,16 @@ class TrainPipeline(BasePipeline):
 
     def val(self, model: BaseClassifier, val_loader: torch.utils.data.DataLoader[torch.Tensor],
             criterion: nn.Module) -> t.Tuple[float, Metrics, torch.Tensor, torch.Tensor]:
+        """Execute validation on validation dataset.
+
+        Args:
+            model: Model to validate.
+            val_loader: Validation data loader.
+            criterion: Loss function.
+
+        Returns:
+            Tuple of (validation_loss, metrics, outputs, targets).
+        """
         model.eval()
         val_loss = 0.0
         total_samples = 0
@@ -469,7 +525,16 @@ class TrainPipeline(BasePipeline):
 
     def test(self, model: BaseClassifier, test_loader: torch.utils.data.DataLoader[torch.Tensor],
              criterion: nn.Module) -> t.Tuple[Metrics, torch.Tensor, torch.Tensor]:
-        """Test the model and return metrics, outputs, and targets."""
+        """Test the model and return metrics, outputs, and targets.
+
+        Args:
+            model: Model to test.
+            test_loader: Test data loader.
+            criterion: Loss function.
+
+        Returns:
+            Tuple of (test_metrics, outputs, targets).
+        """
         spinner.start("Evaluating on test set...")
         model.eval()
         test_loss = 0.0
@@ -498,7 +563,16 @@ class TrainPipeline(BasePipeline):
     def plots(self, logger: _LoggerContext, exp_dir: p.Path, class_names: t.List[str],
               test_outputs: torch.Tensor, test_targets: torch.Tensor,
               test_metrics: Metrics) -> None:
-        """Generate and save all plots."""
+        """Generate and save all plots including training curves and ROC curves.
+
+        Args:
+            logger: Logger context.
+            exp_dir: Experiment directory path.
+            class_names: List of class names for plotting.
+            test_outputs: Test model outputs.
+            test_targets: Test target labels.
+            test_metrics: Test metrics for plotting.
+        """
         plots_dir = exp_dir / "plots"
         plots_dir.mkdir(exist_ok=True)
 
@@ -599,7 +673,21 @@ class TrainPipeline(BasePipeline):
              optimizer: torch.optim.Optimizer,
              scheduler: torch.optim.lr_scheduler.LRScheduler | None, accuracy: float,
              mode: t.Literal["best", "final", "frequent"]) -> None:
-        """Save model checkpoint."""
+        """Save model checkpoint.
+
+        Args:
+            logger: Logger context.
+            exp_dir: Experiment directory path.
+            epoch: Current epoch number.
+            model: Model to save.
+            optimizer: Optimizer state to save.
+            scheduler: Scheduler state to save (if exists).
+            accuracy: Current accuracy for checkpoint naming.
+            mode: Checkpoint type - "best", "final", or "frequent".
+
+        Raises:
+            ValueError: If save mode is not supported.
+        """
         ckpt_dir = exp_dir / "checkpoints"
         ckpt_dir.mkdir(exist_ok=True)
         if mode == "best":
@@ -629,8 +717,13 @@ class TrainPipeline(BasePipeline):
 
     def save_comprehensive_metrics(self, logger: _LoggerContext, exp_dir: p.Path,
                                    test_metrics: Metrics) -> None:
-        """Save comprehensive metrics including test, best validation,
-        and final validation."""
+        """Save comprehensive metrics including test, best validation, and final validation.
+
+        Args:
+            logger: Logger context.
+            exp_dir: Experiment directory path.
+            test_metrics: Test metrics to save.
+        """
         metric_dir = exp_dir / "metrics"
         metric_dir.mkdir(exist_ok=True)
 

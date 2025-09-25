@@ -24,6 +24,14 @@ logger = logging.getLogger(__name__)
 
 
 class BaseClassifier(nn.Module, abc.ABC):
+    """Abstract base class for all classification models.
+
+    This class provides a common interface for classification models with methods for loading
+    checkpoints and accessing model properties.
+
+    Args:
+        num_classes: Number of output classes for classification.
+    """
 
     def __init__(self, num_classes: int) -> None:
         super().__init__()
@@ -39,31 +47,53 @@ class BaseClassifier(nn.Module, abc.ABC):
 
     @abc.abstractmethod
     def forward(self, x: torch.Tensor) -> torch.Tensor:
+        """Forward pass through the model.
+
+        Args:
+            x: Input tensor.
+
+        Returns:
+            Output tensor with predictions.
+        """
         ...
 
-    def load(
-        self,
-        ckpt: Checkpoint,
-        *,
-        strict: bool = True,
-    ) -> None:
+    def load(self, ckpt: Checkpoint, *, strict: bool = True) -> None:
+        """Load model state from checkpoint dictionary.
+
+        Args:
+            ckpt: Checkpoint dictionary containing model state and metadata.
+            strict: Whether to strictly enforce state dict key matching.
+        """
         classes = ckpt.get("classes", [])
         self.num_classes = len(classes) or self.num_classes
         self.load_state_dict(ckpt["model_state_dict"], strict=strict)
 
-    def loads(
-        self,
-        ckpt_path: str | os.PathLike[str],
-        *,
-        strict: bool = True,
-        map_location: str | torch.device | None = None,
-    ) -> None:
+    def loads(self,
+              ckpt_path: str | os.PathLike[str],
+              *,
+              strict: bool = True,
+              map_location: str | torch.device | None = None) -> None:
+        """Load model state from checkpoint file.
+
+        Args:
+            ckpt_path: Path to the checkpoint file.
+            strict: Whether to strictly enforce state dict key matching.
+            map_location: Device location for loading tensors.
+        """
         path = p.Path(ckpt_path)
         ckpt: Checkpoint = torch.load(path, map_location=map_location or "cpu")
         self.load(ckpt, strict=strict)
 
     @property
     def gradcam_layer(self) -> nn.Module:
+        """Get the layer for GradCAM visualization.
+
+        Returns:
+            The target layer for GradCAM.
+
+        Raises:
+            NotImplementedError: If not implemented by subclass.
+        """
         raise NotImplementedError(f"{self.__class__.__name__} does not implement gradcam_layer "
                                   f"method.")
 
@@ -74,6 +104,17 @@ _C = t.TypeVar("_C", bound=BaseClassifier)
 
 
 def register_model(name: str) -> t.Callable[[t.Type[_C]], t.Type[_C]]:
+    """Decorator to register a model class in the global registry.
+
+    Args:
+        name: Name to register the model under.
+
+    Returns:
+        Decorator function that registers the model class.
+
+    Raises:
+        TypeError: If the decorated class doesn't inherit from BaseClassifier.
+    """
 
     def decorator(cls: t.Type[_C]) -> t.Type[_C]:
         global MODEL_REGISTRY
@@ -86,17 +127,31 @@ def register_model(name: str) -> t.Callable[[t.Type[_C]], t.Type[_C]]:
 
 
 class TorchVisionClassifier(BaseClassifier):
+    """Wrapper for torchvision models with unified interface.
 
-    def __init__(
-        self,
-        *,
-        model_name: str,
-        num_classes: int,
-        pretrained: bool = True,
-        weights_path: str | os.PathLike[str] | None = None,
-        map_location: str | torch.device | None = None,
-        **kwargs: t.Any,
-    ) -> None:
+    This class wraps torchvision models and provides automatic head replacement
+    for different number of classes, along with GradCAM layer identification.
+
+    Args:
+        model_name: Name of the torchvision model.
+        num_classes: Number of output classes.
+        pretrained: Whether to use pretrained weights.
+        weights_path: Path to custom weights file.
+        map_location: Device location for loading weights.
+        **kwargs: Additional arguments for model creation.
+
+    Raises:
+        ValueError: If model_name is not found in torchvision.models or not callable.
+    """
+
+    def __init__(self,
+                 *,
+                 model_name: str,
+                 num_classes: int,
+                 pretrained: bool = True,
+                 weights_path: str | os.PathLike[str] | None = None,
+                 map_location: str | torch.device | None = None,
+                 **kwargs: t.Any) -> None:
         super().__init__(num_classes=num_classes)
         if not hasattr(models, model_name):
             raise ValueError(f"'{model_name}' not found in torchvision.models. ")
@@ -140,11 +195,11 @@ class TorchVisionClassifier(BaseClassifier):
             m.fc = nn.Linear(num_features, num_classes)
 
         elif isinstance(m, models.AlexNet):
-            num_features = m.classifier[6].in_features
+            num_features = m.classifier[6].in_features  # type: ignore[attr-defined]
             m.classifier[6] = nn.Linear(num_features, num_classes)
 
         elif isinstance(m, models.VGG):
-            num_features = m.classifier[6].in_features
+            num_features = m.classifier[6].in_features  # type: ignore[attr-defined]
             m.classifier[6] = nn.Linear(num_features, num_classes)
 
         elif isinstance(m, models.SqueezeNet):
@@ -160,19 +215,19 @@ class TorchVisionClassifier(BaseClassifier):
             m.fc = nn.Linear(num_features, num_classes)
 
         elif isinstance(m, models.MobileNetV2):
-            num_features = m.classifier[1].in_features
+            num_features = m.classifier[1].in_features  # type: ignore[attr-defined]
             m.classifier[1] = nn.Linear(num_features, num_classes)
 
         elif isinstance(m, models.MobileNetV3):
-            num_features = m.classifier[3].in_features
+            num_features = m.classifier[3].in_features  # type: ignore[attr-defined]
             m.classifier[3] = nn.Linear(num_features, num_classes)
 
         elif isinstance(m, models.EfficientNet):
-            num_features = m.classifier[1].in_features
+            num_features = m.classifier[1].in_features  # type: ignore[attr-defined]
             m.classifier[1] = nn.Linear(num_features, num_classes)
 
         elif isinstance(m, models.ConvNeXt):
-            num_features = m.classifier[2].in_features
+            num_features = m.classifier[2].in_features  # type: ignore[attr-defined]
             m.classifier[2] = nn.Linear(num_features, num_classes)
 
         elif isinstance(m, models.GoogLeNet):
@@ -296,22 +351,33 @@ class TorchVisionClassifier(BaseClassifier):
                                       f"Please check the model architecture.")
 
 
-def make_model(
-    name: str,
-    *,
-    num_classes: int,
-    pretrained: bool = True,
-    weights_path: str | os.PathLike[str] | None = None,
-    **kwargs: t.Any,
-) -> BaseClassifier:
+def make_model(name: str,
+               *,
+               num_classes: int,
+               pretrained: bool = True,
+               weights_path: str | os.PathLike[str] | None = None,
+               **kwargs: t.Any) -> BaseClassifier:
+    """Create a model instance by name.
+
+    Args:
+        name: Model name (torchvision model or registered custom model).
+        num_classes: Number of output classes.
+        pretrained: Whether to use pretrained weights (for torchvision models).
+        weights_path: Path to custom weights file.
+        **kwargs: Additional arguments for model creation.
+
+    Returns:
+        Initialized model instance.
+
+    Raises:
+        ValueError: If the model name is not recognized.
+    """
     if hasattr(models, name):  # torchvision
-        return TorchVisionClassifier(
-            model_name=name,
-            num_classes=num_classes,
-            pretrained=pretrained,
-            weights_path=weights_path,
-            **kwargs,
-        )
+        return TorchVisionClassifier(model_name=name,
+                                     num_classes=num_classes,
+                                     pretrained=pretrained,
+                                     weights_path=weights_path,
+                                     **kwargs)
 
     if name in MODEL_REGISTRY:
         model = MODEL_REGISTRY[name](num_classes=num_classes, **kwargs)
@@ -322,13 +388,26 @@ def make_model(
     raise ValueError(f"Unknown model: {name}")
 
 
-def load_model(
-    ckpt_path: str | os.PathLike[str],
-    *,
-    map_location: str | torch.device | None = None,
-    strict: bool = True,
-    **kwargs: t.Any,
-) -> BaseClassifier:
+def load_model(ckpt_path: str | os.PathLike[str],
+               *,
+               map_location: str | torch.device | None = None,
+               strict: bool = True,
+               **kwargs: t.Any) -> BaseClassifier:
+    """Load a model from checkpoint file.
+
+    Args:
+        ckpt_path: Path to the checkpoint file.
+        map_location: Device location for loading tensors.
+        strict: Whether to strictly enforce state dict key matching.
+        **kwargs: Additional arguments for model creation.
+
+    Returns:
+        Loaded model instance.
+
+    Raises:
+        FileNotFoundError: If checkpoint file doesn't exist.
+        ValueError: If checkpoint doesn't contain required model information.
+    """
     path = p.Path(ckpt_path)
     if not path.exists():
         raise FileNotFoundError(f"Checkpoint not found: {path}")
@@ -342,6 +421,19 @@ def load_model_from_ckpt(ckpt: Checkpoint,
                          *,
                          strict: bool = True,
                          **kwargs: t.Any) -> BaseClassifier:
+    """Load a model from checkpoint dictionary.
+
+    Args:
+        ckpt: Checkpoint dictionary containing model state and metadata.
+        strict: Whether to strictly enforce state dict key matching.
+        **kwargs: Additional arguments for model creation.
+
+    Returns:
+        Loaded model instance.
+
+    Raises:
+        ValueError: If checkpoint doesn't contain required model architecture information.
+    """
     model_name = ckpt.get("config", {}).get("model", {}).get("architecture", "")
     if not model_name:
         raise ValueError("Checkpoint does not contain 'model_name'.")
@@ -352,6 +444,7 @@ def load_model_from_ckpt(ckpt: Checkpoint,
     return model
 
 
+# Dynamically import all modules in the current package
 _package_dir = p.Path(__file__).parent
 for _, module_name, ispkg in pkgutil.iter_modules([str(_package_dir)]):
     if not ispkg and module_name not in {"__init__", "base"}:

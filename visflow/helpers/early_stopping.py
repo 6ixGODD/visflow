@@ -4,21 +4,20 @@ import typing as t
 
 
 class EarlyStopping:
+    """Early stopping utility for training loops.
+
+    Args:
+        patience: Number of epochs to wait before stopping
+        min_delta: Minimum change to qualify as an improvement
+        mode: One of "min" or "max". In "min" mode, training will stop when
+            the quantity monitored has stopped decreasing; in "max" mode
+            it will stop when the quantity has stopped increasing.
+    """
 
     def __init__(self,
                  patience: int = 7,
                  min_delta: float = 0.0,
                  mode: t.Literal["min", "max"] = "min") -> None:
-        """
-        Early stopping utility for training loops.
-
-        Args:
-            patience: Number of epochs to wait before stopping
-            min_delta: Minimum change to qualify as an improvement
-            mode: One of "min" or "max". In "min" mode, training will stop when
-                the quantity monitored has stopped decreasing; in "max" mode
-                it will stop when the quantity has stopped increasing.
-        """
         self.patience = patience
         self.min_delta = min_delta
         self.counter = 0
@@ -38,8 +37,7 @@ class EarlyStopping:
             self.is_better = lambda current, best: current > best + self.min_delta
 
     def step(self, score: float, /) -> bool:
-        """
-        Call this method after each epoch with the validation score.
+        """Call this method after each epoch with the validation score.
 
         Args:
             score: Current validation score (loss, accuracy, f1, etc.)
