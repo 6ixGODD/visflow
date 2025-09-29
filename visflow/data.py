@@ -13,7 +13,7 @@ from visflow.resources.config import TrainConfig
 from visflow.utils.functional import compute_class_weights
 
 
-class ImageDatamodule:
+class Datamodule:
 
     def __init__(self, config: TrainConfig):
         self.config = config

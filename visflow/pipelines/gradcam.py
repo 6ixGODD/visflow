@@ -7,7 +7,7 @@ import cv2
 import PIL.Image
 import torch
 
-from visflow.data import ImageDatamodule
+from visflow.data import Datamodule
 from visflow.helpers.gradcam import GraphCAM
 from visflow.pipelines import BasePipeline
 from visflow.resources.config import TrainConfig
@@ -155,7 +155,7 @@ class GradCAMPipeline(BasePipeline):
         model = load_model_from_ckpt(ckpt)
         gradcam = GraphCAM(model=model, device=self.device, target_layer=self.target_layer)
         train_config = TrainConfig.model_validate(config)
-        transform = ImageDatamodule(
+        transform = Datamodule(
             train_config).val_transforms  # Val transforms is fit for inference
 
         for idx, image_file in enumerate(self.image_files, 1):

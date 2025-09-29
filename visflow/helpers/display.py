@@ -346,7 +346,11 @@ class Display:
                         indicator = " ⬆️"  # Higher is better for other metrics
 
                 metrics_table.add_row(
-                    metric_name.replace("_", " ").title(), train_str, val_str + indicator, best_str)
+                    metric_name.replace("_", " ").title(),
+                    train_str,
+                    val_str + indicator,
+                    best_str,
+                )
 
         # Display extra metrics if available
         train_extras = (train_metrics.get("extras", {}) if "extras" in train_metrics else {})
@@ -369,7 +373,11 @@ class Display:
                 best_str = f"{best_extra:.4f}" if best_extra is not None else "N/A"
 
                 metrics_table.add_row(
-                    extra_metric.replace("_", " ").title(), train_str, val_str, best_str)
+                    extra_metric.replace("_", " ").title(),
+                    train_str,
+                    val_str,
+                    best_str,
+                )
 
         self.console.print(metrics_table)
 
@@ -436,8 +444,10 @@ class Display:
                                        padding=(0, 1))
             self.console.print(final_panel)
         except:
-            self.console.print(rtext.Text("✨ Experiment Complete! ✨", style="bold green"),
-                               justify="center")
+            self.console.print(
+                rtext.Text("✨ Experiment Complete! ✨", style="bold green"),
+                justify="center",
+            )
 
     @staticmethod
     def clear() -> None:

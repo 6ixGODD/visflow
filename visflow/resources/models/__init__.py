@@ -251,8 +251,8 @@ class TorchVisionClassifier(BaseClassifier):
             m.head = nn.Linear(num_features, num_classes)
 
         elif isinstance(m, models.MaxVit):
-            num_features = m.head.in_features
-            m.head = nn.Linear(num_features, num_classes)
+            num_features = m.classifier[-1].in_features  # type: ignore[attr-defined]
+            m.classifier[-1] = nn.Linear(num_features, num_classes, bias=False)
 
         else:
             raise NotImplementedError(f"Head replacement not implemented for {type(m).__name__}. ")

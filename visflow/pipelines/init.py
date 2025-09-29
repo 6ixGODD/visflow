@@ -17,6 +17,16 @@ class InitPipeline(BasePipeline):
 
     def __call__(self) -> None:
         spinner.start("Initializing project...")
+        if p.Path(".config.yml").exists():
+            spinner.fail(".config.yml already exists. Please run 'visflow init' in an empty "
+                         "folder.")
+            return
+        if (_p := p.Path("data")).exists():
+            if (_p / "train").exists() or (_p / "test").exists() or (_p / "val").exists():
+                spinner.fail("data/train, data/test, or data/val folder already exists. Please run "
+                             "'visflow init' in an empty folder.")
+                return
+
         aio.run(
             self.downloader.downloads(
                 DownloadTask(url=".config.example.yml",
@@ -35,7 +45,7 @@ class InitPipeline(BasePipeline):
                              save_to=(p.Path(""),),
                              method="GET",
                              save_url="data/val/README.md")))
-        spinner.succeed("Project initialized successfully. Please put your data in the "
-                        '"data" folder, then edit .config.yml to configure your project, '
-                        'then run "visflow train" to start training. Happy exploring!')
+        spinner.succeed("Project initialized successfully. Please put your data in the \"data\" "
+                        "folder, then edit .config.yml to configure your project, then run "
+                        "\"visflow train\" to start training. Happy exploring!")
         self._completed = True

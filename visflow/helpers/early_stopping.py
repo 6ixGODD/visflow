@@ -9,9 +9,9 @@ class EarlyStopping:
     Args:
         patience: Number of epochs to wait before stopping
         min_delta: Minimum change to qualify as an improvement
-        mode: One of "min" or "max". In "min" mode, training will stop when
-            the quantity monitored has stopped decreasing; in "max" mode
-            it will stop when the quantity has stopped increasing.
+        mode: One of "min" or "max". In "min" mode, training will stop when the quantity monitored
+            has stopped decreasing; in "max" mode it will stop when the quantity has stopped
+            increasing.
     """
 
     def __init__(self,

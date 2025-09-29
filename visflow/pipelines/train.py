@@ -16,7 +16,7 @@ from visflow.context import EpochLog
 from visflow.context import ExperimentEndLog
 from visflow.context import ExperimentStartLog
 from visflow.context import Metrics
-from visflow.data import ImageDatamodule
+from visflow.data import Datamodule
 from visflow.helpers.display import Display
 from visflow.helpers.early_stopping import EarlyStopping
 from visflow.helpers.functional import env_info
@@ -81,7 +81,7 @@ class TrainPipeline(BasePipeline):
         self.config = config
         self.logger = Logger(config.logging)
         self.device = torch.device(config.training.device)
-        self.datamodule = ImageDatamodule(config)
+        self.datamodule = Datamodule(config)
 
         self.best_acc = 0.0
         self.best_epoch = 1
@@ -107,16 +107,17 @@ class TrainPipeline(BasePipeline):
         """
         self.start_time = time.time()
 
-        # Setup experiment -----------------------------------------------------
+        # Setup experiment -------------------------------------------------------------------------
         spinner.start("Setting up experiment...")
-        seed(self.config.seed)
-        exp_id = gen_id(pref=self.config.output.experiment_name, without_hyphen=True)
+        seed(self.config.seed)  # setup random seed
+        exp_name = (self.config.output.experiment_name if self.config.output.experiment_name
+                    != "auto" else self.config.model.architecture)  # if auto, use model name
+        exp_id = gen_id(pref=exp_name, without_hyphen=True)  # generate unique experiment ID
 
         output_dir = p.Path(self.config.output.output_dir)
         output_dir.mkdir(parents=True, exist_ok=True)
-        exp_name = (self.config.output.experiment_name if self.config.output.experiment_name
-                    != "auto" else self.config.model.architecture)
-        exp_dir = incr_path(output_dir, exp_name)
+
+        exp_dir = incr_path(output_dir, exp_name)  # create unique experiment directory
 
         context = Context(experiment_id=exp_id,
                           experiment_name=exp_name,
@@ -128,12 +129,12 @@ class TrainPipeline(BasePipeline):
         env = env_info()
         spinner.succeed("Experiment setup completed.")
 
-        # Prepare data loaders -------------------------------------------------
+        # Prepare data loaders ---------------------------------------------------------------------
         spinner.start("Preparing data loaders...")
         train_loader, val_loader, test_loader = self.datamodule.loaders
         spinner.succeed("Data loaders ready.")
 
-        # Initialize model -----------------------------------------------------
+        # Initialize model -------------------------------------------------------------------------
         spinner.start("Initializing model...")
         model = make_model(name=self.config.model.architecture,
                            pretrained=self.config.model.pretrained,
@@ -148,12 +149,12 @@ class TrainPipeline(BasePipeline):
         model_summary = summary(model, (3, x, y))
         spinner.succeed("Model initialized.")
 
-        # Setup loss function and optimizer ------------------------------------
+        # Setup loss function and optimizer --------------------------------------------------------
         criterion = self._setup_criterion()
         optimizer = self._setup_optimizer(model)
         scheduler = self._setup_scheduler(optimizer)
 
-        # Log experiment start -------------------------------------------------
+        # Log experiment start ---------------------------------------------------------------------
         startlog = ExperimentStartLog(env=env,
                                       dataset=self.datamodule.info,
                                       config=self.config.to_dict(),
@@ -161,15 +162,15 @@ class TrainPipeline(BasePipeline):
         display.display_start(startlog)
         logger.info("Experiment started", **startlog)
 
-        # Training loop --------------------------------------------------------
+        # Training loop ----------------------------------------------------------------------------
         initial_lr = optimizer.param_groups[0]["lr"]
         checkpoint_freq = getattr(self.config.output, "checkpoint_frequency", 0)
 
         early_stopping = EarlyStopping(
             patience=self.config.training.early_stopping_patience,
             min_delta=self.config.training.early_stopping_min_delta,
-            mode=(  # type: ignore
-                "min" if self.config.training.early_stopping_target == "loss" else "max"))
+            mode="min" if self.config.training.early_stopping_target == "loss" else "max",
+        )
 
         val_acc = 0.0  # Initialize val_acc for first epoch
         epoch = 0  # cache epoch for saving final checkpoint
@@ -212,17 +213,15 @@ class TrainPipeline(BasePipeline):
             epoch_time = time.time() - epoch_start_time
 
             # Log epoch results
-            epoch_log = EpochLog(
-                epoch=epoch,
-                total_epochs=self.config.training.epochs,
-                train_metrics=Metrics(loss=train_loss, accuracy=train_acc),
-                val_metrics=val_metrics,
-                best_val_metrics=self.best_metrics,
-                best_epoch=self.best_epoch,
-                epoch_time_sec=epoch_time,
-                initial_lr=initial_lr,
-                final_lr=optimizer.param_groups[0]["lr"],
-            )
+            epoch_log = EpochLog(epoch=epoch,
+                                 total_epochs=self.config.training.epochs,
+                                 train_metrics=Metrics(loss=train_loss, accuracy=train_acc),
+                                 val_metrics=val_metrics,
+                                 best_val_metrics=self.best_metrics,
+                                 best_epoch=self.best_epoch,
+                                 epoch_time_sec=epoch_time,
+                                 initial_lr=initial_lr,
+                                 final_lr=optimizer.param_groups[0]["lr"])
 
             display.display_metrics(epoch_log)
             logger.info(
@@ -254,17 +253,17 @@ class TrainPipeline(BasePipeline):
         # Save final checkpoint
         self.save(logger, exp_dir, epoch, model, optimizer, scheduler, val_acc, "final")
 
-        # Test evaluation ------------------------------------------------------
+        # Test evaluation --------------------------------------------------------------------------
         test_metrics, test_outputs, test_targets = self.test(model, test_loader, criterion)
 
-        # Generate plots -------------------------------------------------------
+        # Generate plots ---------------------------------------------------------------------------
         class_names = self.datamodule.classes
         self.plots(logger, exp_dir, class_names, test_outputs, test_targets, test_metrics)
 
-        # Save comprehensive metrics -------------------------------------------
+        # Save comprehensive metrics ---------------------------------------------------------------
         self.save_comprehensive_metrics(logger, exp_dir, test_metrics)
 
-        # Final experiment log -------------------------------------------------
+        # Final experiment log ---------------------------------------------------------------------
         total_time = time.time() - self.start_time
         endlog = ExperimentEndLog(total_epochs=self.config.training.epochs,
                                   total_time_sec=total_time,
@@ -477,12 +476,15 @@ class TrainPipeline(BasePipeline):
             batch_time_sec=batch_time,
             forward_time_sec=0.0,  # Could be tracked separately if needed
             backward_time_sec=0.0,  # Could be tracked separately if needed
-            samples_per_sec=data.size(0) / batch_time)
+            samples_per_sec=data.size(0) / batch_time,
+        )
 
         logger.info(
             f"[Epoch {epoch}/{self.config.training.epochs}] "
             f"Batch {batch}/{len(train_loader)} - "
-            f"Loss: {loss.item():.4f}, Acc: {batch_acc:.4f}", **batch_log)
+            f"Loss: {loss.item():.4f}, Acc: {batch_acc:.4f}",
+            **batch_log,
+        )
 
     def val(self, model: BaseClassifier, val_loader: torch.utils.data.DataLoader[torch.Tensor],
             criterion: nn.Module) -> t.Tuple[float, Metrics, torch.Tensor, torch.Tensor]:
