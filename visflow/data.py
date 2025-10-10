@@ -3,13 +3,14 @@ from __future__ import annotations
 import typing as t
 
 import torch
-from torch.utils.data import DataLoader, WeightedRandomSampler
+from torch.utils.data import DataLoader
+from torch.utils.data import WeightedRandomSampler
 from torchvision import transforms
 from torchvision.datasets import ImageFolder
 from torchvision.transforms.functional import InterpolationMode
 
 from visflow.context import DatasetInfo
-from visflow.resources.config import TrainConfig
+from visflow.config import TrainConfig
 from visflow.utils.functional import compute_class_weights
 
 

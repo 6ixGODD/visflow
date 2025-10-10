@@ -3,7 +3,8 @@ from __future__ import annotations
 import asyncio as aio
 import pathlib as p
 
-from visflow.helpers.downloader import DownloadTask, HTTPDownloader
+from visflow.helpers.downloader import DownloadTask
+from visflow.helpers.downloader import HTTPDownloader
 from visflow.pipelines import BasePipeline
 from visflow.utils import spinner
 

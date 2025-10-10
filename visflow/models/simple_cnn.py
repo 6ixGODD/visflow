@@ -3,7 +3,8 @@ from __future__ import annotations
 import torch
 import torch.nn as nn
 
-from visflow.resources.models import BaseClassifier, register_model
+from visflow.models import BaseClassifier
+from visflow.models import register_model
 
 
 @register_model('simple_cnn')

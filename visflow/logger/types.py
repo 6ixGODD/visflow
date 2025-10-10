@@ -8,7 +8,7 @@ LogLevel: t.TypeAlias = t.Literal["debug", "info", "warning", "error", "critical
 
 
 class LoggingTarget:
-    __slots__: t.Collection[str] = ("logname", "loglevel")
+    __slots__ = ("logname", "loglevel")  # type: t.Collection[str]
 
     def __init__(self,
                  *,

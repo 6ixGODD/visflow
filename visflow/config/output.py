@@ -15,7 +15,7 @@ class OutputConfig(pydt.BaseModel):
         default="auto",
         min_length=1,
         description="Unique name for the experiment. Use 'auto' to generate a "
-        "name based on model achitecture.",
+        "name based on model architecture.",
     )
 
     checkpoint_frequency: int = pydt.Field(default=10,

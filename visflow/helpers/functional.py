@@ -13,7 +13,9 @@ import torch.nn as nn
 import torch.version
 import torchvision
 
-from visflow.context import EnvironmentInfo, LayerInfo, ModelSummary
+from visflow.context import EnvironmentInfo
+from visflow.context import LayerInfo
+from visflow.context import ModelSummary
 from visflow.types import CriterionFunc
 
 

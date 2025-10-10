@@ -8,8 +8,10 @@ import pathlib as p
 import sys
 import typing as t
 
-from visflow.resources.logger import BaseLogger, LoggerBackend
-from visflow.resources.logger.types import LoggingTarget, LogLevel
+from visflow.logger import BaseLogger
+from visflow.logger import LoggerBackend
+from visflow.logger.types import LoggingTarget
+from visflow.logger.types import LogLevel
 from visflow.utils import ansi
 
 _LEVEL_MAP: t.Dict[LogLevel, int] = {
@@ -144,7 +146,7 @@ class ContextFormatter(logging.Formatter):
                 # Should not happen with our calculation, but just in case
                 display = display[:20] if not self.use_colors else display
         else:
-            # Without TAG: use full 20 characters
+            # Without TAG: full 20 characters
             if len(name) > 20:
                 truncated_name = f"...{name[-17:]}"  # 20 - 3 = 17
             else:

@@ -27,12 +27,12 @@ from visflow.helpers.plotting import plot_confusion_matrix
 from visflow.helpers.plotting import plot_roc_curve
 from visflow.helpers.plotting import plot_training_curves
 from visflow.pipelines import BasePipeline
-from visflow.resources.config import TrainConfig
-from visflow.resources.logger import _LoggerContext
-from visflow.resources.logger import Logger
-from visflow.resources.logger.types import LoggingTarget
-from visflow.resources.models import BaseClassifier
-from visflow.resources.models import make_model
+from visflow.config import TrainConfig
+from visflow.logger import _LoggerContext
+from visflow.logger import Logger
+from visflow.logger.types import LoggingTarget
+from visflow.models import BaseClassifier
+from visflow.models import make_model
 from visflow.types import Checkpoint
 from visflow.utils import gen_id
 from visflow.utils import incr_path
@@ -60,12 +60,12 @@ class TrainPipeline(BasePipeline):
         train_acc_history: List of training accuracies per epoch.
         val_loss_history: List of validation losses per epoch.
         val_acc_history: List of validation accuracies per epoch.
-        best_epoch: Epoch number with best validation performance.
+        best_epoch: Epoch number with the best validation performance.
         best_metrics: Metrics from the best validation epoch.
         final_metrics: Metrics from the final epoch.
         start_time: Training start timestamp.
-        best_val_outputs: Model outputs from best validation epoch.
-        best_val_targets: Target labels from best validation epoch.
+        best_val_outputs: Model outputs from the best validation epoch.
+        best_val_targets: Target labels from the best validation epoch.
         final_val_outputs: Model outputs from final epoch.
         final_val_targets: Target labels from final epoch.
     """

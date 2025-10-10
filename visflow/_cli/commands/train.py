@@ -8,7 +8,7 @@ import typing as t
 
 from visflow._cli.args import BaseArgs
 from visflow.pipelines.train import TrainPipeline
-from visflow.resources.config import TrainConfig
+from visflow.config import TrainConfig
 from visflow.utils import spinner
 
 if t.TYPE_CHECKING:

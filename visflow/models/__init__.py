@@ -13,8 +13,10 @@ import torch.nn as nn
 import torchvision.models as models
 from torchvision.models.convnext import CNBlock
 from torchvision.models.densenet import _DenseLayer
-from torchvision.models.regnet import AnyStage, ResBottleneckBlock
-from torchvision.models.resnet import BasicBlock, Bottleneck
+from torchvision.models.regnet import AnyStage
+from torchvision.models.regnet import ResBottleneckBlock
+from torchvision.models.resnet import BasicBlock
+from torchvision.models.resnet import Bottleneck
 from torchvision.models.squeezenet import Fire
 from torchvision.ops import Conv2dNormActivation
 

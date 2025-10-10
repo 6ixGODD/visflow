@@ -6,15 +6,15 @@ import typing as t
 import pydantic as pydt
 import pydantic_settings as ps
 
-from visflow.resources.config.augmentation import AugmentationConfig
-from visflow.resources.config.data import DataConfig
-from visflow.resources.config.logging import LoggingConfig
-from visflow.resources.config.model import ModelConfig
-from visflow.resources.config.normalization import NormalizationConfig
-from visflow.resources.config.output import OutputConfig
-from visflow.resources.config.resize import ResizeConfig
-from visflow.resources.config.testing import TestingConfig
-from visflow.resources.config.training import TrainingConfig
+from visflow.config.augmentation import AugmentationConfig
+from visflow.config.data import DataConfig
+from visflow.config.logging import LoggingConfig
+from visflow.config.model import ModelConfig
+from visflow.config.normalization import NormalizationConfig
+from visflow.config.output import OutputConfig
+from visflow.config.resize import ResizeConfig
+from visflow.config.testing import TestingConfig
+from visflow.config.training import TrainingConfig
 from visflow.types import PathLikes
 
 

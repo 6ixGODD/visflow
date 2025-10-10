@@ -4,9 +4,9 @@ import typing as t
 
 import pydantic as pydt
 
-from visflow.resources.config.lr_scheduler.cosine import CosineConfig
-from visflow.resources.config.lr_scheduler.plateau import PlateauConfig
-from visflow.resources.config.lr_scheduler.step import StepConfig
+from visflow.config.lr_scheduler.cosine import CosineConfig
+from visflow.config.lr_scheduler.plateau import PlateauConfig
+from visflow.config.lr_scheduler.step import StepConfig
 
 
 class TrainingConfig(pydt.BaseModel):
@@ -66,13 +66,13 @@ class TrainingConfig(pydt.BaseModel):
     lr_scheduler: t.Literal["step", "cosine", "plateau"] | None = pydt.Field(
         default=None, description="Learning rate scheduling strategy.")
 
-    cosine_scheduler: CosineConfig | None = pydt.Field(
+    cosine_scheduler: t.Optional[CosineConfig] = pydt.Field(
         default=None, description="Configuration for cosine learning rate scheduler.")
 
-    step_scheduler: StepConfig | None = pydt.Field(
+    step_scheduler: t.Optional[StepConfig] = pydt.Field(
         default=None, description="Configuration for step learning rate scheduler.")
 
-    plateau_scheduler: PlateauConfig | None = pydt.Field(
+    plateau_scheduler: t.Optional[PlateauConfig] = pydt.Field(
         default=None, description="Configuration for plateau learning rate scheduler.")
 
     early_stopping: bool = pydt.Field(

@@ -5,9 +5,10 @@ import typing as t
 
 import matplotlib.pyplot as plt
 import numpy as np
-import torch
-from sklearn.metrics import auc, roc_curve
+from sklearn.metrics import auc
+from sklearn.metrics import roc_curve
 from sklearn.preprocessing import label_binarize
+import torch
 
 plt.rcParams["font.family"] = "Times New Roman"
 plt.rcParams["font.size"] = 12

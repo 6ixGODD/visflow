@@ -6,12 +6,13 @@ import typing as t
 import cv2
 import numpy as np
 import pytorch_grad_cam as gradcam
-import torch
-import torch.nn as nn
 from pytorch_grad_cam.utils.image import show_cam_on_image
 from pytorch_grad_cam.utils.model_targets import ClassifierOutputTarget
+import torch
+import torch.nn as nn
 
-from visflow.resources.models import BaseClassifier, TorchVisionClassifier
+from visflow.models import BaseClassifier
+from visflow.models import TorchVisionClassifier
 from visflow.types import PathLikes
 
 
