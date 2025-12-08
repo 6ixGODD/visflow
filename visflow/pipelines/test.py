@@ -2,35 +2,43 @@ from __future__ import annotations
 
 import pathlib as p
 import time
-import typing as t
 
-import numpy as np
 import pandas as pd
 import torch
-import torch.nn as nn
 from torch.utils.data import DataLoader
 
-from visflow.context import CheckpointTestLog, Context, Metrics, TestEndLog
+from visflow.config import TestConfig
+from visflow.config import TrainConfig
+from visflow.context import CheckpointTestLog
+from visflow.context import Context
+from visflow.context import Metrics
+from visflow.context import TestEndLog
 from visflow.data import Datamodule
-from visflow.helpers.display import Display
-from visflow.helpers.functional import env_info
-from visflow.helpers.metrics import compute_metric
-from visflow.helpers.plotting import (
-    plot_combined_roc_curves,
-    plot_confusion_matrix,
-)
+from visflow.helper.display import Display
+from visflow.helper.functional import env_info
+from visflow.helper.metrics import compute_metric
+from visflow.helper.plotting import plot_combined_roc_curves
+from visflow.logger import Logger
+from visflow.logger.types import LoggingTarget
+from visflow.models import BaseClassifier
 from visflow.pipelines import BasePipeline
-from visflow.resources.config import TestConfig, TrainConfig
-from visflow.resources.logger import Logger
-from visflow.resources.logger.types import LoggingTarget
-from visflow.resources.models import BaseClassifier, make_model
 from visflow.types import Checkpoint
-from visflow.utils import gen_id, incr_path, seed, spinner
+from visflow.utils import gen_id
+from visflow.utils import incr_path
+from visflow.utils import seed
+from visflow.utils import spinner
 
 
 class TestPipeline(BasePipeline):
-    __slots__ = BasePipeline.__slots__ + ("config", "logger", "device", "datamodule",
-                                          "checkpoint_results", "start_time")
+    __slots__ = (
+        *BasePipeline.__slots__,
+        "config",
+        "logger",
+        "device",
+        "datamodule",
+        "checkpoint_results",
+        "start_time",
+    )
 
     def __init__(self, config: TestConfig):
         self._completed = False
@@ -39,7 +47,7 @@ class TestPipeline(BasePipeline):
         self.device = torch.device(config.device)
 
         # Will be initialized from first checkpoint
-        self.checkpoint_results = []  # type: t.List[CheckpointTestLog]
+        self.checkpoint_results: list[CheckpointTestLog] = []
         self.start_time = 0.0
 
     def __call__(self) -> None:
@@ -55,28 +63,31 @@ class TestPipeline(BasePipeline):
 
         exp_dir = incr_path(output_dir, self.config.experiment_name)
 
-        context = Context(experiment_id=exp_id,
-                          experiment_name="test_comparison",
-                          timestamp=time.strftime("%Y%m%dT%H%M%S", time.localtime()))
-        display = Display(context)
-        self.logger.add_target(LoggingTarget(logname=exp_dir / ".log.json", loglevel="info"),)
+        context = Context(
+            experiment_id=exp_id,
+            experiment_name="test_comparison",
+            timestamp=time.strftime("%Y%m%dT%H%M%S", time.localtime()),
+        )
+        Display(context)
+        self.logger.add_target(LoggingTarget(logname=exp_dir / ".log.json", loglevel="info"))
         logger = self.logger.with_context(TAG="test", **context)
-        env = env_info()
+        env_info()
         spinner.succeed("Experiment setup completed.")
 
         # Store results for combined plotting
-        checkpoint_outputs: t.Dict[str, t.Tuple[torch.Tensor, torch.Tensor]] = {}
+        checkpoint_outputs: dict[str, tuple[torch.Tensor, torch.Tensor]] = {}
 
         # Test each checkpoint
         for i, checkpoint_path in enumerate(self.config.checkpoint_files):
-            spinner.start(f"Testing checkpoint {i + 1}/{len(self.config.checkpoint_files)}: "
-                          f"{p.Path(checkpoint_path).name}")
+            spinner.start(
+                f"Testing checkpoint {i + 1}/{len(self.config.checkpoint_files)}: "
+                f"{p.Path(checkpoint_path).name}"
+            )
             ckpt = self.load(checkpoint_path)
-            model: BaseClassifier = make_model(
 
             checkpoint_result = self.test_ckpt(
                 checkpoint_path=checkpoint_path,
-                test_loader=Datamodule(TrainConfig(**ckpt['config'])),
+                test_loader=Datamodule(TrainConfig(**ckpt["config"])),
                 logger=logger,
                 exp_dir=exp_dir,
             )
@@ -122,8 +133,9 @@ class TestPipeline(BasePipeline):
         checkpoint: Checkpoint = torch.load(ckpt_path, map_location=self.device)
         return checkpoint
 
-    def eval(self, model: BaseClassifier,
-             dataloader: DataLoader) -> t.Tuple[Metrics, torch.Tensor, torch.Tensor]:
+    def eval(
+        self, model: BaseClassifier, dataloader: DataLoader
+    ) -> tuple[Metrics, torch.Tensor, torch.Tensor]:
         """Evaluate model on dataloader."""
         model.eval()
         all_outputs = []
@@ -147,8 +159,9 @@ class TestPipeline(BasePipeline):
 
         return metrics, outputs_tensor, targets_tensor
 
-    def plots(self, exp_dir: p.Path,
-              checkpoint_outputs: t.Dict[str, t.Tuple[torch.Tensor, torch.Tensor]]) -> None:
+    def plots(
+        self, exp_dir: p.Path, checkpoint_outputs: dict[str, tuple[torch.Tensor, torch.Tensor]]
+    ) -> None:
         """Generate comparison plots for all checkpoints."""
         if not checkpoint_outputs:
             return
@@ -199,5 +212,6 @@ class TestPipeline(BasePipeline):
 
         # Save detailed results as JSON
         import json
-        with open(exp_dir / "detailed_results.json", "w") as f:
+
+        with (exp_dir / "detailed_results.json").open("w") as f:
             json.dump(self.checkpoint_results, f, indent=2, default=str)

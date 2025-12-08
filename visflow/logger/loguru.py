@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import contextlib
 import sys
 import typing as t
 
@@ -14,7 +15,7 @@ try:
 except ImportError:
     raise
 
-_LevelMapper: t.Dict[LogLevel, str] = {
+_LevelMapper: dict[LogLevel, str] = {
     "debug": "DEBUG",
     "info": "INFO",
     "warning": "WARNING",
@@ -25,14 +26,13 @@ _LevelMapper: t.Dict[LogLevel, str] = {
 
 @singleton
 class LoguruBackend(LoggerBackend):
-
     def __init__(self) -> None:
         self._loguru = _logger
         self._loguru.remove()
-        self._handler_ids: t.List[int] = []
+        self._handler_ids: list[int] = []
         self._is_setup = False
 
-    def setup_handlers(self, targets: t.List[LoggingTarget]) -> None:
+    def setup_handlers(self, targets: list[LoggingTarget]) -> None:
         if self._is_setup:
             return
 
@@ -81,18 +81,17 @@ class LoguruBackend(LoggerBackend):
 
     def close(self) -> None:
         for handler_id in self._handler_ids:
-            try:
-                self._loguru.remove(handler_id)
-            except ValueError:
-                pass  # Handler already removed
+            with contextlib.suppress(ValueError):
+                self._loguru.remove(handler_id)  # Handler already removed
         self._handler_ids.clear()
         self._is_setup = False
 
 
 class LoguruLogger(BaseLogger):
-
-    def __init__(self,
-                 targets: t.Sequence[LoggingTarget] | None = None,
-                 initial_ctx: t.Dict[str, t.Any] | None = None):
+    def __init__(
+        self,
+        targets: t.Sequence[LoggingTarget] | None = None,
+        initial_ctx: dict[str, t.Any] | None = None,
+    ):
         backend = LoguruBackend()
         super().__init__(backend, targets, initial_ctx)

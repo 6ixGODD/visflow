@@ -1,15 +1,18 @@
 from __future__ import annotations
 
+from types import NoneType
 import typing as t
 
 
 class FieldInfo:
     __slots__ = ("default", "default_factory", "required")
 
-    def __init__(self,
-                 default: t.Any | ellipsis = Ellipsis,
-                 default_factory: t.Callable[[], t.Any] | None = None,
-                 required: bool = True):
+    def __init__(
+        self,
+        default: t.Any | NoneType = Ellipsis,
+        default_factory: t.Callable[[], t.Any] | None = None,
+        required: bool = True,
+    ):
         self.default = default
         self.default_factory = default_factory
         self.required = required
@@ -23,9 +26,9 @@ class FieldInfo:
 class SlottedDataClass:
     __slots__ = ()  # type: t.Collection[str]
 
-    _field_defaults: t.ClassVar[t.Dict[str, t.Any]] = {}
-    _field_optional: t.ClassVar[t.Set[str]] = set()
-    _field_info: t.ClassVar[t.Dict[str, FieldInfo]]
+    _field_defaults: t.ClassVar[dict[str, t.Any]] = {}
+    _field_optional: t.ClassVar[set[str]] = set()
+    _field_info: t.ClassVar[dict[str, FieldInfo]]
     _all_fields: t.ClassVar[frozenset[str]]
 
     def __init_subclass__(cls, **kwargs: t.Any):
@@ -34,11 +37,11 @@ class SlottedDataClass:
         cls._all_fields = frozenset[str](name for name in cls.__slots__ if not name.startswith("_"))
 
     @classmethod
-    def _parse_field(cls) -> t.Dict[str, FieldInfo]:
+    def _parse_field(cls) -> dict[str, FieldInfo]:
         field_info = {}
         anns = getattr(cls, "__annotations__", {})
         defaults = getattr(cls, "_field_defaults", {})
-        optional: t.Set[str] = getattr(cls, "_field_optional", set())
+        optional: set[str] = getattr(cls, "_field_optional", set())
 
         for field_name in getattr(cls, "__slots__", []):
             if field_name.startswith("_"):
@@ -89,10 +92,10 @@ class SlottedDataClass:
         return False
 
     @classmethod
-    def from_dict(cls: t.Type[t.Self], data: t.Dict[str, t.Any]) -> t.Self:
+    def from_dict(cls: type[t.Self], data: dict[str, t.Any]) -> t.Self:
         return cls(**data)
 
-    def to_dict(self, recursive: bool = False) -> t.Dict[str, t.Any]:
+    def to_dict(self, recursive: bool = False) -> dict[str, t.Any]:
         if recursive:
             return self._to_dict_recursive()
 
@@ -102,7 +105,7 @@ class SlottedDataClass:
             if hasattr(self, field_name)
         }
 
-    def _to_dict_recursive(self) -> t.Dict[str, t.Any]:
+    def _to_dict_recursive(self) -> dict[str, t.Any]:
         result = {}
         for field_name in self._all_fields:
             if hasattr(self, field_name):
@@ -114,14 +117,13 @@ class SlottedDataClass:
     def _serialize_value(cls, value: t.Any) -> t.Any:
         if isinstance(value, SlottedDataClass):
             return value.to_dict(recursive=True)
-        elif isinstance(value, (list, tuple)):
+        if isinstance(value, (list, tuple)):
             return [cls._serialize_value(item) for item in value]
-        elif isinstance(value, dict):
+        if isinstance(value, dict):
             return {k: cls._serialize_value(v) for k, v in value.items()}
-        elif isinstance(value, set):
+        if isinstance(value, set):
             return [cls._serialize_value(item) for item in value]
-        else:
-            return value
+        return value
 
     def __repr__(self) -> str:
         parts = []

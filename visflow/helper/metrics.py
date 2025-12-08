@@ -8,10 +8,12 @@ import torch
 from visflow.context import Metrics
 
 
-def compute_metric(outputs: torch.Tensor,
-                   targets: torch.Tensor,
-                   loss: float | None = None,
-                   num_classes: int | None = None) -> Metrics:
+def compute_metric(
+    outputs: torch.Tensor,
+    targets: torch.Tensor,
+    loss: float | None = None,
+    num_classes: int | None = None,
+) -> Metrics:
     with torch.no_grad():
         # Get predictions
         _, preds = torch.max(outputs, 1)
@@ -27,10 +29,9 @@ def compute_metric(outputs: torch.Tensor,
         # Precision, Recall, F1
         if num_classes and num_classes > 2:
             # Multi-class
-            precision, recall, f1, _ = precision_recall_fscore_support(y_true,
-                                                                       y_pred,
-                                                                       average="weighted",
-                                                                       zero_division=0)
+            precision, recall, f1, _ = precision_recall_fscore_support(
+                y_true, y_pred, average="weighted", zero_division=0
+            )
             # AUC-ROC for multi-class (one-vs-rest)
             try:
                 auc_roc = roc_auc_score(y_true, y_prob, multi_class="ovr", average="weighted")
@@ -38,10 +39,9 @@ def compute_metric(outputs: torch.Tensor,
                 auc_roc = None
         else:
             # Binary classification
-            precision, recall, f1, _ = precision_recall_fscore_support(y_true,
-                                                                       y_pred,
-                                                                       average="binary",
-                                                                       zero_division=0)
+            precision, recall, f1, _ = precision_recall_fscore_support(
+                y_true, y_pred, average="binary", zero_division=0
+            )
             # AUC-ROC for binary
             try:
                 auc_roc = roc_auc_score(y_true, y_prob[:, 1] if y_prob.shape[1] > 1 else y_prob)
@@ -72,8 +72,8 @@ def compute_metric(outputs: torch.Tensor,
                 specificities.append(class_specificity)
 
             # Macro average
-            sensitivity = (sum(sensitivities) / len(sensitivities) if sensitivities else 0.0)
-            specificity = (sum(specificities) / len(specificities) if specificities else 0.0)
+            sensitivity = sum(sensitivities) / len(sensitivities) if sensitivities else 0.0
+            specificity = sum(specificities) / len(specificities) if specificities else 0.0
 
         else:
             # Binary classification
@@ -90,12 +90,14 @@ def compute_metric(outputs: torch.Tensor,
                 sensitivity = 0.0
                 specificity = 0.0
 
-        return Metrics(loss=loss,
-                       accuracy=accuracy,
-                       precision=precision,
-                       recall=recall,
-                       auc_roc=auc_roc,
-                       f1_score=f1,
-                       confusion_matrix=cm.tolist(),
-                       sensitivity=sensitivity,
-                       specificity=specificity)
+        return Metrics(
+            loss=loss,
+            accuracy=accuracy,
+            precision=precision,
+            recall=recall,
+            auc_roc=auc_roc,
+            f1_score=f1,
+            confusion_matrix=cm.tolist(),
+            sensitivity=sensitivity,
+            specificity=specificity,
+        )

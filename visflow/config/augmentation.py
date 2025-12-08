@@ -9,7 +9,7 @@ from visflow.types import PixelValue
 
 class CropConfig(pydt.BaseModel):
     enabled: bool = pydt.Field(default=False, description="Whether to apply random cropping.")
-    margin: int | t.Tuple[int, int] = pydt.Field(
+    margin: int | tuple[int, int] = pydt.Field(
         default=0,
         ge=0,
         description="Margin to be left on each border of the image before "
@@ -31,13 +31,13 @@ class CropConfig(pydt.BaseModel):
 
 
 class HorizontalFlipConfig(pydt.BaseModel):
-    enabled: bool = pydt.Field(default=False,
-                               description="Whether to apply random horizontal flip.")
+    enabled: bool = pydt.Field(
+        default=False, description="Whether to apply random horizontal flip."
+    )
 
-    p: float = pydt.Field(default=0.5,
-                          ge=0.0,
-                          le=1.0,
-                          description="Probability of applying horizontal flip.")
+    p: float = pydt.Field(
+        default=0.5, ge=0.0, le=1.0, description="Probability of applying horizontal flip."
+    )
 
 
 class RotationConfig(pydt.BaseModel):
@@ -46,7 +46,7 @@ class RotationConfig(pydt.BaseModel):
         description="Whether to apply random rotation.",
     )
 
-    degrees: float | t.Tuple[float, float] = pydt.Field(
+    degrees: float | tuple[float, float] = pydt.Field(
         default=15.0,
         description="Range of degrees to select from. If degrees is a number, "
         "the range will be (-degrees, +degrees).",
@@ -63,7 +63,7 @@ class RotationConfig(pydt.BaseModel):
         "hold the entire rotated image.",
     )
 
-    center: t.Tuple[float, float] | None = pydt.Field(
+    center: tuple[float, float] | None = pydt.Field(
         default=None,
         description="Optional center of rotation. Origin is the upper left corner.",
     )
@@ -75,52 +75,54 @@ class RotationConfig(pydt.BaseModel):
 
 
 class ColorJitterConfig(pydt.BaseModel):
-    enabled: bool = pydt.Field(default=False,
-                               description="Whether to apply random color jittering.")
+    enabled: bool = pydt.Field(
+        default=False, description="Whether to apply random color jittering."
+    )
 
-    brightness: float | t.Tuple[float, float] = pydt.Field(
+    brightness: float | tuple[float, float] = pydt.Field(
         default=0.2,
         description="How much to jitter brightness. brightness_factor is chosen uniformly "
         "from [max(0, 1 - brightness), 1 + brightness].",
     )
 
-    contrast: float | t.Tuple[float, float] = pydt.Field(
+    contrast: float | tuple[float, float] = pydt.Field(
         default=0.2,
         description="How much to jitter contrast. contrast_factor is chosen uniformly from "
         "[max(0, 1 - contrast), 1 + contrast].",
     )
 
-    saturation: float | t.Tuple[float, float] = pydt.Field(
+    saturation: float | tuple[float, float] = pydt.Field(
         default=0.2,
         description="How much to jitter saturation. saturation_factor is chosen uniformly from "
         "[max(0, 1 - saturation), 1 + saturation].",
     )
 
-    hue: float | t.Tuple[float, float] = pydt.Field(
+    hue: float | tuple[float, float] = pydt.Field(
         default=0.1,
-        description="How much to jitter hue. hue_factor is chosen uniformly from "
-        "[-hue, hue].",
+        description="How much to jitter hue. hue_factor is chosen uniformly from [-hue, hue].",
     )
 
 
 class AffineConfig(pydt.BaseModel):
-    enabled: bool = pydt.Field(default=False,
-                               description="Whether to apply random affine transformations.")
+    enabled: bool = pydt.Field(
+        default=False, description="Whether to apply random affine transformations."
+    )
 
-    degrees: float | t.Tuple[float, float] = pydt.Field(
+    degrees: float | tuple[float, float] = pydt.Field(
         default=0.0,
         description="Range of degrees to select from for rotation.",
     )
 
-    translate: t.Tuple[float, float] | None = pydt.Field(
+    translate: tuple[float, float] | None = pydt.Field(
         default=None,
         description="Tuple of maximum absolute fraction for horizontal and vertical translations.",
     )
 
-    scale: t.Tuple[float, float] | None = pydt.Field(default=None,
-                                                     description="Scaling factor interval.")
+    scale: tuple[float, float] | None = pydt.Field(
+        default=None, description="Scaling factor interval."
+    )
 
-    shear: float | t.Tuple[float, float] | None = pydt.Field(
+    shear: float | tuple[float, float] | None = pydt.Field(
         default=None,
         description="Range of degrees to select from for shearing.",
     )
@@ -135,7 +137,7 @@ class AffineConfig(pydt.BaseModel):
         description="Pixel fill value for the area outside the transformed image.",
     )
 
-    center: t.Tuple[float, float] | None = pydt.Field(
+    center: tuple[float, float] | None = pydt.Field(
         default=None,
         description="Optional center of rotation. Origin is the upper left corner.",
     )
@@ -151,13 +153,14 @@ class ErasingConfig(pydt.BaseModel):
         description="Probability that the Random Erasing operation will be performed.",
     )
 
-    scale: t.Tuple[float, float] = pydt.Field(
+    scale: tuple[float, float] = pydt.Field(
         default=(0.02, 0.33),
         description="Range of proportion of erased area against input image.",
     )
 
-    ratio: t.Tuple[float, float] = pydt.Field(default=(0.3, 3.3),
-                                              description="Range of aspect ratio of erased area.")
+    ratio: tuple[float, float] = pydt.Field(
+        default=(0.3, 3.3), description="Range of aspect ratio of erased area."
+    )
 
     value: PixelValue | t.Literal["random"] = pydt.Field(
         default=0,
@@ -167,18 +170,19 @@ class ErasingConfig(pydt.BaseModel):
         "value is random for each pixel.",
     )
 
-    inplace: bool = pydt.Field(default=False,
-                               description="Whether to make this operation in-place.")
+    inplace: bool = pydt.Field(
+        default=False, description="Whether to make this operation in-place."
+    )
 
 
 class MixupConfig(pydt.BaseModel):
-    enabled: bool = pydt.Field(default=False,
-                               description="Whether to apply MixUp data augmentation.")
+    enabled: bool = pydt.Field(
+        default=False, description="Whether to apply MixUp data augmentation."
+    )
 
-    alpha: float = pydt.Field(default=0.2,
-                              ge=0.0,
-                              le=2.0,
-                              description="MixUp interpolation strength parameter.")
+    alpha: float = pydt.Field(
+        default=0.2, ge=0.0, le=2.0, description="MixUp interpolation strength parameter."
+    )
 
     p: float = pydt.Field(
         default=0.5,

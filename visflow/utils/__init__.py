@@ -16,7 +16,7 @@ import torch
 _C = t.TypeVar("_C")
 
 
-def singleton(cls: t.Type[_C]) -> t.Callable[..., _C]:
+def singleton(cls: type[_C]) -> t.Callable[..., _C]:
     """Thread-safe singleton decorator.
 
     This decorator ensures that only one instance of the decorated class
@@ -35,7 +35,7 @@ def singleton(cls: t.Type[_C]) -> t.Callable[..., _C]:
         A wrapper function that returns the singleton instance of the class.
     """
     # Dictionary to keep singleton instances for each decorated class.
-    instances: t.Dict[t.Type[_C], t.Any] = {}
+    instances: dict[type[_C], t.Any] = {}
     lock = threading.RLock()
 
     @ft.wraps(cls)
@@ -65,23 +65,21 @@ def utc_now() -> dt.datetime:
 
 
 class classproperty(property):
-
     def __get__(self, __instance: t.Any, __owner: type | None = None) -> t.Any:
         if not callable(self.fget):
             raise TypeError("fget must be callable")
         return self.fget(__owner)
 
 
-@ft.lru_cache(maxsize=None)
-def _get_func_params(fn: t.Callable[..., t.Any]) -> t.Set[str]:
+@ft.cache
+def _get_func_params(fn: t.Callable[..., t.Any]) -> set[str]:
     return set(inspect.signature(fn).parameters.keys())
 
 
-def filter_kwargs(fn: t.Callable[..., t.Any],
-                  kwargs: t.Dict[str, t.Any],
-                  pref: str = "") -> t.Dict[str, t.Any]:
-    """
-    Filter out invalid keyword arguments for a given function by comparing
+def filter_kwargs(
+    fn: t.Callable[..., t.Any], kwargs: dict[str, t.Any], pref: str = ""
+) -> dict[str, t.Any]:
+    """Filter out invalid keyword arguments for a given function by comparing
     the provided keyword arguments to the function's signature. Only valid
     keyword arguments are returned.
 
@@ -101,21 +99,19 @@ def filter_kwargs(fn: t.Callable[..., t.Any],
         filtered = {}
         for key, value in kwargs.items():
             if key.startswith(pref):
-                param_name = key[len(pref):]
+                param_name = key[len(pref) :]
                 if param_name in valid_params and param_name not in {"self", "cls"}:
                     filtered[param_name] = value
         return filtered
-    else:
-        # Direct filtering without prefix removal
-        return {
-            key: value
-            for key, value in kwargs.items()
-            if key in valid_params and key not in {"self", "cls"}
-        }
+    # Direct filtering without prefix removal
+    return {
+        key: value
+        for key, value in kwargs.items()
+        if key in valid_params and key not in {"self", "cls"}
+    }
 
 
 class Unset:
-
     def __repr__(self) -> str:
         return "<UNSET>"
 
@@ -134,7 +130,7 @@ def flatten_dict(
     /,
     sep: str = ".",
     _parent: str = "",
-) -> t.Dict[str, t.Any]:
+) -> dict[str, t.Any]:
     items = []  # type: t.List[tuple[str, t.Any]]
     for k, v in _dict.items():
         key = f"{_parent}{sep}{k}" if _parent else k

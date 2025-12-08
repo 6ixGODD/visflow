@@ -10,13 +10,13 @@ class ANSIFormatter:
     """Enhanced formatter for ANSI color and style formatting in console
     output.
 
-    Provides organized color constants, helper methods, and context managers
-    for applying consistent styling to terminal output. Automatically
-    detects color support in the terminal environment.
+    Provides organized color constants, helper methods, and context
+    managers for applying consistent styling to terminal output.
+    Automatically detects color support in the terminal environment.
     """
 
     class FG(enum.StrEnum):
-        """Foreground colors"""
+        """Foreground colors."""
 
         BLACK = "\033[30m"
         RED = "\033[31m"
@@ -36,7 +36,7 @@ class ANSIFormatter:
         BRIGHT_WHITE = "\033[97m"
 
     class BG(enum.StrEnum):
-        """Background colors"""
+        """Background colors."""
 
         BLACK = "\033[40m"
         RED = "\033[41m"
@@ -56,7 +56,7 @@ class ANSIFormatter:
         BRIGHT_WHITE = "\033[107m"
 
     class STYLE(enum.StrEnum):
-        """Text styles"""
+        """Text styles."""
 
         RESET = "\033[0m"
         BOLD = "\033[1m"
@@ -109,16 +109,18 @@ class ANSIFormatter:
         if plat == "win32":
             # Windows 10 with VT sequences enabled
             return bool(
-                os.environ.get("TERM_PROGRAM", "") or "ANSICON" in os.environ
-                or "WT_SESSION" in os.environ or os.environ.get("ConEmuANSI") == "ON")
+                os.environ.get("TERM_PROGRAM", "")
+                or "ANSICON" in os.environ
+                or "WT_SESSION" in os.environ
+                or os.environ.get("CONEMUANSI") == "ON"
+            )
 
         # Most Unix-like systems support colors
         return True
 
     @classmethod
     def enable(cls, enabled: bool = True) -> None:
-        """
-        Enable or disable ANSI formatting.
+        """Enable or disable ANSI formatting.
 
         Args:
             enabled: True to enable colors, False to disable.
@@ -127,8 +129,7 @@ class ANSIFormatter:
 
     @classmethod
     def format(cls, text: str, *styles: STYLE | FG | BG | None) -> str:
-        """
-        Format text with the specified ANSI styles.
+        """Format text with the specified ANSI styles.
 
         Intelligently reapplies styles after any reset sequences in the text.
         If colors are disabled, returns the original text without formatting.
@@ -179,8 +180,7 @@ class ANSIFormatter:
 
     @classmethod
     def rgb(cls, text: str, r: int, g: int, b: int, background: bool = False) -> str:
-        """
-        Format text with a specific RGB color.
+        """Format text with a specific RGB color.
 
         Args:
             text: The text to format

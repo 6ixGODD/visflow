@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-import visflow._cli.commands as cmd
+import visflow.cli.commands as cmd
 import visflow.exceptions as exc
 
 

@@ -8,11 +8,13 @@ LogLevel: t.TypeAlias = t.Literal["debug", "info", "warning", "error", "critical
 
 
 class LoggingTarget:
-    __slots__ = ("logname", "loglevel")  # type: t.Collection[str]
+    __slots__ = ("loglevel", "logname")  # type: t.Collection[str]
 
-    def __init__(self,
-                 *,
-                 logname: t.Literal["stdout", "stderr"] | PathLikes = "stdout",
-                 loglevel: LogLevel = "info") -> None:
+    def __init__(
+        self,
+        *,
+        logname: t.Literal["stdout", "stderr"] | PathLikes = "stdout",
+        loglevel: LogLevel = "info",
+    ) -> None:
         self.logname = logname
         self.loglevel = loglevel

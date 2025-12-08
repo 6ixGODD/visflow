@@ -79,7 +79,7 @@ class DatasetInfo(te.TypedDict):
     test_size: int
     """Number of test samples."""
 
-    classes: t.List[str]
+    classes: list[str]
     """List of class names."""
 
 
@@ -102,7 +102,7 @@ class Metrics(te.TypedDict, total=False):
     auc_roc: float
     """Current AUC-ROC value."""
 
-    confusion_matrix: t.List[t.List[int]]
+    confusion_matrix: list[list[int]]
     """Current confusion matrix."""
 
     sensitivity: float
@@ -111,7 +111,7 @@ class Metrics(te.TypedDict, total=False):
     specificity: float
     """Current specificity value."""
 
-    extras: t.Dict[str, float]
+    extras: dict[str, float]
     """Any additional metrics."""
 
 
@@ -130,9 +130,10 @@ class BatchLog(te.TypedDict, total=False):
 
     metrics: te.Required[Metrics]
     """Metrics for the current batch.
-    
-    !NOTE: These metrics are typically noisy and may not reflect overall 
-    performance."""
+
+    !NOTE: These metrics are typically noisy and may not reflect overall
+    performance.
+    """
 
     learning_rate: float
     """Current learning rate."""
@@ -186,10 +187,10 @@ class EpochLog(te.TypedDict):
 
 
 class LayerInfo(te.TypedDict):
-    input_shape: t.List[int]
+    input_shape: list[int]
     """Shape of the input tensor."""
 
-    output_shape: t.List[int] | t.List[t.List[int]]
+    output_shape: list[int] | list[list[int]]
     """Shape of the output tensor."""
 
     nb_params: int
@@ -200,7 +201,7 @@ class LayerInfo(te.TypedDict):
 
 
 class ModelSummary(te.TypedDict):
-    layers: t.Dict[str, LayerInfo]
+    layers: dict[str, LayerInfo]
     """Information about each layer in the model."""
 
     total_params: int
@@ -232,7 +233,7 @@ class ExperimentStartLog(te.TypedDict, total=False):
     dataset: te.Required[DatasetInfo]
     """Information about the dataset."""
 
-    config: te.Required[t.Dict[str, t.Any]]
+    config: te.Required[dict[str, t.Any]]
     """Configuration parameters for the experiment."""
 
     model_summary: te.Required[ModelSummary]
@@ -290,11 +291,11 @@ class TestEndLog(te.TypedDict):
     total_time_sec: te.Required[float]
     """Total time taken for all tests."""
 
-    checkpoint_results: te.Required[t.List[CheckpointTestLog]]
+    checkpoint_results: te.Required[list[CheckpointTestLog]]
     """Results for all checkpoints."""
 
     best_checkpoint: te.Required[CheckpointTestLog]
     """Best performing checkpoint."""
 
-    test_dataset_info: t.Dict[str, t.Any]
+    test_dataset_info: dict[str, t.Any]
     """Information about the test dataset."""

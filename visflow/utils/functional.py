@@ -6,10 +6,9 @@ import numpy as np
 import torch
 
 
-def mixup(x: torch.Tensor,
-          y: torch.Tensor,
-          *,
-          alpha: float = 1.0) -> t.Tuple[torch.Tensor, torch.Tensor, torch.Tensor, float]:
+def mixup(
+    x: torch.Tensor, y: torch.Tensor, *, alpha: float = 1.0
+) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor, float]:
     """Apply MixUp augmentation to a batch of images and labels.
 
     Args:
@@ -24,10 +23,7 @@ def mixup(x: torch.Tensor,
         y_b (torch.Tensor): Labels of the shuffled images.
         lam (float): MixUp coefficient.
     """
-    if alpha > 0:
-        lam = np.random.beta(alpha, alpha)
-    else:
-        lam = 1
+    lam = np.random.beta(alpha, alpha) if alpha > 0 else 1
 
     batch_size = x.size(0)
     index = torch.randperm(batch_size).to(x.device)
@@ -38,15 +34,13 @@ def mixup(x: torch.Tensor,
     return mixed_x, y_a, y_b, lam
 
 
-def compute_class_weights(labels: t.Sequence[int]) -> t.Dict[int, float]:
+def compute_class_weights(labels: t.Sequence[int]) -> dict[int, float]:
     labels_tensor = torch.tensor(labels, dtype=torch.long)
     class_counts = torch.bincount(labels_tensor)
     total_samples = len(labels_tensor)
 
-    class_weights = {
-        cls:
-            total_samples / count.item()  # type: ignore
+    return {
+        cls: total_samples / count.item()  # type: ignore
         for cls, count in enumerate(class_counts)
         if count.item() > 0  # type: ignore
     }
-    return class_weights

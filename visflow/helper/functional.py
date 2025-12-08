@@ -20,35 +20,34 @@ from visflow.types import CriterionFunc
 
 
 class MixUpLoss(nn.Module):
-
     def __init__(self, criterion: CriterionFunc):
         super().__init__()
         self.criterion = criterion
 
-    def forward(self,
-                pred: torch.Tensor,
-                target_a: torch.Tensor,
-                target_b: t.Optional[torch.Tensor] = None,
-                lam: float | None = None) -> torch.Tensor:
+    def forward(
+        self,
+        pred: torch.Tensor,
+        target_a: torch.Tensor,
+        target_b: t.Optional[torch.Tensor] = None,  # noqa
+        lam: float | None = None,
+    ) -> torch.Tensor:
         if target_b is not None and lam is not None:
             return lam * self.criterion(pred, target_a) + (1 - lam) * self.criterion(pred, target_b)
-        else:
-            return self.criterion(pred, target_a)
+        return self.criterion(pred, target_a)
 
 
-def summary(model: nn.Module,
-            input_size: t.Tuple[int, ...] | t.List[t.Tuple[int, ...]],
-            batch_size: int = -1,
-            device: t.Literal["cuda", "cpu"] = "cuda") -> ModelSummary:
-
+def summary(
+    model: nn.Module,
+    input_size: tuple[int, ...] | list[tuple[int, ...]],
+    batch_size: int = -1,
+    device: t.Literal["cuda", "cpu"] = "cuda",
+) -> ModelSummary:
     def register_hook(module: nn.Module) -> None:
-
-        def hook(module: nn.Module, input: t.Tuple[torch.Tensor, ...],
-                 output: torch.Tensor) -> None:
+        def hook(module: nn.Module, input: tuple[torch.Tensor, ...], output: torch.Tensor) -> None:
             class_name = str(module.__class__).split(".")[-1].split("'")[0]
             module_idx = len(layer_summary)
 
-            m_key = "%s-%i" % (class_name, module_idx + 1)
+            m_key = f"{module_idx}-{class_name}"
 
             input_shape = list(input[0].size())
             input_shape[0] = batch_size
@@ -71,8 +70,11 @@ def summary(model: nn.Module,
                 trainable=trainable,
             )
 
-        if (not isinstance(module, nn.Sequential) and not isinstance(module, nn.ModuleList)
-                and not (module == model)):
+        if (
+            not isinstance(module, nn.Sequential)
+            and not isinstance(module, nn.ModuleList)
+            and module != model
+        ):
             hooks.append(module.register_forward_hook(hook))
 
     if device == "cuda" and torch.cuda.is_available() and hasattr(torch.cuda, "FloatTensor"):
@@ -124,14 +126,16 @@ def summary(model: nn.Module,
     total_params_size = abs(total_params * 4.0 / (1024**2.0))
     total_size = total_params_size + total_output_size + total_input_size
 
-    return ModelSummary(layers=layer_summary,
-                        total_params=total_params,
-                        trainable_params=trainable_params,
-                        non_trainable_params=total_params - trainable_params,
-                        input_size_mb=round(total_input_size, 2),
-                        forward_backward_pass_size_mb=round(total_output_size, 2),
-                        params_size_mb=round(total_params_size, 2),
-                        estimated_total_size_mb=round(total_size, 2))
+    return ModelSummary(
+        layers=layer_summary,
+        total_params=total_params,
+        trainable_params=trainable_params,
+        non_trainable_params=total_params - trainable_params,
+        input_size_mb=round(total_input_size, 2),
+        forward_backward_pass_size_mb=round(total_output_size, 2),
+        params_size_mb=round(total_params_size, 2),
+        estimated_total_size_mb=round(total_size, 2),
+    )
 
 
 @ft.lru_cache(maxsize=1)
@@ -146,12 +150,17 @@ def env_info() -> EnvironmentInfo:
         memory_usage_gb=round(psutil.virtual_memory().used / (1024**3), 2),
         gpu_available=torch.cuda.is_available(),
         gpu_model=(torch.cuda.get_device_name(0) if torch.cuda.is_available() else "N/A"),
-        gpu_memory_gb=(round(torch.cuda.get_device_properties(0).total_memory /
-                             (1024**3), 2) if torch.cuda.is_available() else 0),
-        gpu_memory_usage_gb=(round(torch.cuda.memory_allocated(0) /
-                                   (1024**3), 2) if torch.cuda.is_available() else 0),
+        gpu_memory_gb=(
+            round(torch.cuda.get_device_properties(0).total_memory / (1024**3), 2)
+            if torch.cuda.is_available()
+            else 0
+        ),
+        gpu_memory_usage_gb=(
+            round(torch.cuda.memory_allocated(0) / (1024**3), 2) if torch.cuda.is_available() else 0
+        ),
         python_version=platform.python_version(),
         torch_version=torch.__version__,
         torchvision_version=torchvision.__version__,
         cuda_version=torch.version.cuda or "N/A",
-        cudnn_version=torch.backends.cudnn.version() or "N/A")
+        cudnn_version=torch.backends.cudnn.version() or "N/A",
+    )

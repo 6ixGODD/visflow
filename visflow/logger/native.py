@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import contextlib
 import json
 import logging
 import logging.handlers
@@ -14,7 +15,7 @@ from visflow.logger.types import LoggingTarget
 from visflow.logger.types import LogLevel
 from visflow.utils import ansi
 
-_LEVEL_MAP: t.Dict[LogLevel, int] = {
+_LEVEL_MAP: dict[LogLevel, int] = {
     "debug": logging.DEBUG,
     "info": logging.INFO,
     "warning": logging.WARNING,
@@ -24,7 +25,12 @@ _LEVEL_MAP: t.Dict[LogLevel, int] = {
 
 
 class ContextFormatter(logging.Formatter):
-    LEVEL_COLORS = {
+    LEVEL_COLORS: t.ClassVar[
+        dict[
+            int,
+            t.Sequence[ansi.ANSIFormatter.FG | ansi.ANSIFormatter.BG | ansi.ANSIFormatter.STYLE],
+        ]
+    ] = {
         logging.DEBUG: (
             ansi.ANSIFormatter.FG.GRAY,
             ansi.ANSIFormatter.STYLE.DIM,
@@ -45,7 +51,12 @@ class ContextFormatter(logging.Formatter):
         ),
     }
 
-    COMPONENT_STYLES = {
+    COMPONENT_STYLES: t.ClassVar[
+        dict[
+            str,
+            t.Sequence[ansi.ANSIFormatter.FG | ansi.ANSIFormatter.BG | ansi.ANSIFormatter.STYLE],
+        ]
+    ] = {
         "timestamp": (ansi.ANSIFormatter.FG.GRAY,),
         "logger": (ansi.ANSIFormatter.FG.MAGENTA,),
         "tag": (ansi.ANSIFormatter.FG.CYAN, ansi.ANSIFormatter.STYLE.BOLD),
@@ -54,10 +65,9 @@ class ContextFormatter(logging.Formatter):
         # Same as arrow for consistency
     }
 
-    def __init__(self,
-                 is_console: bool = False,
-                 use_colors: bool = True,
-                 verbose: bool | None = None):
+    def __init__(
+        self, is_console: bool = False, use_colors: bool = True, verbose: bool | None = None
+    ):
         super().__init__(datefmt="%Y-%m-%d %H:%M:%S")
         self.is_console = is_console
         self.use_colors = use_colors
@@ -69,12 +79,31 @@ class ContextFormatter(logging.Formatter):
         self.verbose = verbose
 
     @staticmethod
-    def _extract_context(record: logging.LogRecord, /) -> t.Dict[str, t.Any]:
+    def _extract_context(record: logging.LogRecord, /) -> dict[str, t.Any]:
         """Extract context from log record, excluding standard fields."""
         excluded = {
-            "name", "msg", "args", "levelname", "levelno", "pathname", "filename", "module",
-            "lineno", "funcName", "created", "msecs", "relativeCreated", "thread", "threadName",
-            "processName", "process", "getMessage", "exc_info", "exc_text", "stack_info", "message"
+            "name",
+            "msg",
+            "args",
+            "levelname",
+            "levelno",
+            "pathname",
+            "filename",
+            "module",
+            "lineno",
+            "funcName",
+            "created",
+            "msecs",
+            "relativeCreated",
+            "thread",
+            "threadName",
+            "processName",
+            "process",
+            "getMessage",
+            "exc_info",
+            "exc_text",
+            "stack_info",
+            "message",
         }
 
         context = {}
@@ -87,7 +116,7 @@ class ContextFormatter(logging.Formatter):
                     context[key] = str(value)
         return context
 
-    def _format_with_tag(self, name: str, context: t.Dict[str, t.Any]) -> str:
+    def _format_with_tag(self, name: str, context: dict[str, t.Any]) -> str:
         """Format logger name with optional TAG."""
         tag = context.get("TAG")
 
@@ -107,33 +136,32 @@ class ContextFormatter(logging.Formatter):
                 if name_len <= 8:  # Keep short names intact
                     truncated_name = name
                     remaining = available_space - name_len
-                    if tag_len > remaining:
-                        truncated_tag = f"...{tag[-(remaining - 3):]}"
-                    else:
-                        truncated_tag = tag
+                    truncated_tag = f"...{tag[-(remaining - 3) :]}" if tag_len > remaining else tag
                 else:
                     # Truncate name, keep reasonable tag space
                     max_tag_space = min(tag_len, 8)  # At most 8 chars for tag
                     max_name_space = available_space - max_tag_space
 
                     if name_len > max_name_space:
-                        truncated_name = f"...{name[-(max_name_space - 3):]}"
+                        truncated_name = f"...{name[-(max_name_space - 3) :]}"
                     else:
                         truncated_name = name
                         max_tag_space = available_space - len(truncated_name)
 
                     if tag_len > max_tag_space:
-                        truncated_tag = f"...{tag[-(max_tag_space - 3):]}"
+                        truncated_tag = f"...{tag[-(max_tag_space - 3) :]}"
                     else:
                         truncated_tag = tag
 
             full_display = f"{truncated_name}.{truncated_tag}"
 
             if self.use_colors:
-                colored_name = ansi.ANSIFormatter.format(truncated_name,
-                                                         *self.COMPONENT_STYLES["logger"])
-                colored_tag = ansi.ANSIFormatter.format(truncated_tag,
-                                                        *self.COMPONENT_STYLES["tag"])
+                colored_name = ansi.ANSIFormatter.format(
+                    truncated_name, *self.COMPONENT_STYLES["logger"]
+                )
+                colored_tag = ansi.ANSIFormatter.format(
+                    truncated_tag, *self.COMPONENT_STYLES["tag"]
+                )
                 colored_dot = ansi.ANSIFormatter.format(".", ansi.ANSIFormatter.FG.GRAY)
                 display = f"{colored_name}{colored_dot}{colored_tag}"
             else:
@@ -147,10 +175,7 @@ class ContextFormatter(logging.Formatter):
                 display = display[:20] if not self.use_colors else display
         else:
             # Without TAG: full 20 characters
-            if len(name) > 20:
-                truncated_name = f"...{name[-17:]}"  # 20 - 3 = 17
-            else:
-                truncated_name = name
+            truncated_name = f"...{name[-17:]}" if len(name) > 20 else name
 
             display = f"{truncated_name:<20}"  # Left-align and pad to 20
 
@@ -159,7 +184,7 @@ class ContextFormatter(logging.Formatter):
 
         return display
 
-    def _format_context(self, context: t.Dict[str, t.Any], prefix_len: int) -> str:
+    def _format_context(self, context: dict[str, t.Any], prefix_len: int) -> str:
         """Format context for console output."""
         if not self.verbose:
             return ""
@@ -193,10 +218,9 @@ class ContextFormatter(logging.Formatter):
 
         if self.is_console:
             return self._format_console(record, context)
-        else:
-            return self._format_json(record, context)
+        return self._format_json(record, context)
 
-    def _format_console(self, record: logging.LogRecord, context: t.Dict[str, t.Any]) -> str:
+    def _format_console(self, record: logging.LogRecord, context: dict[str, t.Any]) -> str:
         timestamp = self.formatTime(record, self.datefmt)
         logger_name = self._format_with_tag(record.name, context)
         level_name = f"{record.levelname:<8}"
@@ -205,8 +229,9 @@ class ContextFormatter(logging.Formatter):
         # Apply colors
         if self.use_colors:
             timestamp = ansi.ANSIFormatter.format(timestamp, *self.COMPONENT_STYLES["timestamp"])
-            level_name = ansi.ANSIFormatter.format(level_name,
-                                                   *self.LEVEL_COLORS.get(record.levelno, ()))
+            level_name = ansi.ANSIFormatter.format(
+                level_name, *self.LEVEL_COLORS.get(record.levelno, ())
+            )
             arrow = ansi.ANSIFormatter.format("=>", *self.COMPONENT_STYLES["arrow"])
         else:
             arrow = "=>"
@@ -217,7 +242,7 @@ class ContextFormatter(logging.Formatter):
         prefix_len = self._get_prefix_length(
             plain_timestamp,
             "visflow" + 13 * " ",
-            plain_level  # Max 20-char logger
+            plain_level,  # Max 20-char logger
         )  # Use consistent 20-char logger
         indent = " " * (prefix_len - 3)
 
@@ -230,7 +255,7 @@ class ContextFormatter(logging.Formatter):
             message = "\n".join(message_lines)
 
         # Build log line
-        log_line = f"[{timestamp}] [{logger_name}] [{level_name}] {arrow} " f"{message}"
+        log_line = f"[{timestamp}] [{logger_name}] [{level_name}] {arrow} {message}"
 
         # Add context
         context_str = self._format_context(context, prefix_len)
@@ -249,13 +274,14 @@ class ContextFormatter(logging.Formatter):
             for line in exc_lines:
                 colored_line = line
                 if self.use_colors:
-                    colored_line = ansi.ANSIFormatter.format(line, ansi.ANSIFormatter.FG.RED,
-                                                             ansi.ANSIFormatter.STYLE.DIM)
+                    colored_line = ansi.ANSIFormatter.format(
+                        line, ansi.ANSIFormatter.FG.RED, ansi.ANSIFormatter.STYLE.DIM
+                    )
                 log_line += f"{indent}{arrow} {colored_line}\n"
 
         return log_line.rstrip("\n")
 
-    def _format_json(self, record: logging.LogRecord, context: t.Dict[str, t.Any]) -> str:
+    def _format_json(self, record: logging.LogRecord, context: dict[str, t.Any]) -> str:
         """Format for file output as JSON."""
         data = {
             "timestamp": self.formatTime(record, self.datefmt),
@@ -263,7 +289,7 @@ class ContextFormatter(logging.Formatter):
             "message": record.getMessage(),
             "module": record.module,
             "function": record.funcName,
-            "line": record.lineno
+            "line": record.lineno,
         }
 
         if context:
@@ -296,20 +322,17 @@ def _create_handler(target: LoggingTarget) -> logging.Handler:
 
 
 class NativeLoggingBackend(LoggerBackend):
-
     def __init__(self) -> None:
         self._logger = logging.getLogger("visflow")
         self._logger.setLevel(logging.DEBUG)
-        self._handlers: t.List[logging.Handler] = []
+        self._handlers: list[logging.Handler] = []
         ansi.ANSIFormatter.enable(ansi.ANSIFormatter.supports_color())
 
-    def setup_handlers(self, targets: t.List[LoggingTarget]) -> None:
+    def setup_handlers(self, targets: list[LoggingTarget]) -> None:
         for handler in self._logger.handlers[:]:
             self._logger.removeHandler(handler)
-            try:
+            with contextlib.suppress(Exception):
                 handler.close()
-            except Exception:
-                pass
         self._handlers.clear()
 
         # Create new handlers
@@ -322,13 +345,9 @@ class NativeLoggingBackend(LoggerBackend):
 
     def log(self, msg: str, /, level: LogLevel, **context: t.Any) -> None:
         log_level = _LEVEL_MAP.get(level, logging.INFO)
-        record = self._logger.makeRecord(name=self._logger.name,
-                                         level=log_level,
-                                         fn="",
-                                         lno=0,
-                                         msg=msg,
-                                         args=(),
-                                         exc_info=None)
+        record = self._logger.makeRecord(
+            name=self._logger.name, level=log_level, fn="", lno=0, msg=msg, args=(), exc_info=None
+        )
 
         # Add context to record
         for key, value in context.items():
@@ -354,10 +373,11 @@ class NativeLoggingBackend(LoggerBackend):
 
 
 class NativeLogger(BaseLogger):
-
-    def __init__(self,
-                 targets: t.Sequence[LoggingTarget] | None = None,
-                 initial_ctx: t.Dict[str, t.Any] | None = None):
+    def __init__(
+        self,
+        targets: t.Sequence[LoggingTarget] | None = None,
+        initial_ctx: dict[str, t.Any] | None = None,
+    ):
         backend = NativeLoggingBackend()
         super().__init__(backend, targets, initial_ctx)
 

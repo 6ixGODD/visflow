@@ -14,12 +14,13 @@ from visflow.config.logging import LoggingConfig
 from visflow.logger.types import LoggingTarget
 from visflow.logger.types import LogLevel
 
-_context: cvs.ContextVar[t.Dict[str, t.Any]] = cvs.ContextVar("_context", default={})
+_context: cvs.ContextVar[dict[str, t.Any]] = cvs.ContextVar("_context", default={})  # noqa
 F = t.TypeVar("F", bound=t.Callable[..., t.Any])
 
 
 class LogContext:
-    """Manages logging context using context variables for thread-safe context storage."""
+    """Manages logging context using context variables for thread-safe context
+    storage."""
 
     @staticmethod
     def add(**ctx: t.Any) -> None:
@@ -33,7 +34,7 @@ class LogContext:
         _context.set(new_ctx)
 
     @staticmethod
-    def get() -> t.Dict[str, t.Any]:
+    def get() -> dict[str, t.Any]:
         """Get the current logging context.
 
         Returns:
@@ -51,7 +52,7 @@ class LoggerBackend(abc.ABC):
     """Abstract base class for logger backends."""
 
     @abc.abstractmethod
-    def setup_handlers(self, targets: t.List[LoggingTarget]) -> None:
+    def setup_handlers(self, targets: list[LoggingTarget]) -> None:
         """Set up logging handlers for the specified targets.
 
         Args:
@@ -89,7 +90,7 @@ class _LoggerContext:
         initial_ctx: Initial context dictionary. Defaults to None.
     """
 
-    def __init__(self, backend: LoggerBackend, initial_ctx: t.Dict[str, t.Any] | None = None):
+    def __init__(self, backend: LoggerBackend, initial_ctx: dict[str, t.Any] | None = None):
         self._backend = backend
         self._context = initial_ctx or {}
 
@@ -200,8 +201,8 @@ class _LoggerContext:
         self,
         msg: str,
         /,
-        exc: type[BaseException] | t.Tuple[type[BaseException], ...] = Exception,
-        excl_exc: type[BaseException] | t.Tuple[type[BaseException], ...] = ()
+        exc: type[BaseException] | tuple[type[BaseException], ...] = Exception,
+        excl_exc: type[BaseException] | tuple[type[BaseException], ...] = (),
     ) -> t.Generator[None, None, None]:
         """Context manager to catch and log exceptions.
 
@@ -226,20 +227,22 @@ class _LoggerContext:
             )
             raise
 
-    def log_method(self,
-                   msg: str | None = None,
-                   level: LogLevel = "info",
-                   *,
-                   exc: type[BaseException] | t.Tuple[type[BaseException], ...] = Exception,
-                   excl_exc: type[BaseException] | t.Tuple[type[BaseException], ...] = (),
-                   logargs: bool = False,
-                   logres: bool = False,
-                   logdur: bool = True,
-                   incl_ctx: bool = True,
-                   success_level: LogLevel = "info",
-                   error_level: LogLevel = "error",
-                   pre_exec: bool = True,
-                   post_exec: bool = True) -> t.Callable[[F], F]:
+    def log_method(
+        self,
+        msg: str | None = None,
+        level: LogLevel = "info",
+        *,
+        exc: type[BaseException] | tuple[type[BaseException], ...] = Exception,
+        excl_exc: type[BaseException] | tuple[type[BaseException], ...] = (),
+        logargs: bool = False,
+        logres: bool = False,
+        logdur: bool = True,
+        incl_ctx: bool = True,
+        success_level: LogLevel = "info",
+        error_level: LogLevel = "error",
+        pre_exec: bool = True,
+        post_exec: bool = True,
+    ) -> t.Callable[[F], F]:
         """Decorator for logging method execution with configurable options.
 
         Args:
@@ -261,7 +264,6 @@ class _LoggerContext:
         """
 
         def decorator(fn: F) -> t.Any:
-
             @ft.wraps(fn)
             def wrapper(*args: t.Any, **kwargs: t.Any) -> t.Any:
                 func_name = fn.__name__
@@ -379,16 +381,18 @@ class BaseLogger(_LoggerContext):
         initial_ctx: Initial context dictionary. Defaults to None.
     """
 
-    def __init__(self,
-                 backend: LoggerBackend,
-                 targets: t.Sequence[LoggingTarget] | None = None,
-                 initial_ctx: t.Dict[str, t.Any] | None = None):
+    def __init__(
+        self,
+        backend: LoggerBackend,
+        targets: t.Sequence[LoggingTarget] | None = None,
+        initial_ctx: dict[str, t.Any] | None = None,
+    ):
         super().__init__(backend, initial_ctx)
         self._targets = list(targets or [])
         self._backend.setup_handlers(self._targets)
 
     @property
-    def targets(self) -> t.List[LoggingTarget]:
+    def targets(self) -> list[LoggingTarget]:
         """Get the list of current logging targets.
 
         Returns:
@@ -430,20 +434,27 @@ class BaseLogger(_LoggerContext):
     def __enter__(self) -> t.Self:
         return self
 
-    def __exit__(self, exc_type: type[BaseException] | None, exc_value: BaseException | None,
-                 traceback: types.TracebackType | None, /) -> t.Literal[False]:
+    def __exit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_value: BaseException | None,
+        traceback: types.TracebackType | None,
+        /,
+    ) -> t.Literal[False]:
         self.close()
         return False
 
 
 class Logger(BaseLogger):
-    """Main logger class that configures and manages logging based on configuration.
+    """Main logger class that configures and manages logging based on
+    configuration.
 
     Args:
         config: Logging configuration object.
 
     Raises:
-        ValueError: If an unsupported logging backend is specified."""
+        ValueError: If an unsupported logging backend is specified.
+    """
 
     def __init__(self, config: LoggingConfig):
         self.config = config
@@ -457,7 +468,9 @@ class Logger(BaseLogger):
 
             backend = loguru.LoguruBackend()
         else:
-            raise ValueError(f"Unsupported logging backend: {self.config.backend}",)
+            raise ValueError(
+                f"Unsupported logging backend: {self.config.backend}",
+            )
 
         super().__init__(backend=backend, initial_ctx=self.config.extra_context)
         self.add_target(LoggingTarget(logname="stdout", loglevel=self.config.loglevel))

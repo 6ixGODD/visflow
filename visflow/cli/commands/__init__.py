@@ -6,9 +6,9 @@ from visflow import __version__
 
 
 def parse_args() -> argparse.Namespace:
-    from visflow._cli.commands import gradcam
-    from visflow._cli.commands import init
-    from visflow._cli.commands import train
+    from visflow.cli.commands import gradcam
+    from visflow.cli.commands import init
+    from visflow.cli.commands import train
 
     parser = argparse.ArgumentParser(
         description="VisFlow",
@@ -38,5 +38,4 @@ def parse_args() -> argparse.Namespace:
             print("\nPlease specify a subcommand. Use -h for help.")
 
     parser.set_defaults(func=_print_help)
-    args = parser.parse_args()
-    return args
+    return parser.parse_args()

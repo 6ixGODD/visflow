@@ -14,10 +14,9 @@ class EarlyStopping:
             increasing.
     """
 
-    def __init__(self,
-                 patience: int = 7,
-                 min_delta: float = 0.0,
-                 mode: t.Literal["min", "max"] = "min") -> None:
+    def __init__(
+        self, patience: int = 7, min_delta: float = 0.0, mode: t.Literal["min", "max"] = "min"
+    ) -> None:
         self.patience = patience
         self.min_delta = min_delta
         self.counter = 0
@@ -51,13 +50,12 @@ class EarlyStopping:
             self.best_score = score
             self.counter = 0
             return False
-        else:
-            # No improvement
-            self.counter += 1
-            if self.counter >= self.patience:
-                self.early_stop = True
-                return True
-            return False
+        # No improvement
+        self.counter += 1
+        if self.counter >= self.patience:
+            self.early_stop = True
+            return True
+        return False
 
     def reset(self) -> None:
         self.counter = 0

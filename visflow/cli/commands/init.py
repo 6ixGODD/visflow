@@ -3,7 +3,7 @@ from __future__ import annotations
 import argparse
 import typing as t
 
-from visflow._cli.args import BaseArgs
+from visflow.cli.args import BaseArgs
 from visflow.pipelines.init import InitPipeline
 
 if t.TYPE_CHECKING:
@@ -19,12 +19,13 @@ class Args(BaseArgs):
 
     @classmethod
     def add_args(cls, parser: argparse.ArgumentParser) -> None:
-        parser.add_argument("--proxy",
-                            "-p",
-                            type=str,
-                            default=None,
-                            help="Proxy server to use for downloading files (e.g., "
-                            "http://proxyserver:port)")
+        parser.add_argument(
+            "--proxy",
+            "-p",
+            type=str,
+            default=None,
+            help="Proxy server to use for downloading files (e.g., http://proxyserver:port)",
+        )
 
 
 def register(subparser: _SubParsersAction[argparse.ArgumentParser]) -> None:

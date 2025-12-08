@@ -1,5 +1,5 @@
 from __future__ import annotations
 
-from ._cli import main
+from .cli import main
 
 main()

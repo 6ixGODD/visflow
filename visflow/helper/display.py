@@ -34,8 +34,9 @@ def make_model_summary_table(model_summary: ModelSummary) -> rtable.Table:
     table.add_row("Trainable Parameters", f"{model_summary['trainable_params']:,}")
     table.add_row("Non-trainable Parameters", f"{model_summary['non_trainable_params']:,}")
     table.add_row("Input Size (MB)", f"{model_summary['input_size_mb']:.2f}")
-    table.add_row("Forward/Backward Pass (MB)",
-                  f"{model_summary['forward_backward_pass_size_mb']:.2f}")
+    table.add_row(
+        "Forward/Backward Pass (MB)", f"{model_summary['forward_backward_pass_size_mb']:.2f}"
+    )
     table.add_row("Parameters Size (MB)", f"{model_summary['params_size_mb']:.2f}")
     table.add_row("Estimated Total Size (MB)", f"{model_summary['estimated_total_size_mb']:.2f}")
 
@@ -73,7 +74,7 @@ def make_ascii_art() -> str:
     try:
         ascii_art = pyfiglet.figlet_format(__project__, font="slant")
         return str(ascii_art)
-    except:
+    except Exception:
         return __project__
 
 
@@ -132,13 +133,13 @@ def make_dataset_table(dataset_info: DatasetInfo) -> rtable.Table:
     if dataset_info["classes"]:
         class_preview = ", ".join(dataset_info["classes"][:5])
         if len(dataset_info["classes"]) > 5:
-            class_preview += f" ... (+{len(dataset_info['classes']) - 5} " f"more)"
+            class_preview += f" ... (+{len(dataset_info['classes']) - 5} more)"
         table.add_row("Class Names", class_preview)
 
     return table
 
 
-def make_config_table(config: t.Dict[str, t.Any]) -> rtable.Table:
+def make_config_table(config: dict[str, t.Any]) -> rtable.Table:
     """Create configuration table."""
     table = rtable.Table(box=rbox.SIMPLE, show_header=False, padding=(0, 1))
     table.add_column("Key", style="cyan", no_wrap=True)
@@ -150,15 +151,9 @@ def make_config_table(config: t.Dict[str, t.Any]) -> rtable.Table:
     for key, value in flat_config.items():
         # Format the value appropriately
         if isinstance(value, float):
-            if 0.001 > value > 0:
-                value_str = f"{value:.6f}"
-            else:
-                value_str = f"{value:.4f}"
+            value_str = f"{value:.6f}" if 0.001 > value > 0 else f"{value:.4f}"
         elif isinstance(value, (list, tuple)):
-            if len(str(value)) > 50:
-                value_str = f"{str(value)[:47]}..."
-            else:
-                value_str = str(value)
+            value_str = f"{str(value)[:47]}..." if len(str(value)) > 50 else str(value)
         else:
             value_str = str(value)
 
@@ -167,7 +162,7 @@ def make_config_table(config: t.Dict[str, t.Any]) -> rtable.Table:
     return table
 
 
-def make_layers_table(layers: t.Dict[str, LayerInfo]) -> rtable.Table:
+def make_layers_table(layers: dict[str, LayerInfo]) -> rtable.Table:
     table = rtable.Table(box=rbox.SIMPLE, show_header=True, padding=(0, 1))
     table.add_column("Layer (type)", style="white", no_wrap=False, min_width=25)
     table.add_column("Output Shape", style="white", justify="right", min_width=25)
@@ -202,14 +197,13 @@ def make_experiment_info_table(exp_id: str, exp_name: str, timestamp: str) -> rt
     table.add_row("Experiment Name", exp_name)
     table.add_row("Start Time", timestamp)
 
-    current_time = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
+    current_time = datetime.datetime.now(datetime.UTC).strftime("%Y-%m-%d %H:%M:%S")
     table.add_row("Current Time (UTC)", current_time)
 
     return table
 
 
 class Display:
-
     def __init__(self, context: Context):
         self.console = rconsole.Console()
         self.context = context
@@ -222,73 +216,91 @@ class Display:
 
         # ASCII Art
         ascii_art = make_ascii_art()
-        ascii_panel = rpanel.Panel(ralign.Align.center(rtext.Text(ascii_art, style="bold blue")),
-                                   box=rbox.DOUBLE,
-                                   padding=(1, 2))
+        ascii_panel = rpanel.Panel(
+            ralign.Align.center(rtext.Text(ascii_art, style="bold blue")),
+            box=rbox.DOUBLE,
+            padding=(1, 2),
+        )
         self.console.print(ascii_panel)
         self.console.print()
 
         # Experiment Information
-        exp_info = make_experiment_info_table(self.context.get("experiment_id", "N/A"),
-                                              self.context.get("experiment_name", "N/A"),
-                                              self.context.get("timestamp", "N/A"))
-        exp_panel = rpanel.Panel(exp_info,
-                                 title="[bold cyan]Experiment Information[/bold cyan]",
-                                 box=rbox.ROUNDED,
-                                 padding=(1, 2))
+        exp_info = make_experiment_info_table(
+            self.context.get("experiment_id", "N/A"),
+            self.context.get("experiment_name", "N/A"),
+            self.context.get("timestamp", "N/A"),
+        )
+        exp_panel = rpanel.Panel(
+            exp_info,
+            title="[bold cyan]Experiment Information[/bold cyan]",
+            box=rbox.ROUNDED,
+            padding=(1, 2),
+        )
         self.console.print(exp_panel)
         self.console.print()
 
         # Environment Information
         env_table = make_env_table(start_log["env"])
-        env_panel = rpanel.Panel(env_table,
-                                 title="[bold cyan]Environment Information[/bold cyan]",
-                                 box=rbox.ROUNDED,
-                                 padding=(1, 2))
+        env_panel = rpanel.Panel(
+            env_table,
+            title="[bold cyan]Environment Information[/bold cyan]",
+            box=rbox.ROUNDED,
+            padding=(1, 2),
+        )
         self.console.print(env_panel)
         self.console.print()
 
         # Dataset Information
         dataset_table = make_dataset_table(start_log["dataset"])
-        dataset_panel = rpanel.Panel(dataset_table,
-                                     title="[bold cyan]Dataset Information[/bold cyan]",
-                                     box=rbox.ROUNDED,
-                                     padding=(1, 2))
+        dataset_panel = rpanel.Panel(
+            dataset_table,
+            title="[bold cyan]Dataset Information[/bold cyan]",
+            box=rbox.ROUNDED,
+            padding=(1, 2),
+        )
         self.console.print(dataset_panel)
         self.console.print()
 
         # Configuration Information
         config_table = make_config_table(start_log["config"])
-        config_panel = rpanel.Panel(config_table,
-                                    title="[bold cyan]Configuration[/bold cyan]",
-                                    box=rbox.ROUNDED,
-                                    padding=(1, 2))
+        config_panel = rpanel.Panel(
+            config_table,
+            title="[bold cyan]Configuration[/bold cyan]",
+            box=rbox.ROUNDED,
+            padding=(1, 2),
+        )
         self.console.print(config_panel)
         self.console.print()
 
         # Model Architecture (if layers are provided)
         if start_log["model_summary"]["layers"]:
             layers_table = make_layers_table(start_log["model_summary"]["layers"])
-            layers_panel = rpanel.Panel(layers_table,
-                                        title="[bold cyan]Model Architecture[/bold cyan]",
-                                        box=rbox.ROUNDED,
-                                        padding=(1, 2))
+            layers_panel = rpanel.Panel(
+                layers_table,
+                title="[bold cyan]Model Architecture[/bold cyan]",
+                box=rbox.ROUNDED,
+                padding=(1, 2),
+            )
             self.console.print(layers_panel)
             self.console.print()
 
         # Model Summary
         model_table = make_model_summary_table(start_log["model_summary"])
-        model_panel = rpanel.Panel(model_table,
-                                   title="[bold cyan]Model Summary[/bold cyan]",
-                                   box=rbox.ROUNDED,
-                                   padding=(1, 2))
+        model_panel = rpanel.Panel(
+            model_table,
+            title="[bold cyan]Model Summary[/bold cyan]",
+            box=rbox.ROUNDED,
+            padding=(1, 2),
+        )
         self.console.print(model_panel)
         self.console.print()
 
         # Separator
         separator = "─" * 80
         self.console.print(rtext.Text(separator, style="dim"), justify="center")
-        self.console.print(rtext.Text("🚀 Experiment Started", style="bold green"), justify="center")
+        self.console.print(
+            rtext.Text("🚀 Experiment Started", style="bold green"), justify="center"
+        )
         self.console.print(rtext.Text(separator, style="dim"), justify="center")
         self.console.print()
 
@@ -300,8 +312,7 @@ class Display:
         # Create progress indicator
         progress_bar = "█" * int((current_epoch / total_epochs) * 40)
         remaining_bar = "░" * (40 - int((current_epoch / total_epochs) * 40))
-        progress_str = (f"[{progress_bar}{remaining_bar}] {current_epoch}/"
-                        f"{total_epochs}")
+        progress_str = f"[{progress_bar}{remaining_bar}] {current_epoch}/{total_epochs}"
 
         # Epoch header
         epoch_header = f"Epoch {current_epoch}/{total_epochs}"
@@ -325,8 +336,14 @@ class Display:
 
         # Display main metrics
         for metric_name in [
-                "loss", "accuracy", "precision", "recall", "f1_score", "auc_roc", "sensitivity",
-                "specificity"
+            "loss",
+            "accuracy",
+            "precision",
+            "recall",
+            "f1_score",
+            "auc_roc",
+            "sensitivity",
+            "specificity",
         ]:
             train_val = train_metrics.get(metric_name)  # type: ignore
             val_val = val_metrics.get(metric_name)  # type: ignore
@@ -340,10 +357,7 @@ class Display:
                 # Add visual indicator for improvement
                 indicator = ""
                 if best_val is not None and val_val is not None and val_val == best_val:
-                    if metric_name == "loss":
-                        indicator = " ⬇️"  # Lower is better for loss
-                    else:
-                        indicator = " ⬆️"  # Higher is better for other metrics
+                    indicator = " ⬇️" if metric_name == "loss" else " ⬆️"
 
                 metrics_table.add_row(
                     metric_name.replace("_", " ").title(),
@@ -353,13 +367,15 @@ class Display:
                 )
 
         # Display extra metrics if available
-        train_extras = (train_metrics.get("extras", {}) if "extras" in train_metrics else {})
+        train_extras = train_metrics.get("extras", {}) if "extras" in train_metrics else {}
         val_extras = val_metrics.get("extras", {}) if "extras" in val_metrics else {}
-        best_extras = (best_val_metrics.get("extras", {})
-                       if best_val_metrics and "extras" in best_val_metrics else {})
+        best_extras = (
+            best_val_metrics.get("extras", {})
+            if best_val_metrics and "extras" in best_val_metrics
+            else {}
+        )
 
-        all_extra_keys = (set(train_extras.keys()) | set(val_extras.keys()) |
-                          set(best_extras.keys()))
+        all_extra_keys = set(train_extras.keys()) | set(val_extras.keys()) | set(best_extras.keys())
 
         if all_extra_keys:
             metrics_table.add_row("", "", "", "")  # Separator
@@ -408,17 +424,20 @@ class Display:
         # Separator
         separator = "─" * 80
         self.console.print(rtext.Text(separator, style="dim"), justify="center")
-        self.console.print(rtext.Text("🎯 Experiment Completed", style="bold green"),
-                           justify="center")
+        self.console.print(
+            rtext.Text("🎯 Experiment Completed", style="bold green"), justify="center"
+        )
         self.console.print(rtext.Text(separator, style="dim"), justify="center")
         self.console.print()
 
         # Final Results
         results_table = make_final_metrics_table(end_log)
-        results_panel = rpanel.Panel(results_table,
-                                     title="[bold cyan]Experiment Results[/bold cyan]",
-                                     box=rbox.ROUNDED,
-                                     padding=(1, 2))
+        results_panel = rpanel.Panel(
+            results_table,
+            title="[bold cyan]Experiment Results[/bold cyan]",
+            box=rbox.ROUNDED,
+            padding=(1, 2),
+        )
         self.console.print(results_panel)
         self.console.print()
 
@@ -429,21 +448,24 @@ class Display:
         time_table.add_column("Value", style="white")
         time_table.add_row("Total Execution Time", f"{execution_time:.2f} seconds")
 
-        time_panel = rpanel.Panel(time_table,
-                                  title="[bold cyan]Execution Summary[/bold cyan]",
-                                  box=rbox.ROUNDED,
-                                  padding=(1, 2))
+        time_panel = rpanel.Panel(
+            time_table,
+            title="[bold cyan]Execution Summary[/bold cyan]",
+            box=rbox.ROUNDED,
+            padding=(1, 2),
+        )
         self.console.print(time_panel)
 
         # Final ASCII art (smaller)
         try:
             final_art = pyfiglet.figlet_format("Complete!", font="small")
-            final_panel = rpanel.Panel(ralign.Align.center(rtext.Text(final_art,
-                                                                      style="bold green")),
-                                       box=rbox.SIMPLE,
-                                       padding=(0, 1))
+            final_panel = rpanel.Panel(
+                ralign.Align.center(rtext.Text(final_art, style="bold green")),
+                box=rbox.SIMPLE,
+                padding=(0, 1),
+            )
             self.console.print(final_panel)
-        except:
+        except Exception:
             self.console.print(
                 rtext.Text("✨ Experiment Complete! ✨", style="bold green"),
                 justify="center",

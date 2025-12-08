@@ -6,7 +6,7 @@ import pydantic as pydt
 
 
 class ResizeConfig(pydt.BaseModel):
-    size: int | t.Tuple[int, int] = pydt.Field(
+    size: int | tuple[int, int] = pydt.Field(
         default=224,
         ge=32,
         le=1024,
@@ -16,12 +16,12 @@ class ResizeConfig(pydt.BaseModel):
         "specified width and height.",
     )
 
-    interpolation: t.Literal["nearest", "nearest-exact", "bilinear", "bicubic"] = (pydt.Field(
+    interpolation: t.Literal["nearest", "nearest-exact", "bilinear", "bicubic"] = pydt.Field(
         default="bilinear",
         description="Interpolation method to use when resizing the image. "
         "Options are 'nearest', 'nearest-exact', 'bilinear', and "
         "'bicubic'.",
-    ))
+    )
 
     max_size: int | None = pydt.Field(
         default=None,

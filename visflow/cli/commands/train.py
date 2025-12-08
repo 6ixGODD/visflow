@@ -6,9 +6,11 @@ import os
 import pathlib as p
 import typing as t
 
-from visflow._cli.args import BaseArgs
-from visflow.pipelines.train import TrainPipeline
+from pydantic import Field
+
+from visflow.cli.args import BaseArgs
 from visflow.config import TrainConfig
+from visflow.pipelines.train import TrainPipeline
 from visflow.utils import spinner
 
 if t.TYPE_CHECKING:
@@ -18,7 +20,7 @@ if t.TYPE_CHECKING:
 class Args(BaseArgs):
     config: str | None = None
     verbose: bool = False
-    overrides: t.List[str] = []
+    overrides: list[str] = Field(default_factory=list)
 
     def run(self) -> None:
         spinner.start("Bootstrapping training pipeline...")
@@ -43,7 +45,7 @@ class Args(BaseArgs):
         spinner.succeed("Training pipeline bootstrapped.")
         pipeline()
 
-    def _overrides(self, config_dict: t.Dict[str, t.Any], overrides: t.List[str]) -> None:
+    def _overrides(self, config_dict: dict[str, t.Any], overrides: list[str]) -> None:
         i = 0
         while i < len(overrides):
             key = overrides[i]
@@ -79,8 +81,7 @@ class Args(BaseArgs):
         try:
             if "." in value_str:
                 return float(value_str)
-            else:
-                return int(value_str)
+            return int(value_str)
         except ValueError:
             pass
 
@@ -88,23 +89,29 @@ class Args(BaseArgs):
 
     @classmethod
     def add_args(cls, parser: argparse.ArgumentParser) -> None:
-        parser.add_argument("--config",
-                            "-c",
-                            type=str,
-                            default=None,
-                            help="Path to the training configuration file (YAML format). ("
-                            "default: %(default)s)")
-        parser.add_argument("--verbose",
-                            "-v",
-                            action="store_true",
-                            help="Enable verbose output. (default: %(default)s)")
-        parser.add_argument("overrides",
-                            nargs="*",
-                            help="Configuration overrides in format: key value key value ...")
+        parser.add_argument(
+            "--config",
+            "-c",
+            type=str,
+            default=None,
+            help="Path to the training configuration file (YAML format). (default: %(default)s)",
+        )
+        parser.add_argument(
+            "--verbose",
+            "-v",
+            action="store_true",
+            help="Enable verbose output. (default: %(default)s)",
+        )
+        parser.add_argument(
+            "overrides",
+            nargs="*",
+            help="Configuration overrides in format: key value key value ...",
+        )
 
 
 def register(subparser: _SubParsersAction[argparse.ArgumentParser]) -> None:
-    parser = subparser.add_parser("train",
-                                  help="Train a model using the specified configuration file.")
+    parser = subparser.add_parser(
+        "train", help="Train a model using the specified configuration file."
+    )
     Args.add_args(parser)
     parser.set_defaults(func=Args.func)

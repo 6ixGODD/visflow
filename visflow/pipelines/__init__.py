@@ -8,8 +8,7 @@ class BasePipeline(abc.ABC):
     _completed: bool
 
     @abc.abstractmethod
-    def __call__(self) -> None:
-        ...
+    def __call__(self) -> None: ...
 
     @property
     def completed(self) -> bool:
