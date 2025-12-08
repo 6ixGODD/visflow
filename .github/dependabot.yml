@@ -1,5 +1,4 @@
 version: 2
-
 updates:
   - package-ecosystem: "pip"
     directory: "/"
@@ -9,7 +8,6 @@ updates:
     open-pull-requests-limit: 10
     labels:
       - "dependencies"
-
   - package-ecosystem: "github-actions"
     directory: "/.github/workflows"
     schedule:
