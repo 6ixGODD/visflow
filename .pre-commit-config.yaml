@@ -22,3 +22,4 @@ repos:
     rev: v0.20.0
     hooks:
       - id: yamlfmt
+        exclude: '(^\.github/workflows/)'
