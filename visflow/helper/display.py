@@ -1,476 +1,287 @@
 from __future__ import annotations
 
-import datetime
+import contextlib
 import os
-import time
+import pathlib
+import sys
+import textwrap
+import traceback
 import typing as t
 
-import pyfiglet
-import rich.align as ralign
-import rich.box as rbox
-import rich.console as rconsole
-import rich.panel as rpanel
-import rich.table as rtable
-import rich.text as rtext
+import halo
 
-from visflow import __project__
-from visflow.context import Context
-from visflow.context import DatasetInfo
-from visflow.context import EnvironmentInfo
-from visflow.context import EpochLog
-from visflow.context import ExperimentEndLog
-from visflow.context import ExperimentStartLog
-from visflow.context import LayerInfo
-from visflow.context import ModelSummary
-from visflow.utils import flatten_dict
+from visflow.helper.ansi import ANSI
+
+spinner = halo.Halo(spinner="dots")
 
 
-def make_model_summary_table(model_summary: ModelSummary) -> rtable.Table:
-    table = rtable.Table(box=rbox.SIMPLE, show_header=False, padding=(0, 1))
-    table.add_column("Key", style="cyan", no_wrap=True)
-    table.add_column("Value", style="white")
-
-    table.add_row("Total Parameters", f"{model_summary['total_params']:,}")
-    table.add_row("Trainable Parameters", f"{model_summary['trainable_params']:,}")
-    table.add_row("Non-trainable Parameters", f"{model_summary['non_trainable_params']:,}")
-    table.add_row("Input Size (MB)", f"{model_summary['input_size_mb']:.2f}")
-    table.add_row(
-        "Forward/Backward Pass (MB)", f"{model_summary['forward_backward_pass_size_mb']:.2f}"
-    )
-    table.add_row("Parameters Size (MB)", f"{model_summary['params_size_mb']:.2f}")
-    table.add_row("Estimated Total Size (MB)", f"{model_summary['estimated_total_size_mb']:.2f}")
-
-    return table
+def success(message: str, /, prefix: str = "✓") -> None:
+    """Print a success message."""
+    print(f"{ANSI.success(prefix)} {message}")
 
 
-def make_final_metrics_table(end_log: ExperimentEndLog) -> rtable.Table:
-    table = rtable.Table(box=rbox.SIMPLE, show_header=False, padding=(0, 1))
-    table.add_column("Metric", style="cyan", no_wrap=True)
-    table.add_column("Final", style="white")
-    table.add_column("Best", style="green")
-
-    final_metrics = end_log["final_metrics"]
-    best_metrics = end_log["best_metrics"]
-
-    for metric_name in ["loss", "accuracy", "precision", "recall", "f1_score", "auc_roc"]:
-        final_val = final_metrics.get(metric_name)  # type: ignore
-        best_val = best_metrics.get(metric_name)  # type: ignore
-
-        if final_val is not None or best_val is not None:
-            final_str = f"{final_val:.4f}" if final_val is not None else "N/A"
-            best_str = f"{best_val:.4f}" if best_val is not None else "N/A"
-            table.add_row(metric_name.replace("_", " ").title(), final_str, best_str)
-
-    # Add experiment summary
-    table.add_row("", "", "")  # Separator
-    table.add_row("Total Epochs", str(end_log["total_epochs"]), "")
-    table.add_row("Best Epoch", "", str(end_log["best_epoch"]))
-    table.add_row("Total Time (sec)", f"{end_log['total_time_sec']:.2f}", "")
-
-    return table
+def error(message: str, /, prefix: str = "✗") -> None:
+    """Print an error message."""
+    print(f"{ANSI.error(prefix)} {message}", file=sys.stderr)
 
 
-def make_ascii_art() -> str:
+def warning(message: str, /, prefix: str = "⚠") -> None:
+    """Print a warning message."""
+    print(f"{ANSI.warning(prefix)} {message}")
+
+
+def info(message: str, /, prefix: str = "ℹ") -> None:  # noqa: RUF001
+    """Print an info message."""
+    print(f"{ANSI.info(prefix)} {message}")
+
+
+def debug(message: str, /, prefix: str = "→") -> None:
+    """Print a debug message (dimmed)."""
+    print(ANSI.format(f"{prefix} {message}", ANSI.STYLE.DIM))
+
+
+def step(message: str, /, step: int | None = None) -> None:
+    """Print a step message in a process."""
+    if step is not None:
+        prefix = ANSI.format(f"[{step}]", ANSI.FG.CYAN, ANSI.STYLE.BOLD)
+        print(f"\n{prefix} {message}")
+    else:
+        print(f"\n▸ {message}")
+
+
+def path(
+    path: str | pathlib.Path | os.PathLike[str],
+    /,
+    label: str | None = None,
+    exists: bool | None = None,
+) -> None:
+    """Print a formatted file path."""
+    path = pathlib.Path(path)
+
+    parts = []
+    if label:
+        parts.append(ANSI.format(f"{label}:", ANSI.STYLE.BOLD))
+
+    if exists is not None:
+        indicator = ANSI.success("✓") if exists else ANSI.error("✗")
+        parts.append(indicator)
+
+    parts.append(ANSI.format(str(path), ANSI.FG.CYAN))
+    print(" ".join(parts))
+
+
+def command(cmd: str, /) -> None:
+    """Print a command being executed."""
+    print(ANSI.format(f"  $ {cmd}", ANSI.FG.GRAY, ANSI.STYLE.DIM))
+
+
+def header(text: str, /) -> None:
+    """Print a section header."""
+    print()
+    print(ANSI.format(text, ANSI.STYLE.BOLD))
+    print(ANSI.format("─" * len(text), ANSI.FG.GRAY))
+
+
+def separator() -> None:
+    """Print a separator line."""
+    print(ANSI.format("─" * 60, ANSI.FG.GRAY))
+
+
+def key_value(
+    data: dict[str, t.Any],
+    /,
+    indent: int = 0,
+) -> None:
+    """Print key-value pairs in a clean format."""
+    if not data:
+        return
+
+    max_key_len = max(len(str(k)) for k in data)
+    indent_str = "  " * indent
+
+    for key, value in data.items():
+        key_str = ANSI.format(str(key).ljust(max_key_len), ANSI.STYLE.BOLD)
+        value_str = str(value)
+        print(f"{indent_str}{key_str}  {value_str}")
+
+
+def list_items(
+    items: list[str],
+    /,
+    bullet: str = "•",
+    indent: int = 0,
+) -> None:
+    """Print a bulleted list of items."""
+    indent_str = "  " * indent
+    for item in items:
+        print(f"{indent_str}{ANSI.format(bullet, ANSI.FG.CYAN)} {item}")
+
+
+@contextlib.contextmanager
+def loading(
+    text: str = "Loading",
+    /,
+    success_text: str | None = None,
+    error_text: str | None = None,
+) -> t.Generator[t.Any, None, None]:
+    """Context manager for showing a loading spinner."""
+    spinner.text = text
+    spinner.start()
+
     try:
-        ascii_art = pyfiglet.figlet_format(__project__, font="slant")
-        return str(ascii_art)
-    except Exception:
-        return __project__
-
-
-def make_env_table(env_info: EnvironmentInfo) -> rtable.Table:
-    """Create environment information table."""
-    table = rtable.Table(box=rbox.SIMPLE, show_header=False, padding=(0, 1))
-    table.add_column("Key", style="cyan", no_wrap=True)
-    table.add_column("Value", style="white")
-
-    table.add_row("Process ID", str(env_info["pid"]))
-    table.add_row("Operating System", env_info["os"])
-    table.add_row("CPU Architecture", env_info["cpu_architecture"])
-    table.add_row("CPU Cores", str(env_info["cpu_cores"]))
-
-    if "cpu_usage" in env_info:
-        table.add_row("CPU Usage (%)", f"{env_info['cpu_usage']:.1f}")
-
-    table.add_row("Memory (GB)", f"{env_info['memory_gb']:.1f}")
-
-    if "memory_usage_gb" in env_info:
-        table.add_row("Memory Usage (GB)", f"{env_info['memory_usage_gb']:.1f}")
-
-    table.add_row("GPU Available", "✓" if env_info["gpu_available"] else "✗")
-
-    if env_info["gpu_available"] and "gpu_model" in env_info:
-        table.add_row("GPU Model", env_info["gpu_model"])
-        if "gpu_memory_gb" in env_info:
-            table.add_row("GPU Memory (GB)", f"{env_info['gpu_memory_gb']:.1f}")
-        if "gpu_memory_usage_gb" in env_info:
-            table.add_row("GPU Memory Usage (GB)", f"{env_info['gpu_memory_usage_gb']:.1f}")
-
-    table.add_row("Python Version", env_info["python_version"])
-    table.add_row("PyTorch Version", env_info["torch_version"])
-    table.add_row("TorchVision Version", env_info["torchvision_version"])
-
-    if "cuda_version" in env_info:
-        table.add_row("CUDA Version", env_info["cuda_version"])
-
-    if "cudnn_version" in env_info:
-        table.add_row("cuDNN Version", env_info["cudnn_version"])
-
-    return table
-
-
-def make_dataset_table(dataset_info: DatasetInfo) -> rtable.Table:
-    table = rtable.Table(box=rbox.SIMPLE, show_header=False, padding=(0, 1))
-    table.add_column("Key", style="cyan", no_wrap=True)
-    table.add_column("Value", style="white")
-
-    table.add_row("Number of Classes", str(dataset_info["num_classes"]))
-    table.add_row("Training Samples", f"{dataset_info['train_size']:,}")
-    table.add_row("Validation Samples", f"{dataset_info['val_size']:,}")
-    table.add_row("Test Samples", f"{dataset_info['test_size']:,}")
-
-    # Show first few class names if available
-    if dataset_info["classes"]:
-        class_preview = ", ".join(dataset_info["classes"][:5])
-        if len(dataset_info["classes"]) > 5:
-            class_preview += f" ... (+{len(dataset_info['classes']) - 5} more)"
-        table.add_row("Class Names", class_preview)
-
-    return table
-
-
-def make_config_table(config: dict[str, t.Any]) -> rtable.Table:
-    """Create configuration table."""
-    table = rtable.Table(box=rbox.SIMPLE, show_header=False, padding=(0, 1))
-    table.add_column("Key", style="cyan", no_wrap=True)
-    table.add_column("Value", style="white")
-
-    # Flatten the config dict to handle nested configurations
-    flat_config = flatten_dict(config)
-
-    for key, value in flat_config.items():
-        # Format the value appropriately
-        if isinstance(value, float):
-            value_str = f"{value:.6f}" if 0.001 > value > 0 else f"{value:.4f}"
-        elif isinstance(value, (list, tuple)):
-            value_str = f"{str(value)[:47]}..." if len(str(value)) > 50 else str(value)
+        yield spinner
+        if success_text:
+            spinner.succeed(success_text)
         else:
-            value_str = str(value)
-
-        table.add_row(key, value_str)
-
-    return table
-
-
-def make_layers_table(layers: dict[str, LayerInfo]) -> rtable.Table:
-    table = rtable.Table(box=rbox.SIMPLE, show_header=True, padding=(0, 1))
-    table.add_column("Layer (type)", style="white", no_wrap=False, min_width=25)
-    table.add_column("Output Shape", style="white", justify="right", min_width=25)
-    table.add_column("Param #", style="white", justify="right", min_width=15)
-
-    for layer_name, layer_info in layers.items():
-        # Format output shape to match the original style
-        output_shape = layer_info["output_shape"]
-        if isinstance(output_shape, list) and len(output_shape) > 0:
-            if isinstance(output_shape[0], list):
-                # Multiple output shapes
-                output_shape_str = str(output_shape)
-            else:
-                # Single output shape - format as list
-                output_shape_str = str(output_shape)
+            spinner.succeed()
+    except Exception as e:
+        if error_text:
+            spinner.fail(error_text)
         else:
-            output_shape_str = str(output_shape)
-
-        param_count = f"{layer_info['nb_params']:,}"
-
-        table.add_row(layer_name, output_shape_str, param_count)
-
-    return table
+            spinner.fail(f"{text} failed: {e}")
+        raise
+    finally:
+        spinner.stop()
 
 
-def make_experiment_info_table(exp_id: str, exp_name: str, timestamp: str) -> rtable.Table:
-    table = rtable.Table(box=rbox.SIMPLE, show_header=False, padding=(0, 1))
-    table.add_column("Key", style="cyan", no_wrap=True)
-    table.add_column("Value", style="white")
+@contextlib.contextmanager
+def section(title: str, /) -> t.Generator[None, None, None]:
+    """Context manager for a named section."""
+    print()
+    print(ANSI.format(f"┌─ {title}", ANSI.FG.CYAN, ANSI.STYLE.BOLD))
 
-    table.add_row("Experiment ID", exp_id)
-    table.add_row("Experiment Name", exp_name)
-    table.add_row("Start Time", timestamp)
-
-    current_time = datetime.datetime.now(datetime.UTC).strftime("%Y-%m-%d %H:%M:%S")
-    table.add_row("Current Time (UTC)", current_time)
-
-    return table
+    try:
+        yield
+    finally:
+        print(ANSI.format("└─" + "─" * (len(title) + 2), ANSI.FG.CYAN))
 
 
-class Display:
-    def __init__(self, context: Context):
-        self.console = rconsole.Console()
-        self.context = context
-        self.start_time = 0.0
+def banner(text: str, /, subtitle: str | None = None, version: str | None = None) -> None:
+    """Print an application banner."""
+    width = max(len(text), len(subtitle) if subtitle else 0) + 4
 
-    def display_start(self, start_log: ExperimentStartLog) -> None:
-        self.clear()
-        self.start_time = time.time()
-        self.console.clear()
+    print()
+    print(ANSI.format("┌" + "─" * (width - 2) + "┐", ANSI.FG.CYAN, ANSI.STYLE.BOLD))
+    print(ANSI.format(f"│ {text.center(width - 4)} │", ANSI.FG.CYAN, ANSI.STYLE.BOLD))
 
-        # ASCII Art
-        ascii_art = make_ascii_art()
-        ascii_panel = rpanel.Panel(
-            ralign.Align.center(rtext.Text(ascii_art, style="bold blue")),
-            box=rbox.DOUBLE,
-            padding=(1, 2),
-        )
-        self.console.print(ascii_panel)
-        self.console.print()
+    if subtitle:
+        print(ANSI.format(f"│ {subtitle.center(width - 4)} │", ANSI.FG.CYAN))
 
-        # Experiment Information
-        exp_info = make_experiment_info_table(
-            self.context.get("experiment_id", "N/A"),
-            self.context.get("experiment_name", "N/A"),
-            self.context.get("timestamp", "N/A"),
-        )
-        exp_panel = rpanel.Panel(
-            exp_info,
-            title="[bold cyan]Experiment Information[/bold cyan]",
-            box=rbox.ROUNDED,
-            padding=(1, 2),
-        )
-        self.console.print(exp_panel)
-        self.console.print()
+    if version:
+        version_text = f"v{version}"
+        print(ANSI.format(f"│ {version_text.center(width - 4)} │", ANSI.FG.GRAY))
 
-        # Environment Information
-        env_table = make_env_table(start_log["env"])
-        env_panel = rpanel.Panel(
-            env_table,
-            title="[bold cyan]Environment Information[/bold cyan]",
-            box=rbox.ROUNDED,
-            padding=(1, 2),
-        )
-        self.console.print(env_panel)
-        self.console.print()
+    print(ANSI.format("└" + "─" * (width - 2) + "┘", ANSI.FG.CYAN, ANSI.STYLE.BOLD))
+    print()
 
-        # Dataset Information
-        dataset_table = make_dataset_table(start_log["dataset"])
-        dataset_panel = rpanel.Panel(
-            dataset_table,
-            title="[bold cyan]Dataset Information[/bold cyan]",
-            box=rbox.ROUNDED,
-            padding=(1, 2),
-        )
-        self.console.print(dataset_panel)
-        self.console.print()
 
-        # Configuration Information
-        config_table = make_config_table(start_log["config"])
-        config_panel = rpanel.Panel(
-            config_table,
-            title="[bold cyan]Configuration[/bold cyan]",
-            box=rbox.ROUNDED,
-            padding=(1, 2),
-        )
-        self.console.print(config_panel)
-        self.console.print()
+def confirm(prompt: str, /, default: bool = False) -> bool:
+    """Ask for user confirmation with a yes/no prompt."""
+    suffix = ANSI.format("[Y/n]" if default else "[y/N]", ANSI.STYLE.DIM)
+    response = input(f"{prompt} {suffix} ").strip().lower()
 
-        # Model Architecture (if layers are provided)
-        if start_log["model_summary"]["layers"]:
-            layers_table = make_layers_table(start_log["model_summary"]["layers"])
-            layers_panel = rpanel.Panel(
-                layers_table,
-                title="[bold cyan]Model Architecture[/bold cyan]",
-                box=rbox.ROUNDED,
-                padding=(1, 2),
-            )
-            self.console.print(layers_panel)
-            self.console.print()
+    if not response:
+        return default
 
-        # Model Summary
-        model_table = make_model_summary_table(start_log["model_summary"])
-        model_panel = rpanel.Panel(
-            model_table,
-            title="[bold cyan]Model Summary[/bold cyan]",
-            box=rbox.ROUNDED,
-            padding=(1, 2),
-        )
-        self.console.print(model_panel)
-        self.console.print()
+    if response in ("y", "yes"):
+        return True
+    if response in ("n", "no"):
+        return False
 
-        # Separator
-        separator = "─" * 80
-        self.console.print(rtext.Text(separator, style="dim"), justify="center")
-        self.console.print(
-            rtext.Text("🚀 Experiment Started", style="bold green"), justify="center"
-        )
-        self.console.print(rtext.Text(separator, style="dim"), justify="center")
-        self.console.print()
+    error("Please answer 'y' or 'n'")
+    return confirm(prompt, default)
 
-    def display_metrics(self, epoch_log: EpochLog) -> None:
-        """Display metrics for the current epoch."""
-        current_epoch = epoch_log["epoch"]
-        total_epochs = epoch_log["total_epochs"]
 
-        # Create progress indicator
-        progress_bar = "█" * int((current_epoch / total_epochs) * 40)
-        remaining_bar = "░" * (40 - int((current_epoch / total_epochs) * 40))
-        progress_str = f"[{progress_bar}{remaining_bar}] {current_epoch}/{total_epochs}"
+def exception_detail(exc: Exception, /, show_traceback: bool = False) -> None:
+    """Display detailed exception information."""
+    from prototypex.exceptions import BootstrapError
 
-        # Epoch header
-        epoch_header = f"Epoch {current_epoch}/{total_epochs}"
-        if "epoch_time_sec" in epoch_log:
-            epoch_header += f" | Time: {epoch_log['epoch_time_sec']:.2f}s"
+    print()
+    print(ANSI.error("┌" + "─" * 68 + "┐"))
+    print(ANSI.error(f"│ ERROR: {type(exc).__name__}".ljust(70) + "│"))
 
-        self.console.print()
-        self.console.print(rtext.Text(epoch_header, style="bold green"))
-        self.console.print(rtext.Text(progress_str, style="white"))
+    if isinstance(exc, BootstrapError):
+        print(ANSI.error(f"│ Code: {exc.code}".ljust(70) + "│"))
 
-        # Current epoch metrics table
-        metrics_table = rtable.Table(box=rbox.SIMPLE, show_header=True, padding=(0, 1))
-        metrics_table.add_column("Metric", style="cyan", no_wrap=True)
-        metrics_table.add_column("Train", style="yellow", justify="right")
-        metrics_table.add_column("Val", style="white", justify="right")
-        metrics_table.add_column("Best Val", style="green", justify="right")
+    print(ANSI.error("├" + "─" * 68 + "┤"))
 
-        train_metrics = epoch_log["train_metrics"]
-        val_metrics = epoch_log["val_metrics"]
-        best_val_metrics = epoch_log["best_val_metrics"]
+    # Wrap error message
+    msg = str(exc)
+    for line in textwrap.wrap(msg, width=66):
+        print(ANSI.error(f"│ {line}".ljust(70) + "│"))
 
-        # Display main metrics
-        for metric_name in [
-            "loss",
-            "accuracy",
-            "precision",
-            "recall",
-            "f1_score",
-            "auc_roc",
-            "sensitivity",
-            "specificity",
-        ]:
-            train_val = train_metrics.get(metric_name)  # type: ignore
-            val_val = val_metrics.get(metric_name)  # type: ignore
-            best_val = best_val_metrics.get(metric_name)  # type: ignore
+    print(ANSI.error("└" + "─" * 68 + "┘"))
 
-            if train_val is not None or val_val is not None:
-                train_str = f"{train_val:.4f}" if train_val is not None else "N/A"
-                val_str = f"{val_val:.4f}" if val_val is not None else "N/A"
-                best_str = f"{best_val:.4f}" if best_val is not None else "N/A"
+    if show_traceback:
+        print()
+        print(ANSI.format("Traceback:", ANSI.STYLE.DIM))
+        print(ANSI.format("─" * 70, ANSI.FG.GRAY))
+        traceback.print_exception(type(exc), exc, exc.__traceback__)
 
-                # Add visual indicator for improvement
-                indicator = ""
-                if best_val is not None and val_val is not None and val_val == best_val:
-                    indicator = " ⬇️" if metric_name == "loss" else " ⬆️"
 
-                metrics_table.add_row(
-                    metric_name.replace("_", " ").title(),
-                    train_str,
-                    val_str + indicator,
-                    best_str,
-                )
+def error_summary(
+    title: str,
+    /,
+    details: dict[str, str] | None = None,
+    suggestions: list[str] | None = None,
+) -> None:
+    """Display an error summary with optional details and suggestions."""
+    print()
+    print(ANSI.error(f"✗ {title}"))
+    print()
 
-        # Display extra metrics if available
-        train_extras = train_metrics.get("extras", {}) if "extras" in train_metrics else {}
-        val_extras = val_metrics.get("extras", {}) if "extras" in val_metrics else {}
-        best_extras = (
-            best_val_metrics.get("extras", {})
-            if best_val_metrics and "extras" in best_val_metrics
-            else {}
-        )
+    if details:
+        print(ANSI.format("Details:", ANSI.STYLE.BOLD))
+        key_value(details, indent=1)
+        print()
 
-        all_extra_keys = set(train_extras.keys()) | set(val_extras.keys()) | set(best_extras.keys())
+    if suggestions:
+        print(ANSI.format("Suggestions:", ANSI.STYLE.BOLD))
+        list_items(suggestions, bullet="→", indent=1)
+        print()
 
-        if all_extra_keys:
-            metrics_table.add_row("", "", "", "")  # Separator
-            for extra_metric in sorted(all_extra_keys):
-                train_extra = train_extras.get(extra_metric)
-                val_extra = val_extras.get(extra_metric)
-                best_extra = best_extras.get(extra_metric)
 
-                train_str = f"{train_extra:.4f}" if train_extra is not None else "N/A"
-                val_str = f"{val_extra:.4f}" if val_extra is not None else "N/A"
-                best_str = f"{best_extra:.4f}" if best_extra is not None else "N/A"
+def fatal_error(message: str, /, exit_code: int = 1) -> t.NoReturn:
+    """Display a fatal error and exit."""
+    print()
+    print(ANSI.error("╔" + "═" * 68 + "╗"))
+    print(ANSI.error("║" + " FATAL ERROR ".center(68) + "║"))
+    print(ANSI.error("╠" + "═" * 68 + "╣"))
 
-                metrics_table.add_row(
-                    extra_metric.replace("_", " ").title(),
-                    train_str,
-                    val_str,
-                    best_str,
-                )
+    for line in textwrap.wrap(message, width=66):
+        print(ANSI.error("║ " + line.ljust(67) + "║"))
 
-        self.console.print(metrics_table)
+    print(ANSI.error("╚" + "═" * 68 + "╝"))
+    print()
+    sys.exit(exit_code)
 
-        # Learning rate and best epoch information
-        info_table = rtable.Table(box=rbox.SIMPLE, show_header=False, padding=(0, 1))
-        info_table.add_column("Key", style="cyan", no_wrap=True)
-        info_table.add_column("Value", style="white")
 
-        if "initial_lr" in epoch_log:
-            info_table.add_row("Initial LR", f"{epoch_log['initial_lr']:.6f}")
-        if "final_lr" in epoch_log:
-            info_table.add_row("Final LR", f"{epoch_log['final_lr']:.6f}")
+def show_error(exc: Exception, verbose: bool = False) -> None:
+    """Display error information."""
+    from prototypex.exceptions import BootstrapError
 
-        if "best_epoch" in epoch_log:
-            info_table.add_row("Best Epoch", str(epoch_log["best_epoch"]))
+    error(f"{type(exc).__name__}: {exc}")
 
-        if info_table.row_count > 0:
-            self.console.print(info_table)
+    if isinstance(exc, BootstrapError):
+        info(f"Error code: {exc.code}")
 
-        # Add a subtle separator between epochs
-        separator = "─" * 60
-        self.console.print(rtext.Text(separator, style="dim"))
+    if verbose:
+        print()
+        print(ANSI.format("Traceback:", ANSI.STYLE.DIM))
+        traceback.print_exception(type(exc), exc, exc.__traceback__)
 
-    def display_end(self, end_log: ExperimentEndLog) -> None:
-        end_time = time.time()
-        self.console.print()
 
-        # Separator
-        separator = "─" * 80
-        self.console.print(rtext.Text(separator, style="dim"), justify="center")
-        self.console.print(
-            rtext.Text("🎯 Experiment Completed", style="bold green"), justify="center"
-        )
-        self.console.print(rtext.Text(separator, style="dim"), justify="center")
-        self.console.print()
+# Simplified table functions - removed overly complex wrapping logic
+def table_dict(
+    data: dict[str, t.Any],
+    /,
+) -> None:
+    """Print a simple table from a dictionary."""
+    if not data:
+        return
 
-        # Final Results
-        results_table = make_final_metrics_table(end_log)
-        results_panel = rpanel.Panel(
-            results_table,
-            title="[bold cyan]Experiment Results[/bold cyan]",
-            box=rbox.ROUNDED,
-            padding=(1, 2),
-        )
-        self.console.print(results_panel)
-        self.console.print()
+    max_key_len = max(len(str(k)) for k in data)
 
-        # Execution time
-        execution_time = end_time - self.start_time
-        time_table = rtable.Table(box=rbox.SIMPLE, show_header=False, padding=(0, 1))
-        time_table.add_column("Key", style="cyan", no_wrap=True)
-        time_table.add_column("Value", style="white")
-        time_table.add_row("Total Execution Time", f"{execution_time:.2f} seconds")
-
-        time_panel = rpanel.Panel(
-            time_table,
-            title="[bold cyan]Execution Summary[/bold cyan]",
-            box=rbox.ROUNDED,
-            padding=(1, 2),
-        )
-        self.console.print(time_panel)
-
-        # Final ASCII art (smaller)
-        try:
-            final_art = pyfiglet.figlet_format("Complete!", font="small")
-            final_panel = rpanel.Panel(
-                ralign.Align.center(rtext.Text(final_art, style="bold green")),
-                box=rbox.SIMPLE,
-                padding=(0, 1),
-            )
-            self.console.print(final_panel)
-        except Exception:
-            self.console.print(
-                rtext.Text("✨ Experiment Complete! ✨", style="bold green"),
-                justify="center",
-            )
-
-    @staticmethod
-    def clear() -> None:
-        os.system("cls" if os.name == "nt" else "clear")
+    for key, value in data.items():
+        key_str = ANSI.format(str(key).ljust(max_key_len), ANSI.STYLE.BOLD)
+        print(f"  {key_str}  {value}")

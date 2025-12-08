@@ -1,12 +1,11 @@
 from __future__ import annotations
 
 import enum
-import functools as ft
 import os
 import sys
 
 
-class ANSIFormatter:
+class ANSI:
     """Enhanced formatter for ANSI color and style formatting in console
     output.
 
@@ -85,7 +84,6 @@ class ANSIFormatter:
     _enabled = True
 
     @classmethod
-    @ft.lru_cache(maxsize=1)
     def supports_color(cls) -> bool:
         """Determine if the current terminal supports colors.
 
@@ -101,22 +99,7 @@ class ANSIFormatter:
             return True
 
         # Check if stdout is a TTY
-        if not hasattr(sys.stdout, "isatty") or not sys.stdout.isatty():
-            return False
-
-        # Check platform-specific cases
-        plat = sys.platform
-        if plat == "win32":
-            # Windows 10 with VT sequences enabled
-            return bool(
-                os.environ.get("TERM_PROGRAM", "")
-                or "ANSICON" in os.environ
-                or "WT_SESSION" in os.environ
-                or os.environ.get("CONEMUANSI") == "ON"
-            )
-
-        # Most Unix-like systems support colors
-        return True
+        return hasattr(sys.stdout, "isatty") or sys.stdout.isatty()
 
     @classmethod
     def enable(cls, enabled: bool = True) -> None:
@@ -128,7 +111,7 @@ class ANSIFormatter:
         cls._enabled = enabled and cls.supports_color()
 
     @classmethod
-    def format(cls, text: str, *styles: STYLE | FG | BG | None) -> str:
+    def format(cls, text: str, /, *styles: STYLE | FG | BG | None) -> str:
         """Format text with the specified ANSI styles.
 
         Intelligently reapplies styles after any reset sequences in the text.
@@ -141,11 +124,12 @@ class ANSIFormatter:
         Returns:
             The formatted text with ANSI styles applied.
         """
-        if not cls._enabled or not styles or all(s is None for s in styles):
+        if not cls._enabled or not styles:
             return text
+        if any(s is None for s in styles):
+            styles = tuple(s for s in styles if s is not None)
 
-        style_list = [s for s in styles if s is not None]
-        style_str = "".join(style_list)
+        style_str = "".join(styles)
 
         # Handle text that already contains reset codes
         if cls.STYLE.RESET in text:
@@ -154,32 +138,32 @@ class ANSIFormatter:
         return f"{style_str}{text}{cls.STYLE.RESET}"
 
     @classmethod
-    def success(cls, text: str) -> str:
+    def success(cls, text: str, /) -> str:
         """Format text as a success message (green, bold)."""
         return cls.format(text, cls.FG.BRIGHT_GREEN, cls.STYLE.BOLD)
 
     @classmethod
-    def error(cls, text: str) -> str:
+    def error(cls, text: str, /) -> str:
         """Format text as an error message (red, bold)."""
         return cls.format(text, cls.FG.BRIGHT_RED, cls.STYLE.BOLD)
 
     @classmethod
-    def warning(cls, text: str) -> str:
+    def warning(cls, text: str, /) -> str:
         """Format text as a warning message (yellow, bold)."""
         return cls.format(text, cls.FG.BRIGHT_YELLOW, cls.STYLE.BOLD)
 
     @classmethod
-    def info(cls, text: str) -> str:
+    def info(cls, text: str, /) -> str:
         """Format text as an info message (cyan)."""
         return cls.format(text, cls.FG.BRIGHT_CYAN)
 
     @classmethod
-    def highlight(cls, text: str) -> str:
+    def highlight(cls, text: str, /) -> str:
         """Format text as highlighted (magenta, bold)."""
         return cls.format(text, cls.FG.BRIGHT_MAGENTA, cls.STYLE.BOLD)
 
     @classmethod
-    def rgb(cls, text: str, r: int, g: int, b: int, background: bool = False) -> str:
+    def rgb(cls, text: str, /, r: int, g: int, b: int, background: bool = False) -> str:
         """Format text with a specific RGB color.
 
         Args:
