@@ -103,11 +103,11 @@ class MyCustomModel(BaseClassifier):
     def __init__(self, num_classes: int):
         super().__init__(num_classes=num_classes)
         # 您的模型实现
-        
+
     def forward(self, x):
         # 前向传播实现
         pass
-        
+
     def gradcam_layer(self):
         # 返回最后一个卷积层用于 GradCAM
         return self.conv_layer

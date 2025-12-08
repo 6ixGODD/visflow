@@ -15,7 +15,7 @@ English | [中文](README.zh-CN.md)
 ### 🚀 Features
 
 - **🎯 Easy Training**: Simple YAML configuration for model training
-- **🔥 GradCAM Visualization**: Built-in support for model interpretability  
+- **🔥 GradCAM Visualization**: Built-in support for model interpretability
 - **🏗️ Multiple Architectures**: Support for 50+ pre-trained models from torchvision
 - **🎨 Extensible**: Easy to add custom models with the registration system
 - **⚡ CLI & Programmatic**: Use via command line or Python API
@@ -104,11 +104,11 @@ class MyCustomModel(BaseClassifier):
     def __init__(self, num_classes: int):
         super().__init__(num_classes=num_classes)
         # Your model implementation
-        
+
     def forward(self, x):
         # Forward pass implementation
         pass
-        
+
     def gradcam_layer(self):
         # Return the last convolutional layer for GradCAM
         return self.conv_layer
