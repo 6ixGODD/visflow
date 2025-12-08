@@ -59,9 +59,9 @@ optional-dependencies.test = [
 urls.Documentation = "https://6ixgodd.github.io/visflow"
 urls.Homepage = "https://github.com/6ixGODD/visflow"
 urls.Repository = "https://github.com/6ixGODD/visflow"
-scripts.visflow = "visflow._cli:main"
+scripts.visflow = "visflow.cli:main"
 homepage = "https://github.com/6ixGODD/visflow"
 repository = "https://github.com/6ixGODD/visflow"
 
 [tool.poetry.scripts]
-visflow = "visflow._cli.main:main"
+visflow = "visflow.cli.main:main"
