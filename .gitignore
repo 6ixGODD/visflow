@@ -97,3 +97,15 @@ data/
 !/data/train/README.md
 !/data/val/README.md
 !/data/test/README.md
+
+# Machine learning model files
+*.pt
+*.pth
+*.ckpt
+*.bin
+*.model
+*.sav
+*.h5
+*.pb
+*.tflite
+*.onnx
