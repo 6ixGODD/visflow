@@ -1,0 +1,7 @@
+wrap = "keep"
+number = false
+end_of_line = "lf"
+validate = true
+extensions = [
+    "mkdocs",
+]
